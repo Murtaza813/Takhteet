@@ -4,6 +4,15 @@ from datetime import datetime
 import calendar
 from fpdf import FPDF
 import base64
+import tempfile
+import os
+import re
+try:
+    from arabic_reshaper import reshape
+    from bidi.algorithm import get_display
+    ARABIC_SUPPORT = True
+except:
+    ARABIC_SUPPORT = False
 
 # Page configuration
 st.set_page_config(
@@ -166,42 +175,177 @@ def toggle_sipara(day, sipara):
         st.session_state.manual_murajjah[day].append(sipara)
         st.session_state.manual_murajjah[day].sort()
 
-def get_murajjah_for_day(day_number, murajjah_option):
+def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
     """Get murajjah for a specific day"""
     if murajjah_option == "No Murajjah":
-        return "Teacher will assign"
+        return "Teacher will assign" if not for_pdf else ""
     
     if murajjah_option == "Manual Selection":
         day_key = f"day{(day_number % 6) + 1}"
         selected = st.session_state.manual_murajjah[day_key]
         if selected:
-            return ", ".join([f"Para {s}" for s in selected])
-        return "Not assigned"
+            # For PDF, return just numbers, for display return "Para X"
+            if for_pdf:
+                return ", ".join([str(s) for s in selected])
+            else:
+                return ", ".join([f"Para {s}" for s in selected])
+        return "Not assigned" if not for_pdf else ""
     
     # Auto Generate
     current_sipara = st.session_state.current_sipara
     is_backward = "Backward" in st.session_state.direction
     
     if is_backward:
+        # For backward direction: completed paras are from 30 down to current_sipara + 1
         completed = list(range(30, current_sipara, -1))
     else:
-        completed = [30] + list(range(1, current_sipara))
+        # For forward direction: completed paras are from 1 up to current_sipara - 1
+        completed = list(range(1, current_sipara))
     
     if not completed:
-        return "No completed paras"
+        return "Revision Day" if not for_pdf else "Revision"
     
+    # Add last sipara for revision
+    completed.append(30)
+    
+    # Distribute completed paras across 6 days
     paras_per_day = max(1, len(completed) // 6)
     start_idx = (day_number % 6) * paras_per_day
     end_idx = min(start_idx + paras_per_day, len(completed))
     
     if start_idx >= len(completed):
-        return "Revision Day"
+        return "Revision Day" if not for_pdf else "Revision"
     
     day_paras = completed[start_idx:end_idx]
-    return ", ".join([f"Para {p}" for p in day_paras])
+    
+    # Remove duplicates and sort
+    day_paras = sorted(list(set(day_paras)))
+    
+    if for_pdf:
+        # For PDF: return just numbers
+        return ", ".join([str(p) for p in day_paras])
+    else:
+        # For display: return "Para X"
+        return ", ".join([f"Para {p}" for p in day_paras])
+
+def generate_schedule(start_juz, days_in_month):
+    """Generate schedule data for PDF - FIXED VERSION"""
+    schedule = {}
+    current_page = st.session_state.start_page
+    current_juz = start_juz
+    is_backward = "Backward" in st.session_state.direction
+    
+    # Get holidays
+    sundays = []
+    for d in range(1, days_in_month + 1):
+        if datetime(st.session_state.year, st.session_state.month, d).weekday() == 6:
+            sundays.append(d)
+    
+    last_days = []
+    extra_holidays = st.session_state.get('extra_holidays', 4)
+    for i in range(days_in_month, days_in_month - extra_holidays, -1):
+        if i not in sundays:
+            last_days.append(i)
+    
+    all_holidays = sorted(set(sundays + last_days))
+    
+    # Calculate jadeen schedule (same as calculate_schedule function)
+    days_in_month = calendar.monthrange(st.session_state.year, st.session_state.month)[1]
+    start_page = st.session_state.start_page
+    end_page = st.session_state.end_page
+    daily_amount = st.session_state.daily_amount
+    is_backward = "Backward" in st.session_state.direction
+    total_pages = abs(end_page - start_page) + 1
+    
+    # Calculate working days
+    working_days = days_in_month - len(all_holidays)
+    
+    schedule_list = []
+    if daily_amount == "Mixed (0.5 & 1 page)":
+        full_page_days = int(total_pages - (total_pages / 2))
+        current_page = start_page
+        day_count = 0
+        
+        pattern = []
+        for i in range(working_days):
+            if day_count < full_page_days and (i % 3 == 0 or working_days - i <= full_page_days - day_count):
+                pattern.append(1)
+                day_count += 1
+            else:
+                pattern.append(0.5)
+        
+        for i in range(working_days):
+            amount = pattern[i]
+            if is_backward:
+                current_page_val = start_page - sum(pattern[:i])
+            else:
+                current_page_val = start_page + sum(pattern[:i])
+            
+            if is_backward and current_page_val < end_page:
+                current_page_val = end_page
+            elif not is_backward and current_page_val > end_page:
+                current_page_val = end_page
+            
+            schedule_list.append({
+                'page': round(current_page_val, 1),
+                'amount': amount
+            })
+    else:
+        amount = 0.5 if "0.5" in daily_amount else 1.0
+        current_page_val = start_page
+        for i in range(working_days):
+            schedule_list.append({
+                'page': current_page_val,
+                'amount': amount
+            })
+            if is_backward:
+                current_page_val -= amount
+                if current_page_val < end_page:
+                    current_page_val = end_page
+            else:
+                current_page_val += amount
+                if current_page_val > end_page:
+                    current_page_val = end_page
+    
+    # Now create the schedule for each day
+    jadeen_idx = 0
+    weekday_counter = 0
+    
+    for day in range(1, days_in_month + 1):
+        if day in all_holidays:
+            schedule[day] = {'isHoliday': True}
+            continue
+        
+        # Get jadeen for this day
+        jadeen = schedule_list[jadeen_idx]
+        
+        # Calculate juz range
+        if is_backward:
+            juz_range = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8}"
+        else:
+            start = max(1, jadeen['page'] - 10)
+            end = jadeen['page'] - 1
+            juz_range = f"{int(start)}-{int(end)}" if start <= end else "None"
+        
+        # Get murajjah for PDF (just numbers)
+        murajjah = get_murajjah_for_day(weekday_counter, st.session_state.murajjah_option, for_pdf=True)
+        
+        schedule[day] = {
+            'current_page': str(int(jadeen['page'])),
+            'juz_range': juz_range,
+            'murajjah': murajjah,
+            'isHoliday': False
+        }
+        
+        jadeen_idx += 1
+        weekday_counter += 1
+        if weekday_counter >= 6:
+            weekday_counter = 0
+    
+    return schedule
 
 def calculate_schedule():
-    """Calculate the complete schedule"""
+    """Calculate the complete schedule with actual calendar dates"""
     month = st.session_state.month
     year = st.session_state.year
     direction = st.session_state.direction
@@ -250,48 +394,55 @@ def calculate_schedule():
         for i in range(working_days):
             amount = pattern[i]
             if is_backward:
-                current_page = start_page - sum(pattern[:i])
+                current_page_val = start_page - sum(pattern[:i])
             else:
-                current_page = start_page + sum(pattern[:i])
+                current_page_val = start_page + sum(pattern[:i])
             
-            if is_backward and current_page < end_page:
-                current_page = end_page
-            elif not is_backward and current_page > end_page:
-                current_page = end_page
+            if is_backward and current_page_val < end_page:
+                current_page_val = end_page
+            elif not is_backward and current_page_val > end_page:
+                current_page_val = end_page
             
             schedule.append({
-                'page': round(current_page, 1),
+                'page': round(current_page_val, 1),
                 'amount': amount
             })
     else:
         amount = 0.5 if "0.5" in daily_amount else 1.0
-        current_page = start_page
+        current_page_val = start_page
         for i in range(working_days):
             schedule.append({
-                'page': current_page,
+                'page': current_page_val,
                 'amount': amount
             })
             if is_backward:
-                current_page -= amount
-                if current_page < end_page:
-                    current_page = end_page
+                current_page_val -= amount
+                if current_page_val < end_page:
+                    current_page_val = end_page
             else:
-                current_page += amount
-                if current_page > end_page:
-                    current_page = end_page
+                current_page_val += amount
+                if current_page_val > end_page:
+                    current_page_val = end_page
     
-    # Create full monthly schedule
+    # Create full monthly schedule - FOLLOWING ACTUAL CALENDAR DATES
     full_schedule = []
     jadeen_idx = 0
     weekday_counter = 0
     
-    for day in range(1, days_in_month + 1):
-        date = datetime(year, month, day)
-        day_name = calendar.day_name[date.weekday()][:3]
+    # Get actual calendar for the selected month
+    cal = calendar.Calendar()
+    month_days = cal.itermonthdays2(year, month)  # Returns (day_of_month, weekday)
+    
+    for day_num, weekday in month_days:
+        if day_num == 0:  # Skip days from other months
+            continue
+            
+        date = datetime(year, month, day_num)
+        day_name = calendar.day_name[weekday][:3]
         
-        if day in all_holidays:
+        if day_num in all_holidays:
             full_schedule.append({
-                'Date': day,
+                'Date': day_num,
                 'Day': day_name,
                 'Jadeen': 'OFF',
                 'Juzz Hali': '—',
@@ -303,17 +454,17 @@ def calculate_schedule():
             
             # Calculate juzz hali
             if is_backward:
-                juzz_hali = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8} (skip {int(jadeen['page'])})"
+                juzz_hali = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8}"
             else:
                 start = max(1, jadeen['page'] - 10)
                 end = jadeen['page'] - 1
                 juzz_hali = f"{int(start)}-{int(end)}" if start <= end else "None"
             
-            # Calculate murajjah
-            murajjah = get_murajjah_for_day(weekday_counter, murajjah_option)
+            # Calculate murajjah (with "Para" prefix for display)
+            murajjah = get_murajjah_for_day(weekday_counter, murajjah_option, for_pdf=False)
             
             full_schedule.append({
-                'Date': day,
+                'Date': day_num,
                 'Day': day_name,
                 'Jadeen': f"{int(jadeen['page'])} ({'full' if jadeen['amount'] == 1 else 'half'})",
                 'Juzz Hali': juzz_hali,
@@ -329,97 +480,246 @@ def calculate_schedule():
     st.session_state.schedule = full_schedule
     return full_schedule
 
-def create_pdf():
-    """Create PDF from schedule - RELIABLE VERSION"""
+def format_arabic(text):
+    """Format Arabic text for RTL display"""
+    if ARABIC_SUPPORT and isinstance(text, str) and any('\u0600' <= c <= '\u06FF' for c in text):
+        try:
+            reshaped_text = reshape(text)
+            return get_display(reshaped_text)
+        except:
+            return text
+    return text
+
+def create_pdf(student_name, selected_month_name, selected_year, start_juz, days_in_month):
+    """Create PDF in PORTRAIT orientation with proper Arabic formatting"""
     try:
-        pdf = FPDF()
+        # Create PDF in PORTRAIT mode
+        pdf = FPDF(orientation='P')
+        pdf.set_auto_page_break(auto=True, margin=15)
         pdf.add_page()
         
+        # Add custom font for Arabic if available
+        use_arabic = ARABIC_SUPPORT
+        
         # Title
-        pdf.set_font('Arial', 'B', 18)
-        pdf.text(10, 20, 'Quran Hifz Takhteet')
+        title = f"{student_name} - {selected_month_name} {selected_year}"
+        pdf.set_font('Helvetica', 'B', 16)
+        pdf.cell(0, 10, title, 0, 1, 'C')
+        pdf.ln(5)
         
-        # Info
-        pdf.set_font('Arial', '', 12)
-        student_name = st.session_state.get('student_name', 'Student')
-        pdf.text(10, 30, f'Student: {student_name}')
-        pdf.text(10, 37, f'Month: {st.session_state.month}/{st.session_state.year}')
+        # Add "تخطيط شهري" title in Arabic
+        if use_arabic:
+            try:
+                pdf.add_font('Arabic', '', 'arial.ttf', uni=True)
+                pdf.add_font('Arabic', 'B', 'arialbd.ttf', uni=True)
+                pdf.set_font('Arabic', 'B', 14)
+            except:
+                use_arabic = False
         
-        # Fix direction text
-        direction = st.session_state.direction.replace("→", "to")
-        pdf.text(10, 44, f'Direction: {direction}')
+        if use_arabic:
+            arabic_title = format_arabic("تخطيط شهري")
+            pdf.cell(0, 10, arabic_title, 0, 1, 'C')
+        else:
+            pdf.set_font('Helvetica', 'B', 14)
+            pdf.cell(0, 10, "Monthly Plan", 0, 1, 'C')
+        pdf.ln(10)
         
-        # Table position
-        y_position = 50
+        # Adjust column widths for PORTRAIT orientation - GIVING MORE WIDTH TO NOTES
+        total_width = 190
         
-        # Header
-        pdf.set_font('Arial', 'B', 10)
-        col_width = pdf.w / 5
+        # NEW COLUMN WIDTHS - Notes gets 25%, others reduced
+        col_widths = [
+            total_width * 0.25,   # ملاحظات (Notes) - INCREASED TO 25%
+            total_width * 0.15,   # هدف حاصل كيڈو؟ (Target) - REDUCED
+            total_width * 0.15,   # أجزاء المراجعة (Murajjah) - REDUCED
+            total_width * 0.12,   # الجزء الحالي (Juzz Hali) - REDUCED
+            total_width * 0.12,   # الجديد صفحة رقم (New Page) - REDUCED
+            total_width * 0.11,   # كمية الجديد (Amount) - REDUCED
+            total_width * 0.10    # التاريخ (Date) - SMALLEST
+        ]
         
-        headers = ['Date', 'Day', 'Jadeen', 'Juzz Hali', 'Murajjah']
-        for i, header in enumerate(headers):
-            pdf.set_xy(10 + i * col_width, y_position)
-            pdf.cell(col_width, 10, header, 1, 0, 'C')
+        # Headers - RTL order
+        if use_arabic:
+            headers = [
+                format_arabic("ملاحظات"),          # Rightmost - WIDEST
+                format_arabic("هدف حاصل كيڈو؟"),   # 
+                format_arabic("أجزاء المراجعة"),   # 
+                format_arabic("الجزء الحالي"),     # 
+                format_arabic("الجديد (صفحة رقم)"),# 
+                format_arabic("كمية الجديد"),      # 
+                format_arabic("التاريخ")           # Leftmost - NARROWEST
+            ]
+        else:
+            headers = [
+                "Notes",            # WIDEST (25%)
+                "Target Achieved?", # 
+                "Murajjah Parts",   # 
+                "Current Juzz",     # 
+                "New (Page No.)",   # 
+                "Amount",           # 
+                "Date"              # NARROWEST (10%)
+            ]
         
-        y_position += 10
+        # Draw table headers
+        pdf.set_fill_color(200, 220, 255)
+        pdf.set_font('Helvetica', 'B', 10)
         
-        # Data
-        pdf.set_font('Arial', '', 9)
-        for day in st.session_state.schedule:
-            # Color for holidays
-            if day['isHoliday']:
-                pdf.set_fill_color(254, 202, 202)
+        # Write headers in REVERSE order for RTL
+        for i in range(6, -1, -1):
+            if use_arabic and i >= 2:
+                try:
+                    pdf.set_font('Arabic', 'B', 10)
+                except:
+                    pdf.set_font('Helvetica', 'B', 8)
             else:
-                pdf.set_fill_color(255, 255, 255)
+                pdf.set_font('Helvetica', 'B', 8)
             
-            # Clean text
-            jadeen = str(day['Jadeen']).replace("—", "-")
-            juzz_hali = str(day['Juzz Hali']).replace("—", "-")
-            murajjah = str(day['Murajjah']).replace("—", "-")
+            pdf.cell(col_widths[i], 8, headers[i], 1, 0, 'C', True)
+        
+        pdf.ln()
+        
+        # Get days data - using the SAME schedule as display
+        if st.session_state.schedule:
+            # Use the same schedule that was calculated for display
+            schedule_data = st.session_state.schedule
+        else:
+            # Fallback to generate_schedule if needed
+            schedule_data = generate_schedule(start_juz, days_in_month)
+        
+        # Draw table rows
+        row_height = 8
+        for day_schedule in schedule_data:
+            day = day_schedule['Date']
+            is_holiday = day_schedule['isHoliday']
             
-            # Draw row
-            pdf.set_xy(10, y_position)
-            pdf.cell(col_width, 8, str(day['Date']), 1, 0, 'C', 1)
-            pdf.cell(col_width, 8, day['Day'], 1, 0, 'C', 1)
-            pdf.cell(col_width, 8, jadeen, 1, 0, 'C', 1)
-            pdf.cell(col_width, 8, juzz_hali, 1, 0, 'C', 1)
-            pdf.cell(col_width, 8, murajjah, 1, 0, 'C', 1)
-            
-            y_position += 8
-            
-            # Add new page if needed
-            if y_position > pdf.h - 20:
+            # Check if new page is needed
+            if pdf.get_y() + row_height > 270:
                 pdf.add_page()
-                y_position = 20
+                # Redraw headers
+                pdf.set_fill_color(200, 220, 255)
+                for i in range(6, -1, -1):
+                    if use_arabic and i >= 2:
+                        try:
+                            pdf.set_font('Arabic', 'B', 10)
+                        except:
+                            pdf.set_font('Helvetica', 'B', 8)
+                    else:
+                        pdf.set_font('Helvetica', 'B', 8)
+                    pdf.cell(col_widths[i], row_height, headers[i], 1, 0, 'C', True)
+                pdf.ln()
+            
+            # Set font for content
+            if use_arabic:
+                try:
+                    pdf.set_font('Arabic', '', 8)
+                except:
+                    pdf.set_font('Helvetica', '', 8)
+            else:
+                pdf.set_font('Helvetica', '', 8)
+            
+            # Prepare cell data
+            if is_holiday:
+                cell_data = [
+                    "",  # Notes - WIDE COLUMN
+                    "",  # Target
+                    format_arabic("عطلة") if use_arabic else "Holiday",  # Murajjah
+                    "",  # Current Juzz
+                    "",  # New Page
+                    "",  # Amount
+                    str(day)  # Date - NARROW COLUMN
+                ]
+            else:
+                # Extract data from schedule
+                jadeen_text = day_schedule['Jadeen']
+                juzz_hali = day_schedule['Juzz Hali']
+                murajjah = day_schedule['Murajjah']
+                
+                # Parse Jadeen text to get page number and amount
+                page_number = ""
+                amount = ""
+                if "(" in jadeen_text:
+                    page_part = jadeen_text.split("(")[0].strip()
+                    amount_part = jadeen_text.split("(")[1].replace(")", "").strip()
+                    page_number = page_part
+                    amount = amount_part.capitalize()
+                
+                # Clean up Murajjah - remove "Para" prefix for PDF
+                if murajjah and murajjah != "—":
+                    # Remove "Para" prefix and keep just numbers
+                    murajjah_clean = murajjah.replace("Para", "").replace("para", "").strip()
+                else:
+                    murajjah_clean = ""
+                
+                # Clean up Juzz Hali
+                clean_juzz_hali = juzz_hali if juzz_hali != "None" else ""
+                
+                cell_data = [
+                    "",  # Notes - WIDE COLUMN (for teacher/student notes)
+                    "",  # Target
+                    murajjah_clean,  # Murajjah (just numbers)
+                    clean_juzz_hali,  # Current Juzz
+                    page_number,  # New Page
+                    amount,  # Amount
+                    str(day)  # Date - NARROW COLUMN
+                ]
+            
+            # Write row data
+            for i in range(6, -1, -1):
+                cell_content = cell_data[i]
+                
+                # Set alignment
+                align = 'C'
+                if i == 6:  # Date - right align in narrow column
+                    align = 'R'
+                elif i == 0:  # Notes - left align for wide column
+                    align = 'L'
+                elif i == 2 and cell_content == "Holiday":  # Holiday
+                    align = 'C'
+                elif i == 2 and murajjah_clean:  # Murajjah numbers
+                    align = 'C'
+                elif i == 3 and clean_juzz_hali:  # Juzz Hali
+                    align = 'C'
+                
+                # Format Arabic if needed
+                if use_arabic and isinstance(cell_content, str) and any('\u0600' <= c <= '\u06FF' for c in cell_content):
+                    cell_content = format_arabic(cell_content)
+                
+                if cell_content is None:
+                    cell_content = ""
+                
+                pdf.cell(col_widths[i], row_height, str(cell_content), 1, 0, align)
+            
+            pdf.ln()
         
-        # Get PDF as bytes - SIMPLE AND RELIABLE
-        import tempfile
-        import os
+        # Footer note
+        pdf.ln(10)
+        if use_arabic:
+            try:
+                pdf.set_font('Arabic', '', 8)
+            except:
+                pdf.set_font('Helvetica', 'I', 8)
+            footer = format_arabic("ملاحظة: العمودان الأيمن للطالب واليسار للمعلم")
+            pdf.cell(0, 5, footer, 0, 0, 'C')
+        else:
+            pdf.set_font('Helvetica', 'I', 8)
+            pdf.cell(0, 5, "Note: Right columns for student, left for teacher", 0, 0, 'C')
         
-        # Create temp file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
-            temp_path = tmp.name
+        # Return PDF as bytes
+        pdf_output = pdf.output()
         
-        # Save PDF to temp file
-        pdf.output(temp_path)
-        
-        # Read PDF bytes
-        with open(temp_path, 'rb') as f:
-            pdf_bytes = f.read()
-        
-        # Clean up temp file
-        try:
-            os.unlink(temp_path)
-        except:
-            pass
-        
-        return pdf_bytes
-        
+        if isinstance(pdf_output, bytearray):
+            return bytes(pdf_output)
+        elif isinstance(pdf_output, str):
+            return pdf_output.encode('latin-1')
+        else:
+            return pdf_output
+            
     except Exception as e:
-        st.error(f"Error in create_pdf: {e}")
-        # Return empty bytes
-        return b""
-
+        st.error(f"Error creating PDF: {str(e)}")
+        import traceback
+        st.error(traceback.format_exc())
+        return None
+        
 def render_manual_murajjah_section():
     """Render the manual murajjah selection interface"""
     if st.session_state.murajjah_option == "Manual Selection":
@@ -516,7 +816,7 @@ def main():
             - 📅 **Monthly schedule generator**
             - 📄 **Jadeen tracking**
             - 🔄 **Murajjah planning**
-            - 📊 **PDF export**
+            - 📊 **PDF export (Portrait)**
             """)
         
         st.markdown("---")
@@ -567,7 +867,7 @@ def main():
                 "**Month**",
                 options=list(range(1, 13)),
                 format_func=lambda x: datetime(2000, x, 1).strftime('%B'),
-                index=11
+                index=11  # Default to December
             )
             
             if "Backward" in st.session_state.direction:
@@ -590,14 +890,14 @@ def main():
                     "**Current Jadeen Page**",
                     min_value=1,
                     max_value=604,
-                    value=1,
+                    value=418,
                     step=1
                 )
                 st.session_state.end_page = st.number_input(
                     "**Target Jadeen Page**",
                     min_value=1,
                     max_value=604,
-                    value=50,
+                    value=430,
                     step=1
                 )
             
@@ -605,7 +905,7 @@ def main():
                 "**Current Sipara (Para)**",
                 min_value=1,
                 max_value=30,
-                value=27
+                value=21
             )
         
         with col2:
@@ -655,9 +955,11 @@ def main():
     # Display schedule if exists
     if st.session_state.schedule:
         st.markdown("---")
+        month_name = datetime(2000, st.session_state.month, 1).strftime('%B')
+        
         st.markdown(f"""
         <div class="stCard">
-            <h2>Takhteet for {st.session_state.student_name} - {st.session_state.month}/{st.session_state.year}</h2>
+            <h2>Takhteet for {st.session_state.student_name} - {month_name} {st.session_state.year}</h2>
             <p style='color: #10b981; font-weight: 600;'>({st.session_state.direction})</p>
         </div>
         """, unsafe_allow_html=True)
@@ -666,27 +968,14 @@ def main():
         df = pd.DataFrame(st.session_state.schedule)
         display_df = df[['Date', 'Day', 'Jadeen', 'Juzz Hali', 'Murajjah']]
         
-        # Convert to HTML for styling
-        def highlight_holidays(row):
-            if st.session_state.schedule[row.name]['isHoliday']:
-                return ['background-color: #fef2f2'] * len(row)
-            return [''] * len(row)
-        
-    # Display schedule if exists
-    if st.session_state.schedule:
-        st.markdown("---")
-        
-        # REMOVED THE DUPLICATE TITLE HERE
-        # The title is already shown in the main card above
-        
-        # Create DataFrame for display
-        df = pd.DataFrame(st.session_state.schedule)
-        display_df = df[['Date', 'Day', 'Jadeen', 'Juzz Hali', 'Murajjah']]
+        # Sort by Date
+        display_df = display_df.sort_values('Date')
         
         # Convert to HTML for styling
         def highlight_holidays(row):
-            if st.session_state.schedule[row.name]['isHoliday']:
-                return ['background-color: #fef2f2'] * len(row)
+            for day_data in st.session_state.schedule:
+                if day_data['Date'] == row['Date'] and day_data['isHoliday']:
+                    return ['background-color: #fef2f2'] * len(row)
             return [''] * len(row)
         
         # Display as styled table
@@ -696,32 +985,45 @@ def main():
             height=600
         )
         
-        # SIMPLE PDF Download button
+        # PDF Download button
         st.markdown("---")
         col1, col2, col3 = st.columns([1, 2, 1])
         
         with col2:
             try:
-                # Generate PDF
-                pdf_bytes = create_pdf()
+                # Get month name for PDF
+                month_name = datetime(2000, st.session_state.month, 1).strftime('%B')
+                
+                # Get days in month
+                days_in_month = calendar.monthrange(st.session_state.year, st.session_state.month)[1]
+                
+                # Generate PDF with correct parameters
+                pdf_bytes = create_pdf(
+                    student_name=st.session_state.student_name,
+                    selected_month_name=month_name,
+                    selected_year=st.session_state.year,
+                    start_juz=st.session_state.current_sipara,
+                    days_in_month=days_in_month
+                )
                 
                 # Verify PDF was created successfully
-                if pdf_bytes and len(pdf_bytes) > 100:
-                    # Simple download button
+                if pdf_bytes:
+                    # Create download button
                     st.download_button(
-                        label="📥 Download PDF",
+                        label="📥 Download PDF (Portrait)",
                         data=pdf_bytes,
-                        file_name=f"takhteet_{st.session_state.student_name}_{st.session_state.month}_{st.session_state.year}.pdf",
+                        file_name=f"takhteet_{st.session_state.student_name}_{month_name}_{st.session_state.year}.pdf",
                         mime="application/pdf",
                         type="primary",
                         use_container_width=True
                     )
-                    
                 else:
                     st.error("PDF generation failed. Please try again.")
                     
             except Exception as e:
                 st.error(f"Error creating PDF: {str(e)}")
+                import traceback
+                st.error(traceback.format_exc())
 
 if __name__ == "__main__":
     main()
