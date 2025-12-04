@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quran Hifz Takhteet Generator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+        const { jsPDF } = window.jspdf;
+
+        const QuranTakhteelGenerator = () => {
+            const [formData, setFormData] = useState({
+                studentName: '',
+                month: '12',
+                year: '2025',
+                hifzDirection: 'backward',
+                startJadeenPage: '527',
+                endJadeenPage: '511',
+                currentSipara: '27',
+                dailyJadeenAmount: '0.5-1',
+                extraHolidays: '4',
+                murajjahOption: 'auto',
+            });
+
+            const [manualMurajjah, setManualMurajjah] = useState({
+                day1: [],
+                day2: [],
+                day3: [],
+                day4: [],
+                day5: [],
+                day6: []
+            });
+
+            const siparaRanges = {
+                1: { start: 1, end: 21 },
+                2: { start: 22, end: 41 },
+                3: { start: 42, end: 61 },
+                4: { start: 62, end: 81 },
+                5: { start: 82, end: 101 },
+                6: { start: 102, end: 121 },
+                7: { start: 122, end: 141 },
+                8: { start: 142, end: 161 },
+                9: { start: 162, end: 181 },
+                10: { start: 182, end: 201 },
+                11: { start: 202, end: 221 },
+                12: { start: 222, end: 241 },
+                13: { start: 242, end: 261 },
+                14: { start: 262, end: 281 },
+                15: { start: 282, end: 301 },
+                16: { start: 302, end: 321 },
+                17: { start: 322, end: 341 },
+                18: { start: 342, end: 361 },
+                19: { start: 362, end: 381 },
+                20: { start: 382, end: 401 },
+                21: { start: 402, end: 421 },
+                22: { start: 422, end: 441 },
+                23: { start: 442, end: 461 },
+                24: { start: 462, end: 481 },
+                25: { start: 482, end: 501 },
+                26: { start: 502, end: 521 },
+                27: { start: 522, end: 541 },
+                28: { start: 542, end: 561 },
+                29: { start: 562, end: 581 },
+                30: { start: 582, end: 604 }
+            };
+
+            const [generatedSchedule, setGeneratedSchedule] = useState(null);
+            const [showManualMurajjah, setShowManualMurajjah] = useState(false);
+
+            const getDaysInMonth = (month, year) => {
+                return new Date(year, month, 0).getDate();
+            };
+
+            const getSundays = (month, year) => {
+                const sundays = [];
+                const daysInMonth = getDaysInMonth(month, year);
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month - 1, day);
+                    if (date.getDay() === 0) {
+                        sundays.push(day);
+                    }
+                }
+                return sundays;
+            };
+
+            const calculateJadeenScheduleBackward = (startPage, endPage, workingDays) => {
+                const totalPages = startPage - endPage + 1;
+                const schedule = [];
+                
+                if (formData.dailyJadeenAmount === '0.5-1') {
+                    const fullPageDays = Math.floor(totalPages - (totalPages / 2));
+                    let currentPage = startPage;
+                    let dayCount = 0;
+                    
+                    const pattern = [];
+                    for (let i = 0; i < workingDays; i++) {
+                        if (dayCount < fullPageDays && (i % 3 === 0 || workingDays - i <= fullPageDays - dayCount)) {
+                            pattern.push(1);
+                            dayCount++;
+                        } else {
+                            pattern.push(0.5);
+                        }
+                    }
+                    
+                    for (let i = 0; i < workingDays; i++) {
+                        const amount = pattern[i];
+                        schedule.push({ page: currentPage, amount: amount });
+                        currentPage -= amount;
+                        if (currentPage < endPage) currentPage = endPage;
+                    }
+                } else {
+                    const dailyAmount = parseFloat(formData.dailyJadeenAmount);
+                    let currentPage = startPage;
+                    
+                    for (let i = 0; i < workingDays; i++) {
+                        schedule.push({ page: currentPage, amount: dailyAmount });
+                        currentPage -= dailyAmount;
+                        if (currentPage < endPage) currentPage = endPage;
+                    }
+                }
+                
+                return schedule;
+            };
+
+            const calculateJadeenScheduleForward = (startPage, endPage, workingDays) => {
+                const totalPages = endPage - startPage + 1;
+                const schedule = [];
+                
+                if (formData.dailyJadeenAmount === '0.5-1') {
+                    const fullPageDays = Math.floor(totalPages - (totalPages / 2));
+                    let currentPage = startPage;
+                    let dayCount = 0;
+                    
+                    const pattern = [];
+                    for (let i = 0; i < workingDays; i++) {
+                        if (dayCount < fullPageDays && (i % 3 === 0 || workingDays - i <= fullPageDays - dayCount)) {
+                            pattern.push(1);
+                            dayCount++;
+                        } else {
+                            pattern.push(0.5);
+                        }
+                    }
+                    
+                    for (let i = 0; i < workingDays; i++) {
+                        const amount = pattern[i];
+                        schedule.push({ page: currentPage, amount: amount });
+                        currentPage += amount;
+                        if (currentPage > endPage) currentPage = endPage;
+                    }
+                } else {
+                    const dailyAmount = parseFloat(formData.dailyJadeenAmount);
+                    let currentPage = startPage;
+                    
+                    for (let i = 0; i < workingDays; i++) {
+                        schedule.push({ page: currentPage, amount: dailyAmount });
+                        currentPage += dailyAmount;
+                        if (currentPage > endPage) currentPage = endPage;
+                    }
+                }
+                
+                return schedule;
+            };
+
+            const getJuzzHaliBackward = (jadeenPage) => {
+                const start = jadeenPage - 1;
+                const end = jadeenPage + 8;
+                return { text: `${start}-${end} (skip ${jadeenPage})`, start, end, skip: jadeenPage };
+            };
+
+            const getJuzzHaliForward = (jadeenPage) => {
+                const start = Math.max(1, jadeenPage - 10);
+                const end = jadeenPage - 1;
+                return { text: start <= end ? `${start}-${end}` : 'None', start, end, skip: null };
+            };
+
+            const getMurajjahSiparas = (currentJadeenPage, dayOfWeek) => {
+                if (formData.murajjahOption === 'none') {
+                    return 'Teacher will assign';
+                }
+                
+                if (formData.murajjahOption === 'manual') {
+                    const dayKey = `day${dayOfWeek + 1}`;
+                    const siparas = manualMurajjah[dayKey];
+                    if (siparas && siparas.length > 0) {
+                        return siparas.map(s => `Para ${s}`).join(', ');
+                    }
+                    return 'Not assigned';
+                }
+                
+                if (formData.hifzDirection === 'backward') {
+                    const currentSipara = parseInt(formData.currentSipara);
+                    const completedSiparas = [];
+                    for (let i = 30; i > currentSipara; i--) {
+                        completedSiparas.push(i);
+                    }
+                    
+                    if (completedSiparas.length === 0) return 'No completed paras yet';
+                    
+                    const siparasPerDay = Math.ceil(completedSiparas.length / 6);
+                    const startIndex = dayOfWeek * siparasPerDay;
+                    const endIndex = Math.min(startIndex + siparasPerDay, completedSiparas.length);
+                    const todaySiparas = completedSiparas.slice(startIndex, endIndex);
+                    
+                    return todaySiparas.map(s => `Para ${s}`).join(', ');
+                    
+                } else {
+                    const currentSipara = parseInt(formData.currentSipara);
+                    const completedSiparas = [30];
+                    for (let i = 1; i < currentSipara; i++) {
+                        completedSiparas.push(i);
+                    }
+                    
+                    if (completedSiparas.length === 1) return 'Para 30';
+                    
+                    const siparasPerDay = Math.ceil(completedSiparas.length / 6);
+                    const startIndex = dayOfWeek * siparasPerDay;
+                    const endIndex = Math.min(startIndex + siparasPerDay, completedSiparas.length);
+                    const todaySiparas = completedSiparas.slice(startIndex, endIndex);
+                    
+                    return todaySiparas.map(s => `Para ${s}`).join(', ');
+                }
+            };
+
+            const generateSchedule = () => {
+                const month = parseInt(formData.month);
+                const year = parseInt(formData.year);
+                const daysInMonth = getDaysInMonth(month, year);
+                const sundays = getSundays(month, year);
+                const extraHolidays = parseInt(formData.extraHolidays);
+                
+                const lastDays = [];
+                for (let i = daysInMonth; i > daysInMonth - extraHolidays; i--) {
+                    if (!sundays.includes(i)) {
+                        lastDays.push(i);
+                    }
+                }
+                
+                const allHolidays = [...new Set([...sundays, ...lastDays])].sort((a, b) => a - b);
+                const workingDays = daysInMonth - allHolidays.length;
+                
+                const jadeenSchedule = formData.hifzDirection === 'backward'
+                    ? calculateJadeenScheduleBackward(
+                        parseInt(formData.startJadeenPage),
+                        parseInt(formData.endJadeenPage),
+                        workingDays
+                    )
+                    : calculateJadeenScheduleForward(
+                        parseInt(formData.startJadeenPage),
+                        parseInt(formData.endJadeenPage),
+                        workingDays
+                    );
+                
+                const schedule = [];
+                let jadeenIndex = 0;
+                let weekDayCounter = 0;
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month - 1, day);
+                    const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
+                    
+                    if (allHolidays.includes(day)) {
+                        schedule.push({
+                            date: day,
+                            dayName,
+                            jadeen: 'OFF',
+                            juzzHali: '—',
+                            murajjah: '—',
+                            isHoliday: true
+                        });
+                        if (date.getDay() === 0) {
+                            weekDayCounter = 0;
+                        }
+                    } else {
+                        const jadeenData = jadeenSchedule[jadeenIndex];
+                        const juzzHali = formData.hifzDirection === 'backward'
+                            ? getJuzzHaliBackward(jadeenData.page)
+                            : getJuzzHaliForward(jadeenData.page);
+                        
+                        const murajjah = getMurajjahSiparas(jadeenData.page, weekDayCounter);
+                        
+                        schedule.push({
+                            date: day,
+                            dayName,
+                            jadeen: `${jadeenData.page} (${jadeenData.amount === 1 ? 'full' : 'half'})`,
+                            juzzHali: juzzHali.text,
+                            murajjah,
+                            isHoliday: false
+                        });
+                        
+                        jadeenIndex++;
+                        weekDayCounter++;
+                        if (weekDayCounter >= 6) weekDayCounter = 0;
+                    }
+                }
+                
+                setGeneratedSchedule(schedule);
+            };
+
+            const toggleManualMurajjahSipara = (day, sipara) => {
+                setManualMurajjah(prev => {
+                    const current = prev[day] || [];
+                    const siparaNum = parseInt(sipara);
+                    
+                    if (current.includes(siparaNum)) {
+                        return {
+                            ...prev,
+                            [day]: current.filter(s => s !== siparaNum)
+                        };
+                    } else {
+                        return {
+                            ...prev,
+                            [day]: [...current, siparaNum].sort((a, b) => a - b)
+                        };
+                    }
+                });
+            };
+
+            const exportToPDF = () => {
+                if (!generatedSchedule) return;
+
+                const doc = new jsPDF();
+                
+                // Title
+                doc.setFontSize(18);
+                doc.text('Quran Hifz Takhteet', 14, 20);
+                
+                // Student Info
+                doc.setFontSize(12);
+                doc.text(`Student: ${formData.studentName}`, 14, 30);
+                doc.text(`Month: ${formData.month}/${formData.year}`, 14, 37);
+                doc.text(`Direction: ${formData.hifzDirection === 'backward' ? 'Backward (30→1)' : 'Forward (1→30)'}`, 14, 44);
+                
+                // Table
+                const tableData = generatedSchedule.map(day => [
+                    day.date,
+                    day.dayName,
+                    day.jadeen,
+                    day.juzzHali,
+                    day.murajjah
+                ]);
+                
+                doc.autoTable({
+                    head: [['Date', 'Day', 'Jadeen (New)', 'Juzz Hali', 'Murajjah']],
+                    body: tableData,
+                    startY: 50,
+                    styles: { fontSize: 8, cellPadding: 2 },
+                    headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+                    alternateRowStyles: { fillColor: [249, 250, 251] },
+                    didParseCell: function(data) {
+                        if (data.row.index >= 0 && generatedSchedule[data.row.index].isHoliday) {
+                            data.cell.styles.fillColor = [254, 202, 202];
+                        }
+                    }
+                });
+                
+                // Save
+                doc.save(`takhteet_${formData.studentName}_${formData.month}_${formData.year}.pdf`);
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 p-6">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="bg-white rounded-xl shadow-2xl p-8 mb-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                <h1 className="text-3xl font-bold text-gray-800">Quran Hifz Takhteet Generator</h1>
+                            </div>
+                            
+                            <div className="mb-6 p-4 bg-emerald-50 rounded-lg">
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                    Hifz Direction
+                                </label>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setFormData({...formData, hifzDirection: 'backward'})}
+                                        className={`flex-1 px-6 py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                                            formData.hifzDirection === 'backward'
+                                                ? 'bg-emerald-600 text-white shadow-lg scale-105'
+                                                : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-emerald-400'
+                                        }`}
+                                    >
+                                        ← Backward (30 → 1)
+                                    </button>
+                                    <button
+                                        onClick={() => setFormData({...formData, hifzDirection: 'forward'})}
+                                        className={`flex-1 px-6 py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                                            formData.hifzDirection === 'forward'
+                                                ? 'bg-emerald-600 text-white shadow-lg scale-105'
+                                                : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-emerald-400'
+                                        }`}
+                                    >
+                                        Forward (1 → 30) →
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Student Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.studentName}
+                                        onChange={(e) => setFormData({...formData, studentName: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                        placeholder="Enter student name"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Month/Year
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <select
+                                            value={formData.month}
+                                            onChange={(e) => setFormData({...formData, month: e.target.value})}
+                                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        >
+                                            {[...Array(12)].map((_, i) => (
+                                                <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="number"
+                                            value={formData.year}
+                                            onChange={(e) => setFormData({...formData, year: e.target.value})}
+                                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                            placeholder="Year"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        {formData.hifzDirection === 'backward' ? 'Start Jadeen Page' : 'Current Jadeen Page'}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={formData.startJadeenPage}
+                                        onChange={(e) => setFormData({...formData, startJadeenPage: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        placeholder={formData.hifzDirection === 'backward' ? 'e.g., 527' : 'e.g., 11'}
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        {formData.hifzDirection === 'backward' ? 'End Jadeen Page (Target)' : 'Target Jadeen Page'}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={formData.endJadeenPage}
+                                        onChange={(e) => setFormData({...formData, endJadeenPage: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        placeholder={formData.hifzDirection === 'backward' ? 'e.g., 511' : 'e.g., 50'}
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Current Sipara (Para)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={formData.currentSipara}
+                                        onChange={(e) => setFormData({...formData, currentSipara: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        placeholder={formData.hifzDirection === 'backward' ? 'e.g., 27' : 'e.g., 1'}
+                                        min="1"
+                                        max="30"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Daily Jadeen Amount
+                                    </label>
+                                    <select
+                                        value={formData.dailyJadeenAmount}
+                                        onChange={(e) => setFormData({...formData, dailyJadeenAmount: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                    >
+                                        <option value="0.5">0.5 page (half) daily</option>
+                                        <option value="1">1 page (full) daily</option>
+                                        <option value="0.5-1">Mixed (0.5 & 1 page)</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Extra Holidays (besides Sundays)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={formData.extraHolidays}
+                                        onChange={(e) => setFormData({...formData, extraHolidays: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        placeholder="e.g., 4"
+                                        min="0"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Murajjah Option
+                                    </label>
+                                    <select
+                                        value={formData.murajjahOption}
+                                        onChange={(e) => setFormData({...formData, murajjahOption: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                    >
+                                        <option value="none">No Murajjah (I'll assign manually)</option>
+                                        <option value="manual">Manual Selection (I choose siparas)</option>
+                                        <option value="auto">Auto Generate Murajjah</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            {formData.murajjahOption === 'manual' && (
+                                <div className="mb-6">
+                                    <button
+                                        onClick={() => setShowManualMurajjah(!showManualMurajjah)}
+                                        className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold mb-4"
+                                    >
+                                        {showManualMurajjah ? 'Hide' : 'Setup'} Manual Murajjah
+                                    </button>
+                                    
+                                    {showManualMurajjah && (
+                                        <div className="bg-purple-50 rounded-lg p-6">
+                                            <h3 className="text-lg font-bold text-gray-800 mb-4">Select Siparas for Each Day</h3>
+                                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {['day1', 'day2', 'day3', 'day4', 'day5', 'day6'].map((day, dayIndex) => (
+                                                    <div key={day} className="bg-white rounded-lg p-4 border-2 border-purple-200">
+                                                        <h4 className="font-semibold text-gray-700 mb-2">Day {dayIndex + 1}</h4>
+                                                        <div className="grid grid-cols-5 gap-1">
+                                                            {[...Array(30)].map((_, i) => {
+                                                                const sipara = i + 1;
+                                                                const isSelected = manualMurajjah[day]?.includes(sipara);
+                                                                return (
+                                                                    <button
+                                                                        key={sipara}
+                                                                        onClick={() => toggleManualMurajjahSipara(day, sipara)}
+                                                                        className={`px-2 py-1 text-xs rounded transition-colors ${
+                                                                            isSelected
+                                                                                ? 'bg-purple-600 text-white'
+                                                                                : 'bg-gray-200 text-gray-700 hover:bg-purple-200'
+                                                                        }`}
+                                                                    >
+                                                                        {sipara}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={generateSchedule}
+                                    className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold flex items-center gap-2"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    Generate Takhteet
+                                </button>
+                                
+                                {generatedSchedule && (
+                                    <button
+                                        onClick={exportToPDF}
+                                        className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold flex items-center gap-2"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Export PDF
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        
+                        {generatedSchedule && (
+                            <div className="bg-white rounded-xl shadow-2xl p-8">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                                    Takhteet for {formData.studentName} - {formData.month}/{formData.year}
+                                    <span className="text-emerald-600 ml-3">
+                                        ({formData.hifzDirection === 'backward' ? 'Backward' : 'Forward'})
+                                    </span>
+                                </h2>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="bg-emerald-600 text-white">
+                                                <th className="border border-emerald-700 px-4 py-3 text-left">Date</th>
+                                                <th className="border border-emerald-700 px-4 py-3 text-left">Day</th>
+                                                <th className="border border-emerald-700 px-4 py-3 text-left">Jadeen (New)</th>
+                                                <th className="border border-emerald-700 px-4 py-3 text-left">Juzz Hali</th>
+                                                <th className="border border-emerald-700 px-4 py-3 text-left">Murajjah</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {generatedSchedule.map((day, index) => (
+                                                <tr 
+                                                    key={index}
+                                                    className={day.isHoliday ? 'bg-red-50' : index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
+                                                >
+                                                    <td className="border border-gray-300 px-4 py-3 font-semibold">
+                                                        {day.date}
+                                                    </td>
+                                                    <td className="border border-gray-300 px-4 py-3">{day.dayName}</td>
+                                                    <td className="border border-gray-300 px-4 py-3">{day.jadeen}</td>
+                                                    <td className="border border-gray-300 px-4 py-3 text-sm">{day.juzzHali}</td>
+                                                    <td className="border border-gray-300 px-4 py-3 text-sm">{day.murajjah}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<QuranTakhteelGenerator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
