@@ -22,22 +22,32 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS to match your design
+# Replace your current st.markdown CSS section with this updated version:
+
 st.markdown("""
 <style>
-    /* Main container */
+    /* Main container - Dark mode compatible */
     .main {
         background: linear-gradient(135deg, #f0fdf4 0%, #f0fdfa 100%);
         padding: 2rem;
     }
     
-    /* Cards */
+    /* Cards - Dark mode compatible */
     .stCard {
-        background: white;
+        background: white !important;
         border-radius: 1rem;
         padding: 2rem;
         box-shadow: 0 10px 40px rgba(16, 185, 129, 0.1);
         margin-bottom: 2rem;
+    }
+    
+    /* Text colors for dark mode */
+    h1, h2, h3, h4, h5, h6 {
+        color: #1f2937 !important;
+    }
+    
+    p, span, div, label {
+        color: #1f2937 !important;
     }
     
     /* Buttons */
@@ -46,6 +56,7 @@ st.markdown("""
         font-weight: 600;
         transition: all 0.3s;
         border: none;
+        color: white !important;
     }
     
     .stButton button:hover {
@@ -56,30 +67,34 @@ st.markdown("""
     /* Input fields */
     .stTextInput input, .stNumberInput input, .stSelectbox select {
         border-radius: 0.5rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid #e5e7eb !important;
+        background-color: white !important;
+        color: #1f2937 !important;
     }
     
     .stTextInput input:focus, .stNumberInput input:focus, .stSelectbox select:focus {
-        border-color: #10b981;
+        border-color: #10b981 !important;
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
     
+    /* Labels */
+    label {
+        color: #1f2937 !important;
+        font-weight: 600 !important;
+    }
+    
     /* Radio buttons */
-    .stRadio label {
-        background: white;
-        border: 2px solid #e5e7eb;
+    .stRadio > label {
+        background: white !important;
+        border: 2px solid #e5e7eb !important;
         border-radius: 0.5rem;
         padding: 1rem;
         margin: 0.5rem 0;
+        color: #1f2937 !important;
     }
     
-    .stRadio label:hover {
-        border-color: #10b981;
-    }
-    
-    /* Headers */
-    h1, h2, h3 {
-        color: #1f2937;
+    .stRadio > label:hover {
+        border-color: #10b981 !important;
     }
     
     /* Holiday rows */
@@ -93,6 +108,7 @@ st.markdown("""
         width: 100%;
         border-radius: 0.5rem;
         overflow: hidden;
+        background-color: white !important;
     }
     
     th {
@@ -104,16 +120,37 @@ st.markdown("""
     
     td {
         padding: 0.75rem !important;
-        border: 1px solid #e5e7eb;
+        border: 1px solid #e5e7eb !important;
+        background-color: white !important;
+        color: #1f2937 !important;
     }
     
     tr:nth-child(even) {
-        background-color: #f9fafb;
+        background-color: #f9fafb !important;
+    }
+    
+    tr:nth-child(odd) {
+        background-color: white !important;
+    }
+    
+    /* Dataframe cells */
+    .dataframe th {
+        background-color: #10b981 !important;
+        color: white !important;
+    }
+    
+    .dataframe td {
+        background-color: white !important;
+        color: #1f2937 !important;
     }
     
     /* Sidebar */
     section[data-testid="stSidebar"] {
-        background-color: #f8fafc;
+        background-color: #f8fafc !important;
+    }
+    
+    section[data-testid="stSidebar"] * {
+        color: #1f2937 !important;
     }
     
     /* Manual Murajjah styling */
@@ -127,8 +164,8 @@ st.markdown("""
     }
     
     .day-card {
-        background: white;
-        border: 2px solid #e5e7eb;
+        background: white !important;
+        border: 2px solid #e5e7eb !important;
         border-radius: 0.5rem;
         padding: 1rem;
         margin-bottom: 1rem;
@@ -136,7 +173,134 @@ st.markdown("""
     
     .day-card h4 {
         margin-top: 0;
-        color: #1f2937;
+        color: #1f2937 !important;
+    }
+    
+    /* Caption text */
+    .stCaption {
+        color: #6b7280 !important;
+    }
+    
+    /* Success messages */
+    .stSuccess {
+        background-color: #d1fae5 !important;
+        color: #065f46 !important;
+    }
+    
+    /* Error messages */
+    .stError {
+        background-color: #fee2e2 !important;
+        color: #991b1b !important;
+    }
+    
+    /* Warning messages */
+    .stWarning {
+        background-color: #fef3c7 !important;
+        color: #92400e !important;
+    }
+    
+    /* Info messages */
+    .stInfo {
+        background-color: #dbeafe !important;
+        color: #1e40af !important;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background-color: #f8fafc !important;
+        color: #1f2937 !important;
+        border-radius: 0.5rem;
+    }
+    
+    .streamlit-expanderContent {
+        background-color: white !important;
+        color: #1f2937 !important;
+    }
+    
+    /* Override Streamlit's dark mode styles */
+    @media (prefers-color-scheme: dark) {
+        .main {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+        }
+        
+        .stCard {
+            background: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #f1f5f9 !important;
+        }
+        
+        p, span, div, label {
+            color: #f1f5f9 !important;
+        }
+        
+        .day-card {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        
+        table, td, tr {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #334155 !important;
+        }
+        
+        .dataframe th, .dataframe td {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        
+        .stTextInput input, .stNumberInput input, .stSelectbox select {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #475569 !important;
+        }
+        
+        .stRadio > label {
+            background: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #475569 !important;
+        }
+        
+        section[data-testid="stSidebar"] {
+            background-color: #0f172a !important;
+        }
+        
+        section[data-testid="stSidebar"] * {
+            color: #f1f5f9 !important;
+        }
+        
+        .streamlit-expanderHeader {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        
+        .streamlit-expanderContent {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        
+        .stSuccess {
+            background-color: #064e3b !important;
+            color: #a7f3d0 !important;
+        }
+        
+        .stError {
+            background-color: #7f1d1d !important;
+            color: #fecaca !important;
+        }
+        
+        .stWarning {
+            background-color: #78350f !important;
+            color: #fef3c7 !important;
+        }
+        
+        .stInfo {
+            background-color: #1e3a8a !important;
+            color: #dbeafe !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1030,4 +1194,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
