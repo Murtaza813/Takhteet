@@ -22,259 +22,147 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS for perfect dark/light mode compatibility
+# FORCE LIGHT MODE but ensure dark mode compatibility
 st.markdown("""
 <style>
-    /* ===== BASE THEME VARIABLES ===== */
-    :root {
-        --primary: #10b981;
-        --primary-dark: #059669;
-        --primary-light: #d1fae5;
-        --background: #ffffff;
-        --surface: #f8fafc;
-        --text: #1f2937;
-        --text-secondary: #6b7280;
-        --border: #e5e7eb;
-        --card-bg: #ffffff;
-        --success: #10b981;
-        --error: #ef4444;
-        --warning: #f59e0b;
-        --info: #3b82f6;
-        --holiday-bg: #fef2f2;
-        --table-header: #10b981;
-        --table-even: #f9fafb;
-        --table-hover: #f3f4f6;
+    /* FORCE LIGHT THEME BUT MAKE DARK MODE SAFE */
+    body {
+        color: #000000 !important;
+        background-color: #ffffff !important;
     }
     
-    /* ===== DARK MODE VARIABLES ===== */
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --background: #0f172a;
-            --surface: #1e293b;
-            --text: #f1f5f9;
-            --text-secondary: #cbd5e1;
-            --border: #334155;
-            --card-bg: #1e293b;
-            --primary: #10b981;
-            --primary-dark: #34d399;
-            --primary-light: #064e3b;
-            --holiday-bg: #7f1d1d;
-            --table-header: #065f46;
-            --table-even: #1e293b;
-            --table-hover: #334155;
-        }
-    }
-    
-    /* ===== BASE STYLES ===== */
-    .main {
-        background: var(--background) !important;
-        min-height: 100vh;
-    }
-    
-    /* Text colors - explicitly set */
+    /* Force all text to be dark */
     * {
-        color: var(--text) !important;
+        color: #000000 !important;
     }
     
+    /* Force all backgrounds to be light */
+    .main, .block-container, .stApp {
+        background-color: #ffffff !important;
+    }
+    
+    /* Cards - force white background with dark text */
+    .takhteet-card {
+        background-color: #ffffff !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 12px !important;
+        padding: 24px !important;
+        margin-bottom: 20px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+        color: #000000 !important;
+    }
+    
+    /* Headers */
     h1, h2, h3, h4, h5, h6 {
-        color: var(--text) !important;
+        color: #1f2937 !important;
         font-weight: 700 !important;
     }
     
-    p, span, div, label, small, strong, em {
-        color: var(--text) !important;
+    /* All text elements */
+    p, span, div, label, li, td, th, strong, em, small {
+        color: #000000 !important;
     }
     
-    /* ===== CARD STYLES ===== */
-    .takhteet-card {
-        background: var(--card-bg) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 16px !important;
-        padding: 24px !important;
-        margin-bottom: 24px !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    /* Input fields - always visible */
+    input, select, textarea {
+        background-color: white !important;
+        color: black !important;
+        border: 2px solid #e5e7eb !important;
     }
     
-    /* ===== BUTTON STYLES ===== */
-    .stButton > button {
-        background-color: var(--primary) !important;
+    input:focus, select:focus, textarea:focus {
+        border-color: #10b981 !important;
+        background-color: white !important;
+        color: black !important;
+    }
+    
+    /* Buttons - always visible */
+    button {
+        background-color: #10b981 !important;
         color: white !important;
         border: none !important;
-        border-radius: 10px !important;
-        padding: 10px 24px !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
-        transition: all 0.2s ease !important;
     }
     
-    .stButton > button:hover {
-        background-color: var(--primary-dark) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3) !important;
+    button:hover {
+        background-color: #059669 !important;
     }
     
-    .stButton > button:active {
-        transform: translateY(0) !important;
-    }
-    
-    /* Secondary buttons */
-    .stButton > button[kind="secondary"] {
-        background-color: transparent !important;
-        color: var(--primary) !important;
-        border: 2px solid var(--primary) !important;
-    }
-    
-    .stButton > button[kind="secondary"]:hover {
-        background-color: var(--primary-light) !important;
-        color: var(--primary-dark) !important;
-    }
-    
-    /* ===== INPUT FIELD STYLES ===== */
-    .stTextInput > div > div > input,
-    .stNumberInput > div > div > input,
-    .stSelectbox > div > div > select {
-        background-color: var(--card-bg) !important;
-        color: var(--text) !important;
-        border: 2px solid var(--border) !important;
-        border-radius: 10px !important;
-        padding: 10px 14px !important;
-        font-size: 14px !important;
-    }
-    
-    .stTextInput > div > div > input:focus,
-    .stNumberInput > div > div > input:focus,
-    .stSelectbox > div > div > select:focus {
-        border-color: var(--primary) !important;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
-        outline: none !important;
-    }
-    
-    /* Input labels */
-    .stTextInput label,
-    .stNumberInput label,
-    .stSelectbox label,
-    .stSlider label {
-        color: var(--text) !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
-        margin-bottom: 6px !important;
-    }
-    
-    /* ===== RADIO BUTTONS ===== */
-    .stRadio > div {
-        background: var(--card-bg) !important;
-        border: 2px solid var(--border) !important;
-        border-radius: 10px !important;
-        padding: 12px !important;
-    }
-    
-    .stRadio > div:hover {
-        border-color: var(--primary) !important;
-    }
-    
-    .stRadio label {
-        color: var(--text) !important;
-        font-weight: 500 !important;
-    }
-    
-    /* ===== SELECTBOX STYLES ===== */
-    .stSelectbox > div > div {
-        background-color: var(--card-bg) !important;
-        border: 2px solid var(--border) !important;
-        border-radius: 10px !important;
-    }
-    
-    /* ===== SLIDER STYLES ===== */
-    .stSlider > div > div > div {
-        background-color: var(--primary-light) !important;
-    }
-    
-    .stSlider > div > div > div > div {
-        background-color: var(--primary) !important;
-    }
-    
-    .stSlider > div > div > div > div > div {
-        background-color: var(--primary) !important;
-        border: 2px solid var(--background) !important;
-    }
-    
-    /* ===== TABLE STYLES ===== */
+    /* DataFrames - force visibility */
     .dataframe {
-        background-color: var(--card-bg) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 12px !important;
-        overflow: hidden !important;
+        background-color: white !important;
+        color: black !important;
     }
     
     .dataframe th {
-        background-color: var(--table-header) !important;
+        background-color: #10b981 !important;
         color: white !important;
-        font-weight: 600 !important;
-        padding: 16px !important;
-        border: none !important;
     }
     
     .dataframe td {
-        background-color: var(--card-bg) !important;
-        color: var(--text) !important;
-        padding: 12px 16px !important;
-        border-bottom: 1px solid var(--border) !important;
-        border-right: 1px solid var(--border) !important;
+        background-color: white !important;
+        color: black !important;
+        border-color: #e5e7eb !important;
     }
     
-    .dataframe tr:nth-child(even) {
-        background-color: var(--table-even) !important;
+    /* Streamlit specific overrides */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stSelectbox > div > div > select,
+    .stTextArea > div > div > textarea {
+        background-color: white !important;
+        color: black !important;
+        border: 2px solid #e5e7eb !important;
     }
     
-    .dataframe tr:hover {
-        background-color: var(--table-hover) !important;
-    }
-    
-    /* ===== SIDEBAR STYLES ===== */
-    section[data-testid="stSidebar"] {
-        background-color: var(--surface) !important;
-    }
-    
-    section[data-testid="stSidebar"] * {
-        color: var(--text) !important;
-    }
-    
-    .sidebar-content {
-        padding: 20px !important;
-    }
-    
-    /* ===== EXPANDER STYLES ===== */
-    .streamlit-expanderHeader {
-        background-color: var(--surface) !important;
-        color: var(--text) !important;
-        border-radius: 10px !important;
-        border: 1px solid var(--border) !important;
+    .stTextInput label,
+    .stNumberInput label,
+    .stSelectbox label,
+    .stSlider label,
+    .stRadio label,
+    .stCheckbox label {
+        color: #1f2937 !important;
         font-weight: 600 !important;
     }
     
+    /* Radio buttons */
+    .stRadio > div {
+        background-color: white !important;
+        border: 2px solid #e5e7eb !important;
+        color: black !important;
+    }
+    
+    /* Selectbox */
+    .stSelectbox > div > div {
+        background-color: white !important;
+        color: black !important;
+    }
+    
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background-color: #f8fafc !important;
+    }
+    
+    section[data-testid="stSidebar"] * {
+        color: #1f2937 !important;
+    }
+    
+    /* Expanders */
+    .streamlit-expanderHeader {
+        background-color: white !important;
+        color: black !important;
+        border: 1px solid #e5e7eb !important;
+    }
+    
     .streamlit-expanderContent {
-        background-color: var(--card-bg) !important;
-        color: var(--text) !important;
-        border-radius: 0 0 10px 10px !important;
-        border: 1px solid var(--border) !important;
-        border-top: none !important;
+        background-color: white !important;
+        color: black !important;
     }
     
-    /* ===== MESSAGE STYLES ===== */
+    /* Messages */
     .stAlert {
-        border-radius: 10px !important;
-        border: none !important;
-    }
-    
-    .stSuccess {
-        background-color: var(--primary-light) !important;
+        background-color: #d1fae5 !important;
         color: #065f46 !important;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .stSuccess {
-            color: #a7f3d0 !important;
-        }
+        border: none !important;
     }
     
     .stError {
@@ -282,23 +170,9 @@ st.markdown("""
         color: #991b1b !important;
     }
     
-    @media (prefers-color-scheme: dark) {
-        .stError {
-            background-color: #7f1d1d !important;
-            color: #fecaca !important;
-        }
-    }
-    
     .stWarning {
         background-color: #fef3c7 !important;
         color: #92400e !important;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .stWarning {
-            background-color: #78350f !important;
-            color: #fef3c7 !important;
-        }
     }
     
     .stInfo {
@@ -306,126 +180,105 @@ st.markdown("""
         color: #1e40af !important;
     }
     
+    /* Tables */
+    table {
+        background-color: white !important;
+        color: black !important;
+    }
+    
+    th {
+        background-color: #10b981 !important;
+        color: white !important;
+    }
+    
+    td {
+        background-color: white !important;
+        color: black !important;
+    }
+    
+    /* Dark mode override - if user forces dark mode */
     @media (prefers-color-scheme: dark) {
-        .stInfo {
-            background-color: #1e3a8a !important;
-            color: #dbeafe !important;
+        .stApp, .main, .block-container {
+            background-color: #1e293b !important;
+        }
+        
+        .takhteet-card {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        
+        * {
+            color: #f1f5f9 !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #f1f5f9 !important;
+        }
+        
+        input, select, textarea {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #475569 !important;
+        }
+        
+        .stTextInput > div > div > input,
+        .stNumberInput > div > div > input,
+        .stSelectbox > div > div > select {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #475569 !important;
+        }
+        
+        .dataframe {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        
+        .dataframe th {
+            background-color: #065f46 !important;
+            color: white !important;
+        }
+        
+        .dataframe td {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #334155 !important;
+        }
+        
+        .stRadio > div {
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+            color: #f1f5f9 !important;
+        }
+        
+        section[data-testid="stSidebar"] {
+            background-color: #0f172a !important;
+        }
+        
+        section[data-testid="stSidebar"] * {
+            color: #f1f5f9 !important;
         }
     }
     
-    /* ===== HOLIDAY ROW STYLES ===== */
-    .holiday-row {
-        background-color: var(--holiday-bg) !important;
-    }
-    
-    /* ===== MANUAL MURAJJAH STYLES ===== */
-    .murajjah-container {
-        background: var(--card-bg) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
-        margin-top: 20px !important;
-    }
-    
-    .day-card {
-        background: var(--surface) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 10px !important;
-        padding: 16px !important;
-        margin-bottom: 16px !important;
-    }
-    
-    .day-card h4 {
-        color: var(--text) !important;
-        margin-bottom: 12px !important;
-    }
-    
+    /* Manual Murajjah buttons */
     .sipara-btn {
-        background-color: var(--surface) !important;
-        color: var(--text) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 6px !important;
-        padding: 6px 10px !important;
-        margin: 3px !important;
-        font-size: 12px !important;
-        min-width: 36px !important;
-        transition: all 0.2s !important;
+        background-color: white !important;
+        color: black !important;
+        border: 1px solid #e5e7eb !important;
     }
     
-    .sipara-btn:hover {
-        border-color: var(--primary) !important;
-        transform: translateY(-1px) !important;
+    @media (prefers-color-scheme: dark) {
+        .sipara-btn {
+            background-color: #334155 !important;
+            color: #f1f5f9 !important;
+            border-color: #475569 !important;
+        }
     }
     
     .sipara-btn.selected {
-        background-color: var(--primary) !important;
+        background-color: #10b981 !important;
         color: white !important;
-        border-color: var(--primary) !important;
-    }
-    
-    /* ===== DOWNLOAD BUTTON ===== */
-    .download-btn {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 10px !important;
-        padding: 14px 28px !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
-    }
-    
-    /* ===== CUSTOM DIVIDERS ===== */
-    .custom-divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, var(--border), transparent);
-        margin: 24px 0;
-        width: 100%;
-    }
-    
-    /* ===== BADGE STYLES ===== */
-    .badge {
-        display: inline-block;
-        padding: 4px 12px;
-        background-color: var(--primary-light);
-        color: var(--primary-dark);
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        margin-right: 8px;
-        margin-bottom: 8px;
-    }
-    
-    /* ===== SCROLLBAR STYLES ===== */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: var(--surface);
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: var(--border);
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--primary);
-    }
-    
-    /* ===== RESPONSIVE ADJUSTMENTS ===== */
-    @media (max-width: 768px) {
-        .takhteet-card {
-            padding: 16px !important;
-        }
-        
-        .stButton > button {
-            width: 100% !important;
-            margin-bottom: 8px !important;
-        }
+        border-color: #10b981 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1319,6 +1172,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
