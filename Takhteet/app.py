@@ -22,7 +22,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# FORCE LIGHT MODE but ensure dark mode compatibility
+# CSS with clear direction button differentiation
 st.markdown("""
 <style>
     /* FORCE LIGHT THEME BUT MAKE DARK MODE SAFE */
@@ -63,6 +63,29 @@ st.markdown("""
         color: #000000 !important;
     }
     
+    /* DIRECTION BUTTONS - CLEAR DIFFERENTIATION */
+    .direction-btn-selected {
+        background-color: #10b981 !important;
+        color: white !important;
+        border: 3px solid #059669 !important;
+        font-weight: bold !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+        transform: scale(1.02) !important;
+    }
+    
+    .direction-btn-unselected {
+        background-color: #f3f4f6 !important;
+        color: #6b7280 !important;
+        border: 2px solid #d1d5db !important;
+        font-weight: normal !important;
+    }
+    
+    .direction-btn-unselected:hover {
+        background-color: #e5e7eb !important;
+        color: #374151 !important;
+        border-color: #9ca3af !important;
+    }
+    
     /* Input fields - always visible */
     input, select, textarea {
         background-color: white !important;
@@ -76,15 +99,33 @@ st.markdown("""
         color: black !important;
     }
     
-    /* Buttons - always visible */
-    button {
+    /* Regular Buttons */
+    .stButton > button {
         background-color: #10b981 !important;
         color: white !important;
         border: none !important;
+        border-radius: 8px !important;
+        padding: 10px 20px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s !important;
     }
     
-    button:hover {
+    .stButton > button:hover {
         background-color: #059669 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+    }
+    
+    .stButton > button[kind="secondary"] {
+        background-color: transparent !important;
+        color: #6b7280 !important;
+        border: 2px solid #e5e7eb !important;
+    }
+    
+    .stButton > button[kind="secondary"]:hover {
+        background-color: #f9fafb !important;
+        color: #374151 !important;
+        border-color: #d1d5db !important;
     }
     
     /* DataFrames - force visibility */
@@ -215,6 +256,26 @@ st.markdown("""
             color: #f1f5f9 !important;
         }
         
+        /* Dark mode direction buttons */
+        .direction-btn-selected {
+            background-color: #10b981 !important;
+            color: white !important;
+            border: 3px solid #34d399 !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.6) !important;
+        }
+        
+        .direction-btn-unselected {
+            background-color: #334155 !important;
+            color: #cbd5e1 !important;
+            border: 2px solid #475569 !important;
+        }
+        
+        .direction-btn-unselected:hover {
+            background-color: #475569 !important;
+            color: #f1f5f9 !important;
+            border-color: #64748b !important;
+        }
+        
         input, select, textarea {
             background-color: #1e293b !important;
             color: #f1f5f9 !important;
@@ -258,6 +319,17 @@ st.markdown("""
         section[data-testid="stSidebar"] * {
             color: #f1f5f9 !important;
         }
+        
+        .stButton > button {
+            background-color: #10b981 !important;
+            color: white !important;
+        }
+        
+        .stButton > button[kind="secondary"] {
+            background-color: transparent !important;
+            color: #cbd5e1 !important;
+            border-color: #475569 !important;
+        }
     }
     
     /* Manual Murajjah buttons */
@@ -279,6 +351,24 @@ st.markdown("""
         background-color: #10b981 !important;
         color: white !important;
         border-color: #10b981 !important;
+    }
+    
+    /* Status indicator */
+    .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+    
+    .status-backward {
+        background-color: #10b981;
+    }
+    
+    .status-forward {
+        background-color: #3b82f6;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1172,6 +1262,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
