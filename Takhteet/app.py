@@ -22,284 +22,409 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Replace your current st.markdown CSS section with this updated version:
-
+# Enhanced CSS for perfect dark/light mode compatibility
 st.markdown("""
 <style>
-    /* Main container - Dark mode compatible */
+    /* ===== BASE THEME VARIABLES ===== */
+    :root {
+        --primary: #10b981;
+        --primary-dark: #059669;
+        --primary-light: #d1fae5;
+        --background: #ffffff;
+        --surface: #f8fafc;
+        --text: #1f2937;
+        --text-secondary: #6b7280;
+        --border: #e5e7eb;
+        --card-bg: #ffffff;
+        --success: #10b981;
+        --error: #ef4444;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --holiday-bg: #fef2f2;
+        --table-header: #10b981;
+        --table-even: #f9fafb;
+        --table-hover: #f3f4f6;
+    }
+    
+    /* ===== DARK MODE VARIABLES ===== */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #334155;
+            --card-bg: #1e293b;
+            --primary: #10b981;
+            --primary-dark: #34d399;
+            --primary-light: #064e3b;
+            --holiday-bg: #7f1d1d;
+            --table-header: #065f46;
+            --table-even: #1e293b;
+            --table-hover: #334155;
+        }
+    }
+    
+    /* ===== BASE STYLES ===== */
     .main {
-        background: linear-gradient(135deg, #f0fdf4 0%, #f0fdfa 100%);
-        padding: 2rem;
+        background: var(--background) !important;
+        min-height: 100vh;
     }
     
-    /* Cards - Dark mode compatible */
-    .stCard {
-        background: white !important;
-        border-radius: 1rem;
-        padding: 2rem;
-        box-shadow: 0 10px 40px rgba(16, 185, 129, 0.1);
-        margin-bottom: 2rem;
+    /* Text colors - explicitly set */
+    * {
+        color: var(--text) !important;
     }
     
-    /* Text colors for dark mode */
     h1, h2, h3, h4, h5, h6 {
-        color: #1f2937 !important;
+        color: var(--text) !important;
+        font-weight: 700 !important;
     }
     
-    p, span, div, label {
-        color: #1f2937 !important;
+    p, span, div, label, small, strong, em {
+        color: var(--text) !important;
     }
     
-    /* Buttons */
-    .stButton button {
-        border-radius: 0.5rem;
-        font-weight: 600;
-        transition: all 0.3s;
-        border: none;
+    /* ===== CARD STYLES ===== */
+    .takhteet-card {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 16px !important;
+        padding: 24px !important;
+        margin-bottom: 24px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    }
+    
+    /* ===== BUTTON STYLES ===== */
+    .stButton > button {
+        background-color: var(--primary) !important;
         color: white !important;
-    }
-    
-    .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-    }
-    
-    /* Input fields */
-    .stTextInput input, .stNumberInput input, .stSelectbox select {
-        border-radius: 0.5rem;
-        border: 2px solid #e5e7eb !important;
-        background-color: white !important;
-        color: #1f2937 !important;
-    }
-    
-    .stTextInput input:focus, .stNumberInput input:focus, .stSelectbox select:focus {
-        border-color: #10b981 !important;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
-    
-    /* Labels */
-    label {
-        color: #1f2937 !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 10px 24px !important;
         font-weight: 600 !important;
+        font-size: 14px !important;
+        transition: all 0.2s ease !important;
     }
     
-    /* Radio buttons */
-    .stRadio > label {
-        background: white !important;
-        border: 2px solid #e5e7eb !important;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin: 0.5rem 0;
-        color: #1f2937 !important;
+    .stButton > button:hover {
+        background-color: var(--primary-dark) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3) !important;
     }
     
-    .stRadio > label:hover {
-        border-color: #10b981 !important;
+    .stButton > button:active {
+        transform: translateY(0) !important;
     }
     
-    /* Holiday rows */
-    .holiday-row {
-        background-color: #fef2f2 !important;
+    /* Secondary buttons */
+    .stButton > button[kind="secondary"] {
+        background-color: transparent !important;
+        color: var(--primary) !important;
+        border: 2px solid var(--primary) !important;
     }
     
-    /* Table styling */
-    table {
-        border-collapse: collapse;
-        width: 100%;
-        border-radius: 0.5rem;
-        overflow: hidden;
-        background-color: white !important;
+    .stButton > button[kind="secondary"]:hover {
+        background-color: var(--primary-light) !important;
+        color: var(--primary-dark) !important;
     }
     
-    th {
-        background-color: #10b981 !important;
-        color: white !important;
-        font-weight: 600;
-        padding: 1rem !important;
+    /* ===== INPUT FIELD STYLES ===== */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stSelectbox > div > div > select {
+        background-color: var(--card-bg) !important;
+        color: var(--text) !important;
+        border: 2px solid var(--border) !important;
+        border-radius: 10px !important;
+        padding: 10px 14px !important;
+        font-size: 14px !important;
     }
     
-    td {
-        padding: 0.75rem !important;
-        border: 1px solid #e5e7eb !important;
-        background-color: white !important;
-        color: #1f2937 !important;
+    .stTextInput > div > div > input:focus,
+    .stNumberInput > div > div > input:focus,
+    .stSelectbox > div > div > select:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        outline: none !important;
     }
     
-    tr:nth-child(even) {
-        background-color: #f9fafb !important;
+    /* Input labels */
+    .stTextInput label,
+    .stNumberInput label,
+    .stSelectbox label,
+    .stSlider label {
+        color: var(--text) !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        margin-bottom: 6px !important;
     }
     
-    tr:nth-child(odd) {
-        background-color: white !important;
+    /* ===== RADIO BUTTONS ===== */
+    .stRadio > div {
+        background: var(--card-bg) !important;
+        border: 2px solid var(--border) !important;
+        border-radius: 10px !important;
+        padding: 12px !important;
     }
     
-    /* Dataframe cells */
+    .stRadio > div:hover {
+        border-color: var(--primary) !important;
+    }
+    
+    .stRadio label {
+        color: var(--text) !important;
+        font-weight: 500 !important;
+    }
+    
+    /* ===== SELECTBOX STYLES ===== */
+    .stSelectbox > div > div {
+        background-color: var(--card-bg) !important;
+        border: 2px solid var(--border) !important;
+        border-radius: 10px !important;
+    }
+    
+    /* ===== SLIDER STYLES ===== */
+    .stSlider > div > div > div {
+        background-color: var(--primary-light) !important;
+    }
+    
+    .stSlider > div > div > div > div {
+        background-color: var(--primary) !important;
+    }
+    
+    .stSlider > div > div > div > div > div {
+        background-color: var(--primary) !important;
+        border: 2px solid var(--background) !important;
+    }
+    
+    /* ===== TABLE STYLES ===== */
+    .dataframe {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+    }
+    
     .dataframe th {
-        background-color: #10b981 !important;
+        background-color: var(--table-header) !important;
         color: white !important;
+        font-weight: 600 !important;
+        padding: 16px !important;
+        border: none !important;
     }
     
     .dataframe td {
-        background-color: white !important;
-        color: #1f2937 !important;
+        background-color: var(--card-bg) !important;
+        color: var(--text) !important;
+        padding: 12px 16px !important;
+        border-bottom: 1px solid var(--border) !important;
+        border-right: 1px solid var(--border) !important;
     }
     
-    /* Sidebar */
+    .dataframe tr:nth-child(even) {
+        background-color: var(--table-even) !important;
+    }
+    
+    .dataframe tr:hover {
+        background-color: var(--table-hover) !important;
+    }
+    
+    /* ===== SIDEBAR STYLES ===== */
     section[data-testid="stSidebar"] {
-        background-color: #f8fafc !important;
+        background-color: var(--surface) !important;
     }
     
     section[data-testid="stSidebar"] * {
-        color: #1f2937 !important;
+        color: var(--text) !important;
     }
     
-    /* Manual Murajjah styling */
-    .sipara-btn {
-        padding: 4px 8px !important;
-        margin: 2px !important;
-        font-size: 12px !important;
-        border-radius: 4px !important;
-        min-width: 32px !important;
-        height: 28px !important;
+    .sidebar-content {
+        padding: 20px !important;
     }
     
-    .day-card {
-        background: white !important;
-        border: 2px solid #e5e7eb !important;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
+    /* ===== EXPANDER STYLES ===== */
+    .streamlit-expanderHeader {
+        background-color: var(--surface) !important;
+        color: var(--text) !important;
+        border-radius: 10px !important;
+        border: 1px solid var(--border) !important;
+        font-weight: 600 !important;
     }
     
-    .day-card h4 {
-        margin-top: 0;
-        color: #1f2937 !important;
+    .streamlit-expanderContent {
+        background-color: var(--card-bg) !important;
+        color: var(--text) !important;
+        border-radius: 0 0 10px 10px !important;
+        border: 1px solid var(--border) !important;
+        border-top: none !important;
     }
     
-    /* Caption text */
-    .stCaption {
-        color: #6b7280 !important;
+    /* ===== MESSAGE STYLES ===== */
+    .stAlert {
+        border-radius: 10px !important;
+        border: none !important;
     }
     
-    /* Success messages */
     .stSuccess {
-        background-color: #d1fae5 !important;
+        background-color: var(--primary-light) !important;
         color: #065f46 !important;
     }
     
-    /* Error messages */
+    @media (prefers-color-scheme: dark) {
+        .stSuccess {
+            color: #a7f3d0 !important;
+        }
+    }
+    
     .stError {
         background-color: #fee2e2 !important;
         color: #991b1b !important;
     }
     
-    /* Warning messages */
+    @media (prefers-color-scheme: dark) {
+        .stError {
+            background-color: #7f1d1d !important;
+            color: #fecaca !important;
+        }
+    }
+    
     .stWarning {
         background-color: #fef3c7 !important;
         color: #92400e !important;
     }
     
-    /* Info messages */
+    @media (prefers-color-scheme: dark) {
+        .stWarning {
+            background-color: #78350f !important;
+            color: #fef3c7 !important;
+        }
+    }
+    
     .stInfo {
         background-color: #dbeafe !important;
         color: #1e40af !important;
     }
     
-    /* Expander */
-    .streamlit-expanderHeader {
-        background-color: #f8fafc !important;
-        color: #1f2937 !important;
-        border-radius: 0.5rem;
-    }
-    
-    .streamlit-expanderContent {
-        background-color: white !important;
-        color: #1f2937 !important;
-    }
-    
-    /* Override Streamlit's dark mode styles */
     @media (prefers-color-scheme: dark) {
-        .main {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-        }
-        
-        .stCard {
-            background: #1e293b !important;
-            color: #f1f5f9 !important;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-            color: #f1f5f9 !important;
-        }
-        
-        p, span, div, label {
-            color: #f1f5f9 !important;
-        }
-        
-        .day-card {
-            background: #1e293b !important;
-            border-color: #334155 !important;
-        }
-        
-        table, td, tr {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #334155 !important;
-        }
-        
-        .dataframe th, .dataframe td {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-        }
-        
-        .stTextInput input, .stNumberInput input, .stSelectbox select {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #475569 !important;
-        }
-        
-        .stRadio > label {
-            background: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #475569 !important;
-        }
-        
-        section[data-testid="stSidebar"] {
-            background-color: #0f172a !important;
-        }
-        
-        section[data-testid="stSidebar"] * {
-            color: #f1f5f9 !important;
-        }
-        
-        .streamlit-expanderHeader {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-        }
-        
-        .streamlit-expanderContent {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-        }
-        
-        .stSuccess {
-            background-color: #064e3b !important;
-            color: #a7f3d0 !important;
-        }
-        
-        .stError {
-            background-color: #7f1d1d !important;
-            color: #fecaca !important;
-        }
-        
-        .stWarning {
-            background-color: #78350f !important;
-            color: #fef3c7 !important;
-        }
-        
         .stInfo {
             background-color: #1e3a8a !important;
             color: #dbeafe !important;
+        }
+    }
+    
+    /* ===== HOLIDAY ROW STYLES ===== */
+    .holiday-row {
+        background-color: var(--holiday-bg) !important;
+    }
+    
+    /* ===== MANUAL MURAJJAH STYLES ===== */
+    .murajjah-container {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+        margin-top: 20px !important;
+    }
+    
+    .day-card {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 10px !important;
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .day-card h4 {
+        color: var(--text) !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .sipara-btn {
+        background-color: var(--surface) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+        padding: 6px 10px !important;
+        margin: 3px !important;
+        font-size: 12px !important;
+        min-width: 36px !important;
+        transition: all 0.2s !important;
+    }
+    
+    .sipara-btn:hover {
+        border-color: var(--primary) !important;
+        transform: translateY(-1px) !important;
+    }
+    
+    .sipara-btn.selected {
+        background-color: var(--primary) !important;
+        color: white !important;
+        border-color: var(--primary) !important;
+    }
+    
+    /* ===== DOWNLOAD BUTTON ===== */
+    .download-btn {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 14px 28px !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
+    }
+    
+    /* ===== CUSTOM DIVIDERS ===== */
+    .custom-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--border), transparent);
+        margin: 24px 0;
+        width: 100%;
+    }
+    
+    /* ===== BADGE STYLES ===== */
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background-color: var(--primary-light);
+        color: var(--primary-dark);
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-right: 8px;
+        margin-bottom: 8px;
+    }
+    
+    /* ===== SCROLLBAR STYLES ===== */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: var(--surface);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary);
+    }
+    
+    /* ===== RESPONSIVE ADJUSTMENTS ===== */
+    @media (max-width: 768px) {
+        .takhteet-card {
+            padding: 16px !important;
+        }
+        
+        .stButton > button {
+            width: 100% !important;
+            margin-bottom: 8px !important;
         }
     }
 </style>
@@ -1194,5 +1319,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
