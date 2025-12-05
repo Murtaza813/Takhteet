@@ -196,22 +196,25 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
     is_backward = "Backward" in st.session_state.direction
     
     if is_backward:
-        # For backward direction: completed paras are from 30 down to current_sipara + 1
+        # For backward direction: All siparas from 30 down to (but NOT including) current_sipara
+        # If on sipara 21, you've completed 30, 29, 28, ..., 22 (not 21 itself)
         completed = list(range(30, current_sipara, -1))
     else:
-        # For forward direction: completed paras are from 1 up to current_sipara - 1
+        # For forward direction: All siparas from 1 up to (but NOT including) current_sipara
+        # If on sipara 21, you've completed 1, 2, 3, ..., 20 (not 21 itself)
         completed = list(range(1, current_sipara))
     
-    if not completed:
+    if not completed or len(completed) == 0:
         return "Revision Day" if not for_pdf else "Revision"
     
-    # Add last sipara for revision
-    completed.append(30)
-    
-    # Distribute completed paras across 6 days
+    # Distribute completed paras evenly across 6 days
     paras_per_day = max(1, len(completed) // 6)
-    start_idx = (day_number % 6) * paras_per_day
-    end_idx = min(start_idx + paras_per_day, len(completed))
+    remainder = len(completed) % 6
+    
+    # Calculate start and end indices for this day
+    day_index = day_number % 6
+    start_idx = day_index * paras_per_day + min(day_index, remainder)
+    end_idx = start_idx + paras_per_day + (1 if day_index < remainder else 0)
     
     if start_idx >= len(completed):
         return "Revision Day" if not for_pdf else "Revision"
@@ -1027,3 +1030,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
