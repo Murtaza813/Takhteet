@@ -22,7 +22,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS with clear direction button differentiation
+# Enhanced CSS with mobile-friendly manual murajjah
 st.markdown("""
 <style>
     /* FORCE LIGHT THEME BUT MAKE DARK MODE SAFE */
@@ -237,6 +237,98 @@ st.markdown("""
         color: black !important;
     }
     
+    /* ===== MANUAL MURAJJAH - CALENDAR/BOX VIEW ===== */
+    .murajjah-day-card {
+        background-color: #f8fafc !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 10px !important;
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+        break-inside: avoid !important;
+    }
+    
+    .murajjah-day-card h4 {
+        color: #1f2937 !important;
+        margin-top: 0 !important;
+        margin-bottom: 12px !important;
+        font-size: 16px !important;
+    }
+    
+    .sipara-grid {
+        display: grid !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 6px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .sipara-btn-box {
+        background-color: white !important;
+        border: 2px solid #e5e7eb !important;
+        border-radius: 6px !important;
+        padding: 8px 4px !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        color: #374151 !important;
+        min-height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .sipara-btn-box:hover {
+        border-color: #10b981 !important;
+        transform: translateY(-1px) !important;
+    }
+    
+    .sipara-btn-box.selected {
+        background-color: #10b981 !important;
+        color: white !important;
+        border-color: #10b981 !important;
+        font-weight: 600 !important;
+    }
+    
+    .selected-list {
+        background-color: #d1fae5 !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        color: #065f46 !important;
+        border-left: 3px solid #10b981 !important;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .murajjah-days-container {
+            column-count: 1 !important;
+        }
+        
+        .sipara-grid {
+            grid-template-columns: repeat(5, 1fr) !important;
+            gap: 4px !important;
+        }
+        
+        .sipara-btn-box {
+            padding: 6px 2px !important;
+            font-size: 11px !important;
+            min-height: 32px !important;
+        }
+        
+        .murajjah-day-card {
+            padding: 12px !important;
+        }
+    }
+    
+    /* Desktop layout */
+    @media (min-width: 769px) {
+        .murajjah-days-container {
+            column-count: 2 !important;
+            column-gap: 20px !important;
+        }
+    }
+    
     /* Dark mode override - if user forces dark mode */
     @media (prefers-color-scheme: dark) {
         .stApp, .main, .block-container {
@@ -274,6 +366,30 @@ st.markdown("""
             background-color: #475569 !important;
             color: #f1f5f9 !important;
             border-color: #64748b !important;
+        }
+        
+        /* Dark mode murajjah */
+        .murajjah-day-card {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        
+        .sipara-btn-box {
+            background-color: #334155 !important;
+            border-color: #475569 !important;
+            color: #cbd5e1 !important;
+        }
+        
+        .sipara-btn-box.selected {
+            background-color: #10b981 !important;
+            color: white !important;
+            border-color: #10b981 !important;
+        }
+        
+        .selected-list {
+            background-color: #064e3b !important;
+            color: #a7f3d0 !important;
+            border-left-color: #10b981 !important;
         }
         
         input, select, textarea {
@@ -331,48 +447,8 @@ st.markdown("""
             border-color: #475569 !important;
         }
     }
-    
-    /* Manual Murajjah buttons */
-    .sipara-btn {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #e5e7eb !important;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .sipara-btn {
-            background-color: #334155 !important;
-            color: #f1f5f9 !important;
-            border-color: #475569 !important;
-        }
-    }
-    
-    .sipara-btn.selected {
-        background-color: #10b981 !important;
-        color: white !important;
-        border-color: #10b981 !important;
-    }
-    
-    /* Status indicator */
-    .status-indicator {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        margin-right: 8px;
-        vertical-align: middle;
-    }
-    
-    .status-backward {
-        background-color: #10b981;
-    }
-    
-    .status-forward {
-        background-color: #3b82f6;
-    }
 </style>
 """, unsafe_allow_html=True)
-
 # Initialize session state
 if 'schedule' not in st.session_state:
     st.session_state.schedule = None
@@ -1262,6 +1338,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
