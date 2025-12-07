@@ -1114,13 +1114,13 @@ def create_pdf(student_name, selected_month_name, selected_year, start_juz, days
         return None
 
 def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, page_num):
-    """Draw a single page of the PDF with 15 days"""
+    """Draw a single page of the PDF with 15 days - FULL PAGE WIDTH"""
     
     # Title
     title = f"{student_name} - {month_name} {year}"
     pdf.set_font('Helvetica', 'B', 16)
     pdf.cell(0, 10, title, 0, 1, 'C')
-    pdf.ln(5)
+    pdf.ln(3)
     
     # Add "Monthly Plan" subtitle
     if use_arabic:
@@ -1146,16 +1146,16 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
         pdf.cell(0, 8, f"Days {start_day}-{end_day}", 0, 1, 'C')
     pdf.ln(5)
     
-    # Column widths for PORTRAIT orientation - ADJUSTED for 15 days per page
-    total_width = 190  # Total width for portrait mode
+    # FULL PAGE COLUMN WIDTHS - Adjusted to use maximum space
+    total_width = 190  # Full width in portrait mode
     
-    # ADJUSTED COLUMN WIDTHS - Optimized for 15 rows
+    # OPTIMIZED COLUMN WIDTHS FOR FULL PAGE
     col_widths = [
-        total_width * 0.25,   # Notes - 25%
-        total_width * 0.15,   # Target Achieved? - 15%
-        total_width * 0.15,   # Murajaah - 15%
+        total_width * 0.28,   # Notes - 28% (wider for notes)
+        total_width * 0.14,   # Target Achieved? - 14%
+        total_width * 0.14,   # Murajaah - 14%
         total_width * 0.12,   # Juzz Hali - 12%
-        total_width * 0.12,   # New Page - 12%
+        total_width * 0.11,   # New Page - 11%
         total_width * 0.11,   # Amount - 11%
         total_width * 0.10    # Date - 10%
     ]
@@ -1173,47 +1173,68 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
         ]
     else:
         headers = [
-            "Notes",            # 25%
-            "Target Achieved?", # 15%
-            "Murajaah",         # 15%
+            "Notes",            # 28%
+            "Target Achieved?", # 14%
+            "Murajaah",         # 14%
             "Juzz Hali",        # 12%
-            "New (Page No.)",   # 12%
+            "New (Page No.)",   # 11%
             "Amount",           # 11%
             "Date"              # 10%
         ]
     
-    # Draw table headers
-    pdf.set_fill_color(200, 220, 255)
-    pdf.set_font('Helvetica', 'B', 9)
+    # Draw table headers - FULL WIDTH
+    pdf.set_fill_color(59, 130, 246)  # Blue color
+    pdf.set_text_color(255, 255, 255)  # White text
     
     # Write headers in REVERSE order for RTL
     for i in range(6, -1, -1):
         if use_arabic and i >= 2:
             try:
-                pdf.set_font('Arabic', 'B', 9)
+                pdf.set_font('Arabic', 'B', 10)
             except:
-                pdf.set_font('Helvetica', 'B', 8)
+                pdf.set_font('Helvetica', 'B', 9)
         else:
-            pdf.set_font('Helvetica', 'B', 8)
+            pdf.set_font('Helvetica', 'B', 9)
         
-        pdf.cell(col_widths[i], 7, headers[i], 1, 0, 'C', True)
+        pdf.cell(col_widths[i], 8, headers[i], 1, 0, 'C', True)
     
     pdf.ln()
+    pdf.set_text_color(0, 0, 0)  # Reset to black text
     
-    # Draw table rows for this page's days
-    row_height = 6.5  # Smaller row height for 15 rows
-    for day_schedule in days_data:
+    # ===== DYNAMIC ROW HEIGHT CALCULATION =====
+    # Calculate available height after headers and before footer
+    available_height = 270 - pdf.get_y() - 25  # Subtract footer space (25mm)
+    
+    if len(days_data) > 0:
+        # Calculate optimal row height to fill available space
+        row_height = available_height / len(days_data)
+        # Keep row height between 7-10mm for readability
+        row_height = min(10, max(7, row_height))
+    else:
+        row_height = 8.5  # Default if no data
+    # ===== END ROW HEIGHT CALCULATION =====
+    
+    # Draw table rows for this page's days - FULL HEIGHT UTILIZATION
+    for idx, day_schedule in enumerate(days_data):
         day = day_schedule['Date']
         is_holiday = day_schedule['isHoliday']
+        
+        # Alternate row colors for better readability
+        if idx % 2 == 0:
+            pdf.set_fill_color(245, 247, 250)  # Light gray
+            fill = True
+        else:
+            pdf.set_fill_color(255, 255, 255)  # White
+            fill = False
         
         # Set font for content
         if use_arabic:
             try:
-                pdf.set_font('Arabic', '', 8)
+                pdf.set_font('Arabic', '', 9)
             except:
-                pdf.set_font('Helvetica', '', 8)
+                pdf.set_font('Helvetica', '', 9)
         else:
-            pdf.set_font('Helvetica', '', 8)
+            pdf.set_font('Helvetica', '', 9)
         
         # Prepare cell data
         if is_holiday:
@@ -1226,6 +1247,9 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
                 "",  # Amount
                 str(day)  # Date
             ]
+            # Highlight holidays with light red
+            pdf.set_fill_color(255, 245, 245)
+            fill = True
         else:
             # Extract data from schedule
             jadeen_text = day_schedule['Jadeen']
@@ -1278,27 +1302,37 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
             if cell_content is None:
                 cell_content = ""
             
-            pdf.cell(col_widths[i], row_height, str(cell_content), 1, 0, align)
+            pdf.cell(col_widths[i], row_height, str(cell_content), 1, 0, align, fill)
         
         pdf.ln()
+        
+        # Reset fill color after holiday rows
+        if is_holiday:
+            if (idx + 1) % 2 == 0:
+                pdf.set_fill_color(245, 247, 250)
+            else:
+                pdf.set_fill_color(255, 255, 255)
     
-    # Footer note
-    pdf.ln(8)
+    # Footer note - positioned at bottom
+    pdf.set_y(275)
+    pdf.set_fill_color(59, 130, 246, 0.1)  # Light blue background
+    pdf.rect(10, 275, 190, 8, 'F')  # Background rectangle
+    
     if use_arabic:
         try:
             pdf.set_font('Arabic', '', 8)
         except:
             pdf.set_font('Helvetica', 'I', 8)
         footer = format_arabic("ملاحظة: العمودان الأيمن للطالب واليسار للمعلم")
-        pdf.cell(0, 5, footer, 0, 0, 'C')
+        pdf.cell(0, 8, footer, 0, 0, 'C')
     else:
         pdf.set_font('Helvetica', 'I', 8)
-        pdf.cell(0, 5, "Note: Right columns for student, left for teacher", 0, 0, 'C')
+        pdf.cell(0, 8, "Note: Right columns for student, left for teacher", 0, 0, 'C')
     
-    # Add page number at bottom
-    pdf.set_y(280)
+    # Add page number at bottom right
     pdf.set_font('Helvetica', 'I', 9)
-    pdf.cell(0, 10, f"Page {page_num}", 0, 0, 'C')
+    pdf.set_xy(170, 282)
+    pdf.cell(20, 5, f"Page {page_num}", 0, 0, 'R')
         
 def render_manual_murajjah_section():
     """Render the manual murajjah selection interface - MOBILE OPTIMIZED"""
@@ -1602,6 +1636,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
