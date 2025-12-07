@@ -1137,29 +1137,36 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
     else:
         pdf.set_font('Helvetica', 'B', 14)
         pdf.cell(0, 10, "Monthly Plan", 0, 1, 'C')
-    pdf.ln(10)
     
-    # Column widths for PORTRAIT orientation
-    total_width = 190
+    # Add page indicator
+    pdf.set_font('Helvetica', 'I', 10)
+    if len(days_data) > 0:
+        start_day = days_data[0]['Date']
+        end_day = days_data[-1]['Date']
+        pdf.cell(0, 8, f"Days {start_day}-{end_day}", 0, 1, 'C')
+    pdf.ln(5)
     
-    # NEW COLUMN WIDTHS - Updated headers
+    # Column widths for PORTRAIT orientation - ADJUSTED for 15 days per page
+    total_width = 190  # Total width for portrait mode
+    
+    # ADJUSTED COLUMN WIDTHS - Optimized for 15 rows
     col_widths = [
-        total_width * 0.25,   # ملاحظات (Notes) - 25%
-        total_width * 0.15,   # هدف حاصل كيڈو؟ (Target) - 15%
-        total_width * 0.15,   # المراجعة (Murajaah) - 15% [CHANGED]
-        total_width * 0.12,   # جز حالی (Juzz Hali) - 12% [CHANGED]
-        total_width * 0.12,   # الجديد (صفحة رقم) (New Page) - 12%
-        total_width * 0.11,   # كمية الجديد (Amount) - 11%
-        total_width * 0.10    # التاريخ (Date) - 10%
+        total_width * 0.25,   # Notes - 25%
+        total_width * 0.15,   # Target Achieved? - 15%
+        total_width * 0.15,   # Murajaah - 15%
+        total_width * 0.12,   # Juzz Hali - 12%
+        total_width * 0.12,   # New Page - 12%
+        total_width * 0.11,   # Amount - 11%
+        total_width * 0.10    # Date - 10%
     ]
     
-    # Headers - RTL order with UPDATED NAMES
+    # Headers - RTL order
     if use_arabic:
         headers = [
             format_arabic("ملاحظات"),          # Notes
             format_arabic("هدف حاصل كيڈو؟"),   # Target Achieved?
-            format_arabic("المراجعة"),         # Murajaah [CHANGED]
-            format_arabic("جز حالی"),          # Juzz Hali [CHANGED]
+            format_arabic("المراجعة"),         # Murajaah
+            format_arabic("جز حالی"),          # Juzz Hali
             format_arabic("الجديد (صفحة رقم)"),# New (Page No.)
             format_arabic("كمية الجديد"),      # Amount
             format_arabic("التاريخ")           # Date
@@ -1168,8 +1175,8 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
         headers = [
             "Notes",            # 25%
             "Target Achieved?", # 15%
-            "Murajaah",         # 15% [CHANGED from "Murajjah Parts"]
-            "Juzz Hali",        # 12% [CHANGED from "Current Juzz"]
+            "Murajaah",         # 15%
+            "Juzz Hali",        # 12%
             "New (Page No.)",   # 12%
             "Amount",           # 11%
             "Date"              # 10%
@@ -1177,31 +1184,27 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
     
     # Draw table headers
     pdf.set_fill_color(200, 220, 255)
-    pdf.set_font('Helvetica', 'B', 10)
+    pdf.set_font('Helvetica', 'B', 9)
     
     # Write headers in REVERSE order for RTL
     for i in range(6, -1, -1):
         if use_arabic and i >= 2:
             try:
-                pdf.set_font('Arabic', 'B', 10)
+                pdf.set_font('Arabic', 'B', 9)
             except:
                 pdf.set_font('Helvetica', 'B', 8)
         else:
             pdf.set_font('Helvetica', 'B', 8)
         
-        pdf.cell(col_widths[i], 8, headers[i], 1, 0, 'C', True)
+        pdf.cell(col_widths[i], 7, headers[i], 1, 0, 'C', True)
     
     pdf.ln()
     
     # Draw table rows for this page's days
-    row_height = 8
+    row_height = 6.5  # Smaller row height for 15 rows
     for day_schedule in days_data:
         day = day_schedule['Date']
         is_holiday = day_schedule['isHoliday']
-        
-        # Check if new page is needed (shouldn't be with 15 days per page)
-        if pdf.get_y() + row_height > 270:
-            break  # Stop if we run out of space
         
         # Set font for content
         if use_arabic:
@@ -1280,7 +1283,7 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
         pdf.ln()
     
     # Footer note
-    pdf.ln(10)
+    pdf.ln(8)
     if use_arabic:
         try:
             pdf.set_font('Arabic', '', 8)
@@ -1291,6 +1294,11 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
     else:
         pdf.set_font('Helvetica', 'I', 8)
         pdf.cell(0, 5, "Note: Right columns for student, left for teacher", 0, 0, 'C')
+    
+    # Add page number at bottom
+    pdf.set_y(280)
+    pdf.set_font('Helvetica', 'I', 9)
+    pdf.cell(0, 10, f"Page {page_num}", 0, 0, 'C')
         
         # Return PDF as bytes
         pdf_output = pdf.output()
@@ -1610,6 +1618,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
