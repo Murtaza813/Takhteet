@@ -1315,8 +1315,11 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
     
     # Footer note - positioned at bottom
     pdf.set_y(275)
-    pdf.set_fill_color(59, 130, 246, 0.1)  # Light blue background
-    pdf.rect(10, 275, 190, 8, 'F')  # Background rectangle
+    
+    # Use light blue without transparency (FPDF doesn't support alpha)
+    pdf.set_fill_color(240, 245, 255)  # Light blue background
+    pdf.set_draw_color(200, 220, 255)  # Light blue border
+    pdf.rect(10, 275, 190, 8, 'FD')  # Background rectangle with border
     
     if use_arabic:
         try:
@@ -1636,6 +1639,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
