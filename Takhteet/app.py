@@ -1470,7 +1470,7 @@ def main():
         
         st.markdown("---")
         
-        # Form inputs in grid
+        # Form inputs in grid - REORDERED FIELDS
         col1, col2 = st.columns(2)
         
         with col1:
@@ -1480,6 +1480,16 @@ def main():
                 value=st.session_state.get('student_name', '')
             )
             
+            # YEAR comes before MONTH
+            st.session_state.year = st.number_input(
+                "**Year**",
+                min_value=2024,
+                max_value=2030,
+                value=2025,
+                step=1
+            )
+            
+            # MONTH after YEAR
             st.session_state.month = st.selectbox(
                 "**Month**",
                 options=list(range(1, 13)),
@@ -1517,27 +1527,21 @@ def main():
                     value=430,
                     step=1
                 )
+        
+        with col2:
+            # DAILY JADEEN AMOUNT moved here (after end page)
+            st.session_state.daily_amount = st.selectbox(
+                "**Daily Jadeen Amount**",
+                options=["0.5 page daily", "1 page daily", "Mixed (0.5 & 1 page)"],
+                index=2
+            )
             
+            # Rest of the fields
             st.session_state.current_sipara = st.slider(
                 "**Current Sipara (Para)**",
                 min_value=1,
                 max_value=30,
                 value=21
-            )
-        
-        with col2:
-            st.session_state.year = st.number_input(
-                "**Year**",
-                min_value=2024,
-                max_value=2030,
-                value=2025,
-                step=1
-            )
-            
-            st.session_state.daily_amount = st.selectbox(
-                "**Daily Jadeen Amount**",
-                options=["0.5 page daily", "1 page daily", "Mixed (0.5 & 1 page)"],
-                index=2
             )
             
             st.session_state.extra_holidays = st.number_input(
@@ -1644,6 +1648,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
