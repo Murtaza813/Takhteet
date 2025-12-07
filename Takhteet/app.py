@@ -22,256 +22,389 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS with mobile-friendly manual murajjah
+# COMPLETE DARK MODE COMPATIBLE CSS
 st.markdown("""
 <style>
-    /* FORCE LIGHT THEME BUT MAKE DARK MODE SAFE */
-    body {
-        color: #000000 !important;
-        background-color: #ffffff !important;
+    /* ========== CSS VARIABLES ========== */
+    :root {
+        /* Light mode colors */
+        --primary-color: #10b981;
+        --primary-dark: #059669;
+        --primary-light: #d1fae5;
+        --secondary-color: #3b82f6;
+        --background: #ffffff;
+        --surface: #f8fafc;
+        --text: #1f2937;
+        --text-secondary: #6b7280;
+        --border: #e5e7eb;
+        --card-bg: #ffffff;
+        --sidebar-bg: linear-gradient(180deg, #10b981 0%, #059669 50%, #047857 100%);
+        --sidebar-text: #ffffff;
+        --table-header: #10b981;
+        --table-row-even: #f9fafb;
+        --table-row-hover: #f3f4f6;
+        --holiday-bg: #fef2f2;
+        --success-bg: #d1fae5;
+        --success-text: #065f46;
+        --error-bg: #fee2e2;
+        --error-text: #991b1b;
+        --warning-bg: #fef3c7;
+        --warning-text: #92400e;
+        --info-bg: #dbeafe;
+        --info-text: #1e40af;
     }
     
-    /* Force all text to be dark */
+    /* Dark mode variables */
+    [data-theme="dark"] {
+        --primary-color: #10b981;
+        --primary-dark: #34d399;
+        --primary-light: #064e3b;
+        --secondary-color: #60a5fa;
+        --background: #0f172a;
+        --surface: #1e293b;
+        --text: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --border: #334155;
+        --card-bg: #1e293b;
+        --sidebar-bg: linear-gradient(180deg, #0f766e 0%, #115e59 50%, #134e4a 100%);
+        --sidebar-text: #f1f5f9;
+        --table-header: #065f46;
+        --table-row-even: #1e293b;
+        --table-row-hover: #334155;
+        --holiday-bg: #7f1d1d;
+        --success-bg: #064e3b;
+        --success-text: #a7f3d0;
+        --error-bg: #7f1d1d;
+        --error-text: #fecaca;
+        --warning-bg: #78350f;
+        --warning-text: #fef3c7;
+        --info-bg: #1e3a8a;
+        --info-text: #dbeafe;
+    }
+    
+    /* Force dark text in light mode for maximum readability */
     * {
-        color: #000000 !important;
+        color: var(--text) !important;
     }
     
-    /* Force all backgrounds to be light */
-    .main, .block-container, .stApp {
-        background-color: #ffffff !important;
+    /* ========== MAIN LAYOUT ========== */
+    .main, .stApp {
+        background-color: var(--background) !important;
+        color: var(--text) !important;
     }
     
-    /* Cards - force white background with dark text */
-    .takhteet-card {
-        background-color: #ffffff !important;
-        border: 1px solid #e5e7eb !important;
-        border-radius: 12px !important;
-        padding: 24px !important;
-        margin-bottom: 20px !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-        color: #000000 !important;
+    .block-container {
+        background-color: var(--background) !important;
+        color: var(--text) !important;
+        padding: 2rem 1rem;
     }
     
-    /* Headers */
+    /* ========== TYPOGRAPHY ========== */
     h1, h2, h3, h4, h5, h6 {
-        color: #1f2937 !important;
+        color: var(--text) !important;
         font-weight: 700 !important;
     }
     
-    /* All text elements */
-    p, span, div, label, li, td, th, strong, em, small {
-        color: #000000 !important;
+    h1 {
+        font-size: 2.5rem !important;
+        margin-bottom: 1.5rem !important;
     }
     
-    /* DIRECTION BUTTONS - CLEAR DIFFERENTIATION */
-    .direction-btn-selected {
-        background-color: #10b981 !important;
+    h2 {
+        font-size: 2rem !important;
+        margin-bottom: 1.25rem !important;
+    }
+    
+    h3 {
+        font-size: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    p, span, div, label, li, strong, em, small {
+        color: var(--text) !important;
+    }
+    
+    /* ========== CARDS ========== */
+    .takhteet-card {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 16px !important;
+        padding: 2rem !important;
+        margin-bottom: 2rem !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+        color: var(--text) !important;
+    }
+    
+    /* ========== SIDEBAR ========== */
+    section[data-testid="stSidebar"] {
+        background: var(--sidebar-bg) !important;
+        color: var(--sidebar-text) !important;
+    }
+    
+    /* Sidebar text */
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] h4,
+    section[data-testid="stSidebar"] h5,
+    section[data-testid="stSidebar"] h6,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] div,
+    section[data-testid="stSidebar"] label {
+        color: var(--sidebar-text) !important;
+    }
+    
+    /* Sidebar expanders */
+    section[data-testid="stSidebar"] .streamlit-expanderHeader {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: var(--sidebar-text) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        backdrop-filter: blur(10px) !important;
+    }
+    
+    section[data-testid="stSidebar"] .streamlit-expanderContent {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: var(--sidebar-text) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 0 0 10px 10px !important;
+    }
+    
+    /* Sidebar divider */
+    section[data-testid="stSidebar"] hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        margin: 1.5rem 0;
+    }
+    
+    /* ========== BUTTONS ========== */
+    .stButton > button {
+        background-color: var(--primary-color) !important;
         color: white !important;
-        border: 3px solid #059669 !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .stButton > button:hover {
+        background-color: var(--primary-dark) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3) !important;
+    }
+    
+    .stButton > button[kind="secondary"] {
+        background-color: transparent !important;
+        color: var(--primary-color) !important;
+        border: 2px solid var(--primary-color) !important;
+    }
+    
+    .stButton > button[kind="secondary"]:hover {
+        background-color: var(--primary-light) !important;
+        color: var(--primary-dark) !important;
+    }
+    
+    /* Direction buttons */
+    .direction-btn-selected {
+        background-color: var(--primary-color) !important;
+        color: white !important;
+        border: 3px solid var(--primary-dark) !important;
         font-weight: bold !important;
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
         transform: scale(1.02) !important;
     }
     
     .direction-btn-unselected {
-        background-color: #f3f4f6 !important;
-        color: #6b7280 !important;
-        border: 2px solid #d1d5db !important;
+        background-color: var(--surface) !important;
+        color: var(--text-secondary) !important;
+        border: 2px solid var(--border) !important;
         font-weight: normal !important;
     }
     
-    .direction-btn-unselected:hover {
-        background-color: #e5e7eb !important;
-        color: #374151 !important;
-        border-color: #9ca3af !important;
-    }
-    
-    /* Input fields - always visible */
-    input, select, textarea {
-        background-color: white !important;
-        color: black !important;
-        border: 2px solid #e5e7eb !important;
-    }
-    
-    input:focus, select:focus, textarea:focus {
-        border-color: #10b981 !important;
-        background-color: white !important;
-        color: black !important;
-    }
-    
-    /* Regular Buttons */
-    .stButton > button {
-        background-color: #10b981 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 10px 20px !important;
-        font-weight: 600 !important;
-        transition: all 0.2s !important;
-    }
-    
-    .stButton > button:hover {
-        background-color: #059669 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-    }
-    
-    .stButton > button[kind="secondary"] {
-        background-color: transparent !important;
-        color: #6b7280 !important;
-        border: 2px solid #e5e7eb !important;
-    }
-    
-    .stButton > button[kind="secondary"]:hover {
-        background-color: #f9fafb !important;
-        color: #374151 !important;
-        border-color: #d1d5db !important;
-    }
-    
-    /* DataFrames - force visibility */
-    .dataframe {
-        background-color: white !important;
-        color: black !important;
-    }
-    
-    .dataframe th {
-        background-color: #10b981 !important;
-        color: white !important;
-    }
-    
-    .dataframe td {
-        background-color: white !important;
-        color: black !important;
-        border-color: #e5e7eb !important;
-    }
-    
-    /* Streamlit specific overrides */
+    /* ========== INPUT FIELDS ========== */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input,
     .stSelectbox > div > div > select,
     .stTextArea > div > div > textarea {
-        background-color: white !important;
-        color: black !important;
-        border: 2px solid #e5e7eb !important;
+        background-color: var(--card-bg) !important;
+        color: var(--text) !important;
+        border: 2px solid var(--border) !important;
+        border-radius: 10px !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
     }
     
+    .stTextInput > div > div > input:focus,
+    .stNumberInput > div > div > input:focus,
+    .stSelectbox > div > div > select:focus {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        outline: none !important;
+    }
+    
+    /* Input labels */
     .stTextInput label,
     .stNumberInput label,
     .stSelectbox label,
     .stSlider label,
     .stRadio label,
     .stCheckbox label {
-        color: #1f2937 !important;
+        color: var(--text) !important;
         font-weight: 600 !important;
+        font-size: 14px !important;
+        margin-bottom: 8px !important;
+    }
+    
+    /* Selectbox dropdown */
+    .stSelectbox > div > div {
+        background-color: var(--card-bg) !important;
+    }
+    
+    .stSelectbox [data-baseweb="select"] > div {
+        background-color: var(--card-bg) !important;
+        border: 2px solid var(--border) !important;
+        border-radius: 8px !important;
+        color: var(--text) !important;
+    }
+    
+    .stSelectbox [role="listbox"] {
+        background-color: var(--card-bg) !important;
+        color: var(--text) !important;
+    }
+    
+    .stSelectbox [role="option"] {
+        color: var(--text) !important;
+        background-color: var(--card-bg) !important;
+    }
+    
+    .stSelectbox [role="option"]:hover {
+        background-color: var(--surface) !important;
+    }
+    
+    /* Slider */
+    .stSlider > div > div > div {
+        background-color: var(--primary-light) !important;
+    }
+    
+    .stSlider > div > div > div > div {
+        background-color: var(--primary-color) !important;
     }
     
     /* Radio buttons */
     .stRadio > div {
-        background-color: white !important;
-        border: 2px solid #e5e7eb !important;
-        color: black !important;
+        background-color: var(--card-bg) !important;
+        border: 2px solid var(--border) !important;
+        border-radius: 10px !important;
+        padding: 16px !important;
     }
     
-    /* Selectbox */
-    .stSelectbox > div > div {
-        background-color: white !important;
-        color: black !important;
+    .stRadio label {
+        color: var(--text) !important;
+        font-weight: 500 !important;
     }
     
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #f8fafc !important;
+    /* ========== DATA TABLES ========== */
+    .dataframe {
+        background-color: var(--card-bg) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
     }
     
-    section[data-testid="stSidebar"] * {
-        color: #1f2937 !important;
+    .dataframe th {
+        background-color: var(--table-header) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        padding: 16px !important;
+        border: none !important;
     }
     
-    /* Expanders */
-    .streamlit-expanderHeader {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #e5e7eb !important;
+    .dataframe td {
+        background-color: var(--card-bg) !important;
+        color: var(--text) !important;
+        padding: 12px 16px !important;
+        border-bottom: 1px solid var(--border) !important;
+        border-right: 1px solid var(--border) !important;
     }
     
-    .streamlit-expanderContent {
-        background-color: white !important;
-        color: black !important;
+    .dataframe tr:nth-child(even) {
+        background-color: var(--table-row-even) !important;
     }
     
-    /* Messages */
-    .stAlert {
-        background-color: #d1fae5 !important;
-        color: #065f46 !important;
+    .dataframe tr:hover {
+        background-color: var(--table-row-hover) !important;
+    }
+    
+    /* ========== MESSAGES ========== */
+    .stSuccess {
+        background-color: var(--success-bg) !important;
+        color: var(--success-text) !important;
+        border-radius: 10px !important;
         border: none !important;
     }
     
     .stError {
-        background-color: #fee2e2 !important;
-        color: #991b1b !important;
+        background-color: var(--error-bg) !important;
+        color: var(--error-text) !important;
+        border-radius: 10px !important;
+        border: none !important;
     }
     
     .stWarning {
-        background-color: #fef3c7 !important;
-        color: #92400e !important;
+        background-color: var(--warning-bg) !important;
+        color: var(--warning-text) !important;
+        border-radius: 10px !important;
+        border: none !important;
     }
     
     .stInfo {
-        background-color: #dbeafe !important;
-        color: #1e40af !important;
+        background-color: var(--info-bg) !important;
+        color: var(--info-text) !important;
+        border-radius: 10px !important;
+        border: none !important;
     }
     
-    /* Tables */
-    table {
-        background-color: white !important;
-        color: black !important;
+    /* ========== MANUAL MURAJJAH ========== */
+    .murajjah-container {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        padding: 20px !important;
+        margin-top: 20px !important;
     }
     
-    th {
-        background-color: #10b981 !important;
-        color: white !important;
-    }
-    
-    td {
-        background-color: white !important;
-        color: black !important;
-    }
-    
-    /* ===== MANUAL MURAJJAH - CALENDAR/BOX VIEW ===== */
     .murajjah-day-card {
-        background-color: #f8fafc !important;
-        border: 1px solid #e5e7eb !important;
+        background-color: var(--surface) !important;
+        border: 1px solid var(--border) !important;
         border-radius: 10px !important;
         padding: 16px !important;
         margin-bottom: 16px !important;
-        break-inside: avoid !important;
-    }
-    
-    .murajjah-day-card h4 {
-        color: #1f2937 !important;
-        margin-top: 0 !important;
-        margin-bottom: 12px !important;
-        font-size: 16px !important;
     }
     
     .sipara-grid {
         display: grid !important;
         grid-template-columns: repeat(5, 1fr) !important;
-        gap: 6px !important;
+        gap: 8px !important;
         margin-bottom: 12px !important;
     }
     
     .sipara-btn-box {
-        background-color: white !important;
-        border: 2px solid #e5e7eb !important;
+        background-color: var(--card-bg) !important;
+        border: 2px solid var(--border) !important;
         border-radius: 6px !important;
-        padding: 8px 4px !important;
+        padding: 8px !important;
         text-align: center !important;
         cursor: pointer !important;
         transition: all 0.2s !important;
         font-size: 12px !important;
         font-weight: 500 !important;
-        color: #374151 !important;
+        color: var(--text) !important;
         min-height: 36px !important;
         display: flex !important;
         align-items: center !important;
@@ -279,45 +412,92 @@ st.markdown("""
     }
     
     .sipara-btn-box:hover {
-        border-color: #10b981 !important;
+        border-color: var(--primary-color) !important;
         transform: translateY(-1px) !important;
     }
     
     .sipara-btn-box.selected {
-        background-color: #10b981 !important;
+        background-color: var(--primary-color) !important;
         color: white !important;
-        border-color: #10b981 !important;
+        border-color: var(--primary-color) !important;
         font-weight: 600 !important;
     }
     
     .selected-list {
-        background-color: #d1fae5 !important;
+        background-color: var(--primary-light) !important;
         border-radius: 6px !important;
         padding: 8px 12px !important;
         font-size: 12px !important;
-        color: #065f46 !important;
-        border-left: 3px solid #10b981 !important;
+        color: var(--success-text) !important;
+        border-left: 3px solid var(--primary-color) !important;
     }
     
-    /* Mobile responsive */
+    /* ========== HOLIDAY ROWS ========== */
+    .holiday-row {
+        background-color: var(--holiday-bg) !important;
+    }
+    
+    /* ========== DOWNLOAD BUTTON ========== */
+    .download-btn {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 14px 28px !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
+    }
+    
+    /* ========== STATUS INDICATORS ========== */
+    .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+    
+    .status-backward {
+        background-color: var(--primary-color);
+    }
+    
+    .status-forward {
+        background-color: var(--secondary-color);
+    }
+    
+    /* ========== RESPONSIVE DESIGN ========== */
     @media (max-width: 768px) {
+        .takhteet-card {
+            padding: 1rem !important;
+        }
+        
         .murajjah-days-container {
             column-count: 1 !important;
         }
         
         .sipara-grid {
             grid-template-columns: repeat(5, 1fr) !important;
-            gap: 4px !important;
+            gap: 6px !important;
         }
         
         .sipara-btn-box {
-            padding: 6px 2px !important;
+            padding: 6px !important;
             font-size: 11px !important;
             min-height: 32px !important;
         }
         
-        .murajjah-day-card {
-            padding: 12px !important;
+        h1 {
+            font-size: 2rem !important;
+        }
+        
+        h2 {
+            font-size: 1.75rem !important;
+        }
+        
+        h3 {
+            font-size: 1.25rem !important;
         }
     }
     
@@ -325,128 +505,54 @@ st.markdown("""
     @media (min-width: 769px) {
         .murajjah-days-container {
             column-count: 2 !important;
-            column-gap: 20px !important;
+            column-gap: 24px !important;
         }
     }
     
-    /* Dark mode override - if user forces dark mode */
-    @media (prefers-color-scheme: dark) {
-        .stApp, .main, .block-container {
-            background-color: #1e293b !important;
-        }
-        
-        .takhteet-card {
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-        }
-        
-        * {
-            color: #f1f5f9 !important;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-            color: #f1f5f9 !important;
-        }
-        
-        /* Dark mode direction buttons */
-        .direction-btn-selected {
-            background-color: #10b981 !important;
-            color: white !important;
-            border: 3px solid #34d399 !important;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.6) !important;
-        }
-        
-        .direction-btn-unselected {
-            background-color: #334155 !important;
-            color: #cbd5e1 !important;
-            border: 2px solid #475569 !important;
-        }
-        
-        .direction-btn-unselected:hover {
-            background-color: #475569 !important;
-            color: #f1f5f9 !important;
-            border-color: #64748b !important;
-        }
-        
-        /* Dark mode murajjah */
-        .murajjah-day-card {
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-        }
-        
-        .sipara-btn-box {
-            background-color: #334155 !important;
-            border-color: #475569 !important;
-            color: #cbd5e1 !important;
-        }
-        
-        .sipara-btn-box.selected {
-            background-color: #10b981 !important;
-            color: white !important;
-            border-color: #10b981 !important;
-        }
-        
-        .selected-list {
-            background-color: #064e3b !important;
-            color: #a7f3d0 !important;
-            border-left-color: #10b981 !important;
-        }
-        
-        input, select, textarea {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #475569 !important;
-        }
-        
-        .stTextInput > div > div > input,
-        .stNumberInput > div > div > input,
-        .stSelectbox > div > div > select {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #475569 !important;
-        }
-        
-        .dataframe {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-        }
-        
-        .dataframe th {
-            background-color: #065f46 !important;
-            color: white !important;
-        }
-        
-        .dataframe td {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #334155 !important;
-        }
-        
-        .stRadio > div {
-            background-color: #1e293b !important;
-            border-color: #475569 !important;
-            color: #f1f5f9 !important;
-        }
-        
-        section[data-testid="stSidebar"] {
-            background-color: #0f172a !important;
-        }
-        
-        section[data-testid="stSidebar"] * {
-            color: #f1f5f9 !important;
-        }
-        
-        .stButton > button {
-            background-color: #10b981 !important;
-            color: white !important;
-        }
-        
-        .stButton > button[kind="secondary"] {
-            background-color: transparent !important;
-            color: #cbd5e1 !important;
-            border-color: #475569 !important;
-        }
+    /* ========== CUSTOM SCROLLBAR ========== */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
     }
+    
+    ::-webkit-scrollbar-track {
+        background: var(--surface);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-color);
+    }
+    
+    /* ========== UTILITY CLASSES ========== */
+    .text-center {
+        text-align: center !important;
+    }
+    
+    .text-right {
+        text-align: right !important;
+    }
+    
+    .text-left {
+        text-align: left !important;
+    }
+    
+    .mb-1 { margin-bottom: 0.25rem !important; }
+    .mb-2 { margin-bottom: 0.5rem !important; }
+    .mb-3 { margin-bottom: 1rem !important; }
+    .mb-4 { margin-bottom: 1.5rem !important; }
+    .mb-5 { margin-bottom: 2rem !important; }
+    
+    .mt-1 { margin-top: 0.25rem !important; }
+    .mt-2 { margin-top: 0.5rem !important; }
+    .mt-3 { margin-top: 1rem !important; }
+    .mt-4 { margin-top: 1.5rem !important; }
+    .mt-5 { margin-top: 2rem !important; }
 </style>
 """, unsafe_allow_html=True)
 # Initialize session state
@@ -1338,6 +1444,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
