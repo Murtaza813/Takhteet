@@ -517,41 +517,55 @@ st.markdown("""
         border-color: #e2e8f0 !important;
     }
     
-    /* === DAY CARDS === */
-    .day-card {
+    /* === DAY CARDS - COMPACT VERSION === */
+    .day-card, .day-card-compact {
         background: rgba(51, 65, 85, 0.5) !important;
         border: 2px solid rgba(71, 85, 105, 0.6) !important;
         border-radius: 16px !important;
-        padding: 1.25rem !important;
+        padding: 1rem !important;
         margin-bottom: 1rem !important;
         backdrop-filter: blur(10px);
         width: 100% !important;
     }
     
-    [data-theme="light"] .day-card {
+    [data-theme="light"] .day-card,
+    [data-theme="light"] .day-card-compact {
         background: #f8fafc !important;
         border-color: #cbd5e1 !important;
     }
     
     .day-card strong {
-        color: #60a5fa !important;
-        font-size: 1.1rem !important;
-        font-weight: 800 !important;
+        color: #10b981 !important;
+        font-size: 1.3rem !important;
+        font-weight: 900 !important;
         display: block;
         margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+        background: linear-gradient(135deg, #10b981, #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        padding: 0.5rem 0;
     }
     
-    /* Force day card buttons to be in 5 columns grid */
-    .day-card .stButton {
-        display: inline-block !important;
-        width: calc(20% - 0.5rem) !important;
-        margin: 0.25rem !important;
+    [data-theme="light"] .day-card strong {
+        color: #059669 !important;
+        text-shadow: none !important;
     }
     
+    /* COMPACT: Smaller sipara buttons for calendar grid */
+    .day-card-compact .stButton > button,
     .day-card .stButton > button {
-        width: 100% !important;
-        padding: 0.6rem 0.3rem !important;
-        font-size: 0.95rem !important;
+        padding: 0.5rem 0.2rem !important;
+        font-size: 0.85rem !important;
+        min-height: 36px !important;
+        height: 36px !important;
+        font-weight: 700 !important;
+    }
+    
+    /* Make columns tighter */
+    .day-card-compact .stColumn,
+    .day-card .stColumn {
+        padding: 0.15rem !important;
     }
     
     /* === MESSAGES === */
@@ -1546,6 +1560,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
