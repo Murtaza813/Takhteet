@@ -28,38 +28,33 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     
-    /* === FIX KEYBOARD_DOUBLE_ARROW TEXT === */
-    button[data-testid*="arrow"] svg,
-    button[data-testid*="arrow"]::after,
-    button[data-testid*="arrow"]::before {
+    /* === CRITICAL: HIDE KEYBOARD ARROW TEXT EVERYWHERE === */
+    /* Hide the header element that shows "keyboard_double_arrow" */
+    header[data-testid="stHeader"] {
         display: none !important;
     }
     
-    [data-testid*="arrow"] {
+    /* Hide Fork/GitHub icons area */
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* Hide the toolbar completely */
+    .stApp > header {
+        display: none !important;
+    }
+    
+    /* Alternative - hide the specific decoration element */
+    [data-testid="stDecoration"] {
+        display: none !important;
+    }
+    
+    /* Force hide any material icon text */
+    .material-icons, .material-icons-round {
         font-size: 0 !important;
         color: transparent !important;
-    }
-    
-    .stButton button[kind*="arrow"] {
-        font-size: 0 !important;
-    }
-    
-    /* === SIDEBAR ARROW VISIBILITY FIX === */
-    section[data-testid="stSidebar"] .streamlit-expanderHeader svg,
-    section[data-testid="stSidebar"] .streamlit-expanderHeader path,
-    section[data-testid="stSidebar"] .streamlit-expanderHeader circle,
-    section[data-testid="stSidebar"] .streamlit-expanderHeader g,
-    section[data-testid="stSidebar"] .stExpander svg {
-        color: white !important;
-        fill: white !important;
-        stroke: white !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-    
-    .streamlit-expanderHeader svg[data-baseweb="icon"] path {
-        fill: white !important;
-        stroke: white !important;
+        text-indent: -9999px !important;
     }
     
     /* === GLOBAL RESET === */
@@ -88,7 +83,6 @@ st.markdown("""
         background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%) !important;
         border-right: none !important;
         box-shadow: 4px 0 40px rgba(59, 130, 246, 0.3);
-        padding: 1.5rem 1rem !important;
     }
     
     /* All sidebar content MUST be white */
@@ -111,66 +105,99 @@ st.markdown("""
         line-height: 1.3 !important;
         margin-bottom: 1.5rem !important;
         color: white !important;
-        background: rgba(0, 0, 0, 0.2) !important;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    /* === SIDEBAR EXPANDER BACKGROUND FIX === */
+    /* === CRITICAL: EXPANDER HEADERS - MAXIMUM VISIBILITY === */
     section[data-testid="stSidebar"] .streamlit-expanderHeader {
-        background: rgba(0, 0, 0, 0.4) !important;
+        background: rgba(255, 255, 255, 0.2) !important;
         border: 2px solid rgba(255, 255, 255, 0.4) !important;
         border-radius: 12px !important;
-        font-weight: 700 !important;
-        padding: 1rem !important;
+        font-weight: 800 !important;
+        padding: 1.2rem !important;
         transition: all 0.3s ease !important;
         backdrop-filter: blur(10px);
         color: white !important;
         margin-bottom: 0.5rem !important;
     }
     
+    /* CRITICAL: Force all text inside expander header to be white */
+    section[data-testid="stSidebar"] .streamlit-expanderHeader * {
+        color: white !important;
+    }
+    
     section[data-testid="stSidebar"] .streamlit-expanderHeader p {
         color: white !important;
-        font-weight: 700 !important;
-        font-size: 1.1rem !important;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        font-weight: 800 !important;
+        font-size: 1.15rem !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+        margin: 0 !important;
     }
     
     section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
-        background: rgba(0, 0, 0, 0.6) !important;
-        border-color: rgba(255, 255, 255, 0.7) !important;
+        background: rgba(255, 255, 255, 0.3) !important;
+        border-color: rgba(255, 255, 255, 0.6) !important;
     }
     
-    /* Expander content - make it darker for contrast */
+    /* === CRITICAL: EXPANDER ARROWS - ULTRA BRIGHT === */
+    section[data-testid="stSidebar"] .streamlit-expanderHeader svg,
+    section[data-testid="stSidebar"] svg {
+        fill: white !important;
+        stroke: white !important;
+        opacity: 1 !important;
+        color: white !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        filter: drop-shadow(0 0 8px rgba(255,255,255,0.8)) !important;
+    }
+    
+    /* Force ALL SVG elements to be white */
+    section[data-testid="stSidebar"] svg path,
+    section[data-testid="stSidebar"] svg circle,
+    section[data-testid="stSidebar"] svg rect,
+    section[data-testid="stSidebar"] svg polygon,
+    section[data-testid="stSidebar"] svg line,
+    section[data-testid="stSidebar"] svg polyline {
+        fill: white !important;
+        stroke: white !important;
+        opacity: 1 !important;
+    }
+    
+    /* === EXPANDER CONTENT - HIGH CONTRAST === */
     section[data-testid="stSidebar"] .streamlit-expanderContent {
-        background: rgba(0, 0, 0, 0.5) !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
         border-radius: 0 0 12px 12px !important;
         margin-top: -5px !important;
         padding: 1.2rem !important;
-        color: #e2e8f0 !important;
+        color: white !important;
     }
     
-    /* List items in expander */
+    /* List items - MAXIMUM VISIBILITY */
     section[data-testid="stSidebar"] .streamlit-expanderContent ol,
     section[data-testid="stSidebar"] .streamlit-expanderContent ul {
-        padding-left: 1.5rem !important;
+        padding-left: 1.8rem !important;
         margin: 0.5rem 0 !important;
     }
     
     section[data-testid="stSidebar"] .streamlit-expanderContent li {
-        color: #e2e8f0 !important;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-        margin: 0.5rem 0 !important;
-        padding: 0.3rem 0 !important;
-        line-height: 1.6 !important;
-        font-size: 0.95rem !important;
-        font-weight: 500 !important;
+        color: white !important;
+        margin: 0.7rem 0 !important;
+        padding: 0.4rem 0 !important;
+        line-height: 1.7 !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5) !important;
     }
     
-    /* Emoji icons in lists */
+    /* Make sure text inside lists is visible */
+    section[data-testid="stSidebar"] .streamlit-expanderContent li * {
+        color: white !important;
+    }
+    
+    /* Emoji/bullet markers */
     section[data-testid="stSidebar"] .streamlit-expanderContent li::marker {
-        color: #e2e8f0 !important;
+        color: white !important;
     }
     
     /* === SIDEBAR BUTTONS === */
@@ -184,7 +211,6 @@ st.markdown("""
         transition: all 0.3s ease !important;
         margin: 0.5rem 0 !important;
         width: 100% !important;
-        backdrop-filter: blur(10px);
     }
     
     section[data-testid="stSidebar"] .stButton > button:hover {
@@ -599,17 +625,6 @@ st.markdown("""
         
         section[data-testid="stSidebar"] h1 {
             font-size: 1.3rem !important;
-        }
-        
-        /* Prevent text overflow in sidebar */
-        section[data-testid="stSidebar"] .streamlit-expanderHeader,
-        section[data-testid="stSidebar"] .streamlit-expanderContent {
-            padding: 0.8rem !important;
-        }
-        
-        section[data-testid="stSidebar"] .streamlit-expanderContent li {
-            font-size: 0.85rem !important;
-            line-height: 1.4 !important;
         }
     }
 </style>
@@ -1503,6 +1518,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
