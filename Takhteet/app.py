@@ -28,23 +28,38 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     
-    /* === CRITICAL: HIDE KEYBOARD ARROW TEXT === */
-    /* Hide all icon font text including "keyboard_double_arrow" */
-    [data-testid="stHeaderActionElements"] {
+    /* === FIX KEYBOARD_DOUBLE_ARROW TEXT === */
+    button[data-testid*="arrow"] svg,
+    button[data-testid*="arrow"]::after,
+    button[data-testid*="arrow"]::before {
         display: none !important;
     }
     
-    /* Alternative method - hide via content */
-    .material-icons-round::before,
-    .material-icons::before {
-        content: '' !important;
+    [data-testid*="arrow"] {
+        font-size: 0 !important;
+        color: transparent !important;
+    }
+    
+    .stButton button[kind*="arrow"] {
         font-size: 0 !important;
     }
     
-    /* Hide any text that says keyboard */
-    *[class*="keyboard"] {
-        font-size: 0 !important;
-        color: transparent !important;
+    /* === SIDEBAR ARROW VISIBILITY FIX === */
+    section[data-testid="stSidebar"] .streamlit-expanderHeader svg,
+    section[data-testid="stSidebar"] .streamlit-expanderHeader path,
+    section[data-testid="stSidebar"] .streamlit-expanderHeader circle,
+    section[data-testid="stSidebar"] .streamlit-expanderHeader g,
+    section[data-testid="stSidebar"] .stExpander svg {
+        color: white !important;
+        fill: white !important;
+        stroke: white !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    .streamlit-expanderHeader svg[data-baseweb="icon"] path {
+        fill: white !important;
+        stroke: white !important;
     }
     
     /* === GLOBAL RESET === */
@@ -73,6 +88,7 @@ st.markdown("""
         background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%) !important;
         border-right: none !important;
         box-shadow: 4px 0 40px rgba(59, 130, 246, 0.3);
+        padding: 1.5rem 1rem !important;
     }
     
     /* All sidebar content MUST be white */
@@ -95,12 +111,15 @@ st.markdown("""
         line-height: 1.3 !important;
         margin-bottom: 1.5rem !important;
         color: white !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    /* === CRITICAL: EXPANDER HEADERS - WHITE TEXT ON BLUE === */
+    /* === SIDEBAR EXPANDER BACKGROUND FIX === */
     section[data-testid="stSidebar"] .streamlit-expanderHeader {
-        background: rgba(255, 255, 255, 0.15) !important;
-        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 2px solid rgba(255, 255, 255, 0.4) !important;
         border-radius: 12px !important;
         font-weight: 700 !important;
         padding: 1rem !important;
@@ -114,43 +133,22 @@ st.markdown("""
         color: white !important;
         font-weight: 700 !important;
         font-size: 1.1rem !important;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
     
     section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
-        background: rgba(255, 255, 255, 0.25) !important;
-        border-color: rgba(255, 255, 255, 0.5) !important;
+        background: rgba(0, 0, 0, 0.6) !important;
+        border-color: rgba(255, 255, 255, 0.7) !important;
     }
     
-    /* === CRITICAL: EXPANDER ARROWS - BRIGHT WHITE === */
-    section[data-testid="stSidebar"] .streamlit-expanderHeader svg,
-    section[data-testid="stSidebar"] svg {
-        fill: white !important;
-        stroke: white !important;
-        opacity: 1 !important;
-        color: white !important;
-        width: 24px !important;
-        height: 24px !important;
-        min-width: 24px !important;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)) !important;
-    }
-    
-    /* Force SVG paths to be white */
-    section[data-testid="stSidebar"] svg path,
-    section[data-testid="stSidebar"] svg circle,
-    section[data-testid="stSidebar"] svg rect,
-    section[data-testid="stSidebar"] svg polygon {
-        fill: white !important;
-        stroke: white !important;
-    }
-    
-    /* === EXPANDER CONTENT - DARK BACKGROUND, WHITE TEXT === */
+    /* Expander content - make it darker for contrast */
     section[data-testid="stSidebar"] .streamlit-expanderContent {
-        background: rgba(0, 0, 0, 0.3) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
         border-radius: 0 0 12px 12px !important;
         margin-top: -5px !important;
-        padding: 1rem !important;
-        color: white !important;
+        padding: 1.2rem !important;
+        color: #e2e8f0 !important;
     }
     
     /* List items in expander */
@@ -161,7 +159,8 @@ st.markdown("""
     }
     
     section[data-testid="stSidebar"] .streamlit-expanderContent li {
-        color: white !important;
+        color: #e2e8f0 !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         margin: 0.5rem 0 !important;
         padding: 0.3rem 0 !important;
         line-height: 1.6 !important;
@@ -171,7 +170,7 @@ st.markdown("""
     
     /* Emoji icons in lists */
     section[data-testid="stSidebar"] .streamlit-expanderContent li::marker {
-        color: white !important;
+        color: #e2e8f0 !important;
     }
     
     /* === SIDEBAR BUTTONS === */
@@ -185,6 +184,7 @@ st.markdown("""
         transition: all 0.3s ease !important;
         margin: 0.5rem 0 !important;
         width: 100% !important;
+        backdrop-filter: blur(10px);
     }
     
     section[data-testid="stSidebar"] .stButton > button:hover {
@@ -599,6 +599,17 @@ st.markdown("""
         
         section[data-testid="stSidebar"] h1 {
             font-size: 1.3rem !important;
+        }
+        
+        /* Prevent text overflow in sidebar */
+        section[data-testid="stSidebar"] .streamlit-expanderHeader,
+        section[data-testid="stSidebar"] .streamlit-expanderContent {
+            padding: 0.8rem !important;
+        }
+        
+        section[data-testid="stSidebar"] .streamlit-expanderContent li {
+            font-size: 0.85rem !important;
+            line-height: 1.4 !important;
         }
     }
 </style>
@@ -1492,6 +1503,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
