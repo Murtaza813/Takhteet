@@ -1116,9 +1116,20 @@ def create_pdf(student_name, selected_month_name, selected_year, start_juz, days
 def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, page_num):
     """Draw a single page of the PDF with 15 days - FULL PAGE WIDTH"""
     
-    # Title
+    # Title - Handle long student names by auto-adjusting font size
     title = f"{student_name} - {month_name} {year}"
     pdf.set_font('Helvetica', 'B', 16)
+    
+    # Check if title is too long and reduce font size if needed
+    title_width = pdf.get_string_width(title)
+    max_title_width = 190  # Maximum width for title
+    
+    if title_width > max_title_width:
+        # Reduce font size proportionally
+        new_font_size = 16 * (max_title_width / title_width)
+        new_font_size = max(12, new_font_size)  # Don't go below 12pt
+        pdf.set_font('Helvetica', 'B', new_font_size)
+    
     pdf.cell(0, 10, title, 0, 1, 'C')
     pdf.ln(3)
     
@@ -1321,9 +1332,13 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
             if cell_content is None:
                 cell_content = ""
             
-            # Ensure text fits in cell
-            if len(str(cell_content)) * 1.5 > col_widths[i]:  # Rough estimate
-                cell_content = str(cell_content)[:int(col_widths[i]/1.5)] + "..."
+            # Ensure text fits in cell - but only truncate if really necessary
+            text_width = pdf.get_string_width(str(cell_content))
+            if text_width > col_widths[i] - 4:  # 2mm padding on each side
+                # Find how many characters fit
+                chars_to_keep = int(len(str(cell_content)) * ((col_widths[i] - 4) / text_width))
+                chars_to_keep = max(1, chars_to_keep - 3)  # Leave room for "..."
+                cell_content = str(cell_content)[:chars_to_keep] + "..."
             
             pdf.cell(col_widths[i], row_height, str(cell_content), 1, 0, align, fill)
         
@@ -1651,6 +1666,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
