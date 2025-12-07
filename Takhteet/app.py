@@ -1276,7 +1276,9 @@ def render_manual_murajjah_section():
 def render_day_card(day_key, day_name):
     """Render a card for selecting siparas for a day"""
     st.markdown(f'<div class="day-card">', unsafe_allow_html=True)
-    st.markdown(f'**{day_name}**')
+    
+    # FIXED: More visible day heading with emoji and better formatting
+    st.markdown(f'<strong style="color: #10b981; font-size: 1.4rem; font-weight: 900; display: block; margin-bottom: 1rem;">📅 {day_name}</strong>', unsafe_allow_html=True)
     
     # Create 6 rows of 5 siparas each
     for row in range(6):
@@ -1298,9 +1300,9 @@ def render_day_card(day_key, day_name):
     # Show selected siparas
     selected = st.session_state.manual_murajjah[day_key]
     if selected:
-        st.caption(f"Selected: {', '.join(map(str, selected))}")
+        st.caption(f"✅ Selected: {', '.join(map(str, selected))}")
     else:
-        st.caption("No siparas selected")
+        st.caption("⚪ No siparas selected")
     
     st.markdown('</div>', unsafe_allow_html=True)
 # Main App
@@ -1544,6 +1546,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
