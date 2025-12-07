@@ -22,22 +22,29 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Replace the st.markdown CSS section with this FIXED version:
+# Replace the st.markdown CSS section with this MOBILE-OPTIMIZED version:
 
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     
-    /* === HIDE MATERIAL ICONS TEXT === */
-    .material-icons, 
-    span[data-baseweb="icon"],
-    [data-testid="stHeaderActionElements"] span {
+    /* === CRITICAL: HIDE KEYBOARD ARROW TEXT === */
+    /* Hide all icon font text including "keyboard_double_arrow" */
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+    
+    /* Alternative method - hide via content */
+    .material-icons-round::before,
+    .material-icons::before {
+        content: '' !important;
         font-size: 0 !important;
     }
     
-    /* Hide "keyboard_double_arrow" text globally */
-    *:not(input):not(textarea) {
-        text-rendering: optimizeLegibility;
+    /* Hide any text that says keyboard */
+    *[class*="keyboard"] {
+        font-size: 0 !important;
+        color: transparent !important;
     }
     
     /* === GLOBAL RESET === */
@@ -57,41 +64,56 @@ st.markdown("""
     }
     
     .block-container {
-        padding: 1.5rem 2rem 3rem 2rem !important;
+        padding: 1.5rem 1rem 3rem 1rem !important;
         max-width: 1600px !important;
     }
     
-    /* === MODERN SIDEBAR - FIXED === */
+    /* === SIDEBAR - COMPLETELY FIXED FOR MOBILE === */
     section[data-testid="stSidebar"] {
         background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%) !important;
         border-right: none !important;
         box-shadow: 4px 0 40px rgba(59, 130, 246, 0.3);
     }
     
-    section[data-testid="stSidebar"] * {
+    /* All sidebar content MUST be white */
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] *,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] li,
+    section[data-testid="stSidebar"] div {
         color: white !important;
     }
     
+    /* Sidebar heading */
     section[data-testid="stSidebar"] h1 {
-        font-size: 1.4rem !important;
+        font-size: 1.5rem !important;
         font-weight: 800 !important;
         text-align: center;
         padding: 1rem 0.5rem !important;
         text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        line-height: 1.4 !important;
-        margin-bottom: 1rem !important;
+        line-height: 1.3 !important;
+        margin-bottom: 1.5rem !important;
+        color: white !important;
     }
     
-    /* FIXED: Sidebar Expander Headers - CLEAR ARROWS */
+    /* === CRITICAL: EXPANDER HEADERS - WHITE TEXT ON BLUE === */
     section[data-testid="stSidebar"] .streamlit-expanderHeader {
         background: rgba(255, 255, 255, 0.15) !important;
         border: 2px solid rgba(255, 255, 255, 0.3) !important;
         border-radius: 12px !important;
-        font-weight: 600 !important;
-        padding: 0.8rem 1rem !important;
+        font-weight: 700 !important;
+        padding: 1rem !important;
         transition: all 0.3s ease !important;
         backdrop-filter: blur(10px);
         color: white !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    section[data-testid="stSidebar"] .streamlit-expanderHeader p {
+        color: white !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
     }
     
     section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
@@ -99,36 +121,67 @@ st.markdown("""
         border-color: rgba(255, 255, 255, 0.5) !important;
     }
     
-    /* FIXED: Expander Arrow Icons - Make them VISIBLE */
-    section[data-testid="stSidebar"] .streamlit-expanderHeader svg {
+    /* === CRITICAL: EXPANDER ARROWS - BRIGHT WHITE === */
+    section[data-testid="stSidebar"] .streamlit-expanderHeader svg,
+    section[data-testid="stSidebar"] svg {
         fill: white !important;
         stroke: white !important;
         opacity: 1 !important;
-        width: 20px !important;
-        height: 20px !important;
+        color: white !important;
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)) !important;
     }
     
+    /* Force SVG paths to be white */
+    section[data-testid="stSidebar"] svg path,
+    section[data-testid="stSidebar"] svg circle,
+    section[data-testid="stSidebar"] svg rect,
+    section[data-testid="stSidebar"] svg polygon {
+        fill: white !important;
+        stroke: white !important;
+    }
+    
+    /* === EXPANDER CONTENT - DARK BACKGROUND, WHITE TEXT === */
     section[data-testid="stSidebar"] .streamlit-expanderContent {
-        background: rgba(0, 0, 0, 0.2) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        background: rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 0 0 12px 12px !important;
         margin-top: -5px !important;
         padding: 1rem !important;
+        color: white !important;
     }
     
-    /* FIXED: Sidebar List Items - Better spacing */
-    section[data-testid="stSidebar"] ul li {
+    /* List items in expander */
+    section[data-testid="stSidebar"] .streamlit-expanderContent ol,
+    section[data-testid="stSidebar"] .streamlit-expanderContent ul {
+        padding-left: 1.5rem !important;
+        margin: 0.5rem 0 !important;
+    }
+    
+    section[data-testid="stSidebar"] .streamlit-expanderContent li {
+        color: white !important;
         margin: 0.5rem 0 !important;
         padding: 0.3rem 0 !important;
-        line-height: 1.5 !important;
+        line-height: 1.6 !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
     }
     
+    /* Emoji icons in lists */
+    section[data-testid="stSidebar"] .streamlit-expanderContent li::marker {
+        color: white !important;
+    }
+    
+    /* === SIDEBAR BUTTONS === */
     section[data-testid="stSidebar"] .stButton > button {
         background: rgba(255, 255, 255, 0.15) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
         border-radius: 12px !important;
         padding: 1rem !important;
         font-weight: 600 !important;
+        color: white !important;
         transition: all 0.3s ease !important;
         margin: 0.5rem 0 !important;
         width: 100% !important;
@@ -140,10 +193,11 @@ st.markdown("""
         box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
     }
     
+    /* Sidebar dividers */
     section[data-testid="stSidebar"] hr {
         border: none;
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
         margin: 1.5rem 0;
     }
     
@@ -151,8 +205,8 @@ st.markdown("""
     .header-container {
         text-align: center;
         margin-bottom: 2rem;
-        padding: 2rem;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+        padding: 2rem 1.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.15));
         border-radius: 20px;
         border: 1px solid rgba(59, 130, 246, 0.3);
         backdrop-filter: blur(10px);
@@ -165,20 +219,21 @@ st.markdown("""
     }
     
     .header-container h1 {
-        font-size: 2.5rem !important;
+        font-size: 2.2rem !important;
         font-weight: 900 !important;
         background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin: 0 !important;
+        line-height: 1.2 !important;
     }
     
     /* === MODERN CARDS === */
     .stCard, .modern-card {
-        background: rgba(30, 41, 59, 0.6) !important;
+        background: rgba(30, 41, 59, 0.7) !important;
         border: 1px solid rgba(71, 85, 105, 0.5) !important;
         border-radius: 20px !important;
-        padding: 2rem !important;
+        padding: 1.5rem !important;
         margin-bottom: 1.5rem !important;
         backdrop-filter: blur(20px) !important;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
@@ -190,11 +245,6 @@ st.markdown("""
         background: white !important;
         border-color: #e2e8f0 !important;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08) !important;
-    }
-    
-    .stCard:hover, .modern-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.2) !important;
     }
     
     /* === HEADINGS === */
@@ -211,14 +261,16 @@ st.markdown("""
     }
     
     h2 {
-        font-size: 1.75rem !important;
+        font-size: 1.5rem !important;
         margin-bottom: 1rem !important;
+        color: #f1f5f9 !important;
     }
     
     h4 {
-        font-size: 1.25rem !important;
-        color: #3b82f6 !important;
+        font-size: 1.15rem !important;
+        color: #60a5fa !important;
         margin-bottom: 1rem !important;
+        font-weight: 700 !important;
     }
     
     [data-theme="light"] h4 {
@@ -232,30 +284,31 @@ st.markdown("""
         color: white !important;
         border: none !important;
         border-radius: 12px !important;
-        padding: 0.75rem 2rem !important;
+        padding: 0.85rem 2rem !important;
         font-weight: 700 !important;
         font-size: 1rem !important;
         box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4) !important;
         transition: all 0.3s ease !important;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        width: 100% !important;
     }
     
     .stButton > button[kind="primary"]:hover {
-        transform: translateY(-3px) !important;
+        transform: translateY(-2px) !important;
         box-shadow: 0 8px 30px rgba(59, 130, 246, 0.6) !important;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
     }
     
     /* === SECONDARY BUTTONS === */
     .stButton > button[kind="secondary"] {
-        background: rgba(71, 85, 105, 0.3) !important;
-        color: #cbd5e1 !important;
-        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        background: rgba(71, 85, 105, 0.4) !important;
+        color: #e2e8f0 !important;
+        border: 2px solid rgba(71, 85, 105, 0.6) !important;
         border-radius: 12px !important;
-        padding: 0.75rem 2rem !important;
+        padding: 0.85rem 1.5rem !important;
         font-weight: 600 !important;
         backdrop-filter: blur(10px);
+        width: 100% !important;
     }
     
     [data-theme="light"] .stButton > button[kind="secondary"] {
@@ -266,18 +319,17 @@ st.markdown("""
     
     .stButton > button[kind="secondary"]:hover {
         border-color: #3b82f6 !important;
-        background: rgba(59, 130, 246, 0.2) !important;
-        color: white !important;
-        transform: scale(1.02);
+        background: rgba(59, 130, 246, 0.25) !important;
+        color: #f1f5f9 !important;
     }
     
-    /* === FIXED: INPUT FIELDS === */
+    /* === INPUT FIELDS === */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input {
-        background: rgba(51, 65, 85, 0.6) !important;
-        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        background: rgba(51, 65, 85, 0.7) !important;
+        border: 2px solid rgba(100, 116, 139, 0.6) !important;
         border-radius: 12px !important;
-        padding: 0.75rem 1rem !important;
+        padding: 0.85rem 1rem !important;
         color: #f1f5f9 !important;
         font-weight: 500 !important;
         font-size: 1rem !important;
@@ -295,20 +347,19 @@ st.markdown("""
     .stTextInput > div > div > input:focus,
     .stNumberInput > div > div > input:focus {
         border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
-        background: rgba(51, 65, 85, 0.8) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
     }
     
-    /* === FIXED: SELECTBOX DROPDOWN - NO CUT OFF === */
+    /* === SELECTBOX - FULL TEXT VISIBLE === */
     .stSelectbox > div > div {
-        background: rgba(51, 65, 85, 0.6) !important;
-        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        background: rgba(51, 65, 85, 0.7) !important;
+        border: 2px solid rgba(100, 116, 139, 0.6) !important;
         border-radius: 12px !important;
         color: #f1f5f9 !important;
         font-weight: 500 !important;
         font-size: 1rem !important;
         backdrop-filter: blur(10px);
-        min-height: 50px !important;
+        min-height: 52px !important;
         padding: 0.5rem 1rem !important;
     }
     
@@ -318,10 +369,9 @@ st.markdown("""
         color: #1e293b !important;
     }
     
-    /* FIXED: Dropdown text visibility */
     .stSelectbox [data-baseweb="select"] > div {
-        padding: 0.5rem 1rem !important;
-        min-height: 50px !important;
+        padding: 0.75rem 1rem !important;
+        min-height: 52px !important;
         display: flex !important;
         align-items: center !important;
     }
@@ -329,29 +379,27 @@ st.markdown("""
     .stSelectbox [data-baseweb="select"] span {
         color: #f1f5f9 !important;
         font-size: 1rem !important;
+        font-weight: 500 !important;
         white-space: normal !important;
         overflow: visible !important;
-        text-overflow: clip !important;
     }
     
     [data-theme="light"] .stSelectbox [data-baseweb="select"] span {
         color: #1e293b !important;
     }
     
-    /* FIXED: Dropdown arrow icon */
     .stSelectbox svg {
         fill: #cbd5e1 !important;
-        width: 20px !important;
-        height: 20px !important;
-        min-width: 20px !important;
+        width: 24px !important;
+        height: 24px !important;
     }
     
-    /* === FIXED: LABELS === */
+    /* === LABELS === */
     .stTextInput label,
     .stNumberInput label,
     .stSelectbox label,
     .stSlider label {
-        color: #cbd5e1 !important;
+        color: #e2e8f0 !important;
         font-weight: 600 !important;
         font-size: 1rem !important;
         margin-bottom: 0.75rem !important;
@@ -367,7 +415,7 @@ st.markdown("""
     
     /* === SLIDER === */
     .stSlider > div > div > div {
-        background: rgba(71, 85, 105, 0.5) !important;
+        background: rgba(71, 85, 105, 0.6) !important;
         border-radius: 10px;
         height: 8px !important;
     }
@@ -383,34 +431,39 @@ st.markdown("""
     .stSlider [role="slider"] {
         background: white !important;
         border: 3px solid #3b82f6 !important;
-        width: 24px !important;
-        height: 24px !important;
+        width: 26px !important;
+        height: 26px !important;
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5) !important;
     }
     
-    /* === TABLE STYLING === */
+    /* Slider value display */
+    .stSlider [data-testid="stTickBar"] > div {
+        color: #f87171 !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+    }
+    
+    /* === TABLE === */
     .dataframe {
         border: none !important;
         border-radius: 16px !important;
         overflow: hidden !important;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-        backdrop-filter: blur(10px);
     }
     
     .dataframe thead tr th {
         background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
         color: white !important;
         font-weight: 800 !important;
-        padding: 1.2rem !important;
-        font-size: 0.9rem !important;
+        padding: 1rem !important;
+        font-size: 0.85rem !important;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         border: none !important;
     }
     
     .dataframe tbody tr {
-        background: rgba(30, 41, 59, 0.5) !important;
-        transition: all 0.2s ease;
+        background: rgba(30, 41, 59, 0.6) !important;
     }
     
     [data-theme="light"] .dataframe tbody tr {
@@ -418,24 +471,19 @@ st.markdown("""
     }
     
     .dataframe tbody tr:nth-child(even) {
-        background: rgba(51, 65, 85, 0.3) !important;
+        background: rgba(51, 65, 85, 0.4) !important;
     }
     
     [data-theme="light"] .dataframe tbody tr:nth-child(even) {
         background: #f8fafc !important;
     }
     
-    .dataframe tbody tr:hover {
-        background: rgba(59, 130, 246, 0.2) !important;
-        transform: scale(1.01);
-        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-    }
-    
     .dataframe tbody tr td {
-        padding: 1rem !important;
+        padding: 0.9rem !important;
         color: #e2e8f0 !important;
         border-color: rgba(71, 85, 105, 0.3) !important;
         font-weight: 500 !important;
+        font-size: 0.9rem !important;
     }
     
     [data-theme="light"] .dataframe tbody tr td {
@@ -445,13 +493,12 @@ st.markdown("""
     
     /* === DAY CARDS === */
     .day-card {
-        background: rgba(51, 65, 85, 0.4) !important;
-        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        background: rgba(51, 65, 85, 0.5) !important;
+        border: 2px solid rgba(71, 85, 105, 0.6) !important;
         border-radius: 16px !important;
-        padding: 1.5rem !important;
+        padding: 1.25rem !important;
         margin-bottom: 1rem !important;
         backdrop-filter: blur(10px);
-        transition: all 0.3s ease;
     }
     
     [data-theme="light"] .day-card {
@@ -459,14 +506,8 @@ st.markdown("""
         border-color: #cbd5e1 !important;
     }
     
-    .day-card:hover {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
-        transform: translateY(-2px);
-    }
-    
     .day-card strong {
-        color: #3b82f6 !important;
+        color: #60a5fa !important;
         font-size: 1.1rem !important;
         font-weight: 800 !important;
         display: block;
@@ -475,40 +516,35 @@ st.markdown("""
     
     /* === MESSAGES === */
     .stSuccess {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1)) !important;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.15)) !important;
         color: #6ee7b7 !important;
         border-radius: 12px !important;
         border: 2px solid rgba(16, 185, 129, 0.5) !important;
         padding: 1rem !important;
         font-weight: 600 !important;
-        backdrop-filter: blur(10px);
     }
     
     [data-theme="light"] .stSuccess {
         background: #d1fae5 !important;
         color: #065f46 !important;
-        border-color: #10b981 !important;
     }
     
     .stError {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1)) !important;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(239, 68, 68, 0.15)) !important;
         color: #fca5a5 !important;
         border-radius: 12px !important;
         border: 2px solid rgba(239, 68, 68, 0.5) !important;
-        backdrop-filter: blur(10px);
     }
     
     [data-theme="light"] .stError {
         background: #fee2e2 !important;
         color: #991b1b !important;
-        border-color: #ef4444 !important;
     }
     
     /* === CAPTIONS === */
     .stCaption {
         color: #94a3b8 !important;
         font-weight: 500 !important;
-        font-size: 0.9rem !important;
     }
     
     [data-theme="light"] .stCaption {
@@ -523,69 +559,50 @@ st.markdown("""
         margin: 2rem 0;
     }
     
-    [data-theme="light"] hr {
-        background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
-    }
-    
     /* === SCROLLBAR === */
     ::-webkit-scrollbar {
-        width: 12px;
-        height: 12px;
+        width: 10px;
+        height: 10px;
     }
     
     ::-webkit-scrollbar-track {
         background: rgba(30, 41, 59, 0.5);
-        border-radius: 10px;
-    }
-    
-    [data-theme="light"] ::-webkit-scrollbar-track {
-        background: #f1f5f9;
     }
     
     ::-webkit-scrollbar-thumb {
         background: linear-gradient(135deg, #3b82f6, #2563eb);
         border-radius: 10px;
-        border: 2px solid rgba(30, 41, 59, 0.5);
     }
     
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    }
-    
-    /* === LOADING SPINNER === */
-    .stSpinner > div {
-        border-color: #3b82f6 transparent transparent transparent !important;
-    }
-    
-    /* === RESPONSIVE === */
+    /* === MOBILE RESPONSIVE === */
     @media (max-width: 768px) {
         .block-container {
-            padding: 1rem !important;
+            padding: 1rem 0.75rem !important;
         }
         
         .header-container h1 {
-            font-size: 2rem !important;
+            font-size: 1.75rem !important;
         }
-    }
-    
-    /* === ANIMATIONS === */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
+        
+        h2 {
+            font-size: 1.35rem !important;
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
+        
+        h4 {
+            font-size: 1.05rem !important;
         }
-    }
-    
-    .stCard, .modern-card {
-        animation: fadeInUp 0.5s ease-out;
+        
+        .stButton > button {
+            padding: 0.75rem 1.5rem !important;
+            font-size: 0.95rem !important;
+        }
+        
+        section[data-testid="stSidebar"] h1 {
+            font-size: 1.3rem !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
-
 # Initialize session state
 if 'schedule' not in st.session_state:
     st.session_state.schedule = None
@@ -1475,6 +1492,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
