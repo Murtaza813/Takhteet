@@ -525,6 +525,7 @@ st.markdown("""
         padding: 1.25rem !important;
         margin-bottom: 1rem !important;
         backdrop-filter: blur(10px);
+        width: 100% !important;
     }
     
     [data-theme="light"] .day-card {
@@ -538,6 +539,19 @@ st.markdown("""
         font-weight: 800 !important;
         display: block;
         margin-bottom: 1rem;
+    }
+    
+    /* Force day card buttons to be in 5 columns grid */
+    .day-card .stButton {
+        display: inline-block !important;
+        width: calc(20% - 0.5rem) !important;
+        margin: 0.25rem !important;
+    }
+    
+    .day-card .stButton > button {
+        width: 100% !important;
+        padding: 0.6rem 0.3rem !important;
+        font-size: 0.95rem !important;
     }
     
     /* === MESSAGES === */
@@ -625,6 +639,25 @@ st.markdown("""
         
         section[data-testid="stSidebar"] h1 {
             font-size: 1.3rem !important;
+        }
+        
+        /* CRITICAL: Force day cards to display in SINGLE COLUMN on mobile */
+        .stColumn {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+        
+        /* Make day card container full width */
+        .day-card {
+            width: 100% !important;
+            margin-bottom: 1.5rem !important;
+        }
+        
+        /* Ensure sipara buttons stay in proper grid inside cards */
+        .day-card .stButton {
+            width: calc(20% - 0.5rem) !important;
+            display: inline-block !important;
         }
     }
 </style>
@@ -1518,6 +1551,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
