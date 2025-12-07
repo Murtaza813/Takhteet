@@ -22,157 +22,84 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# COMPLETE DARK MODE COMPATIBLE CSS
+# MODERN DUAL-MODE COMPATIBLE CSS
 st.markdown("""
 <style>
-    /* ========== CSS VARIABLES ========== */
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    
+    /* ========== ROOT VARIABLES ========== */
     :root {
-        /* Light mode colors */
-        --primary-color: #10b981;
+        --primary: #10b981;
         --primary-dark: #059669;
-        --primary-light: #d1fae5;
-        --secondary-color: #3b82f6;
-        --background: #ffffff;
-        --surface: #f8fafc;
-        --text: #1f2937;
-        --text-secondary: #6b7280;
-        --border: #e5e7eb;
-        --card-bg: #ffffff;
-        --sidebar-bg: linear-gradient(180deg, #10b981 0%, #059669 50%, #047857 100%);
-        --sidebar-text: #ffffff;
-        --table-header: #10b981;
-        --table-row-even: #f9fafb;
-        --table-row-hover: #f3f4f6;
-        --holiday-bg: #fef2f2;
-        --success-bg: #d1fae5;
-        --success-text: #065f46;
-        --error-bg: #fee2e2;
-        --error-text: #991b1b;
-        --warning-bg: #fef3c7;
-        --warning-text: #92400e;
-        --info-bg: #dbeafe;
-        --info-text: #1e40af;
+        --primary-light: #34d399;
+        --accent: #8b5cf6;
+        --accent-light: #a78bfa;
     }
     
-    /* Dark mode variables */
-    [data-theme="dark"] {
-        --primary-color: #10b981;
-        --primary-dark: #34d399;
-        --primary-light: #064e3b;
-        --secondary-color: #60a5fa;
-        --background: #0f172a;
-        --surface: #1e293b;
-        --text: #f1f5f9;
-        --text-secondary: #cbd5e1;
-        --border: #334155;
-        --card-bg: #1e293b;
-        --sidebar-bg: linear-gradient(180deg, #0f766e 0%, #115e59 50%, #134e4a 100%);
-        --sidebar-text: #f1f5f9;
-        --table-header: #065f46;
-        --table-row-even: #1e293b;
-        --table-row-hover: #334155;
-        --holiday-bg: #7f1d1d;
-        --success-bg: #064e3b;
-        --success-text: #a7f3d0;
-        --error-bg: #7f1d1d;
-        --error-text: #fecaca;
-        --warning-bg: #78350f;
-        --warning-text: #fef3c7;
-        --info-bg: #1e3a8a;
-        --info-text: #dbeafe;
-    }
-    
-    /* Force dark text in light mode for maximum readability */
+    /* ========== GLOBAL STYLES ========== */
     * {
-        color: var(--text) !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
-    /* ========== MAIN LAYOUT ========== */
+    /* Main container */
     .main, .stApp {
-        background-color: var(--background) !important;
-        color: var(--text) !important;
+        background: linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%);
+    }
+    
+    [data-theme="dark"] .main,
+    [data-theme="dark"] .stApp {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     }
     
     .block-container {
-        background-color: var(--background) !important;
-        color: var(--text) !important;
-        padding: 2rem 1rem;
+        padding: 2rem 2rem 4rem 2rem !important;
+        max-width: 1400px !important;
     }
     
-    /* ========== TYPOGRAPHY ========== */
-    h1, h2, h3, h4, h5, h6 {
-        color: var(--text) !important;
-        font-weight: 700 !important;
-    }
-    
-    h1 {
-        font-size: 2.5rem !important;
-        margin-bottom: 1.5rem !important;
-    }
-    
-    h2 {
-        font-size: 2rem !important;
-        margin-bottom: 1.25rem !important;
-    }
-    
-    h3 {
-        font-size: 1.5rem !important;
-        margin-bottom: 1rem !important;
-    }
-    
-    p, span, div, label, li, strong, em, small {
-        color: var(--text) !important;
-    }
-    
-    /* ========== CARDS ========== */
-    .takhteet-card {
-        background-color: var(--card-bg) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 16px !important;
-        padding: 2rem !important;
-        margin-bottom: 2rem !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
-        color: var(--text) !important;
-    }
-    
-    /* ========== SIDEBAR ========== */
+    /* ========== SIDEBAR STYLES ========== */
     section[data-testid="stSidebar"] {
-        background: var(--sidebar-bg) !important;
-        color: var(--sidebar-text) !important;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
+        border-right: none !important;
+        box-shadow: 4px 0 24px rgba(16, 185, 129, 0.15);
     }
     
-    /* Sidebar text */
-    section[data-testid="stSidebar"] h1,
-    section[data-testid="stSidebar"] h2,
-    section[data-testid="stSidebar"] h3,
-    section[data-testid="stSidebar"] h4,
-    section[data-testid="stSidebar"] h5,
-    section[data-testid="stSidebar"] h6,
-    section[data-testid="stSidebar"] p,
-    section[data-testid="stSidebar"] span,
-    section[data-testid="stSidebar"] div,
-    section[data-testid="stSidebar"] label {
-        color: var(--sidebar-text) !important;
+    section[data-testid="stSidebar"] * {
+        color: white !important;
     }
     
-    /* Sidebar expanders */
+    section[data-testid="stSidebar"] .stMarkdown {
+        color: white !important;
+    }
+    
+    section[data-testid="stSidebar"] h1 {
+        font-size: 1.75rem !important;
+        font-weight: 800 !important;
+        margin-bottom: 0.5rem !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
     section[data-testid="stSidebar"] .streamlit-expanderHeader {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        color: var(--sidebar-text) !important;
+        background: rgba(255, 255, 255, 0.15) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 10px !important;
+        border-radius: 12px !important;
         font-weight: 600 !important;
-        backdrop-filter: blur(10px) !important;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease !important;
+    }
+    
+    section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+        transform: translateX(-2px);
     }
     
     section[data-testid="stSidebar"] .streamlit-expanderContent {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: var(--sidebar-text) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 0 0 10px 10px !important;
+        border-radius: 0 0 12px 12px !important;
+        padding: 1rem !important;
     }
     
-    /* Sidebar divider */
     section[data-testid="stSidebar"] hr {
         border: none;
         height: 1px;
@@ -180,379 +107,415 @@ st.markdown("""
         margin: 1.5rem 0;
     }
     
-    /* ========== BUTTONS ========== */
+    /* ========== HEADER STYLES ========== */
+    .header-container {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+    
+    [data-theme="dark"] .header-container {
+        background: #1e293b;
+        border-color: rgba(16, 185, 129, 0.2);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+    
+    .header-container h1 {
+        font-size: 2.5rem !important;
+        font-weight: 800 !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .header-subtitle {
+        color: #64748b;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    
+    [data-theme="dark"] .header-subtitle {
+        color: #94a3b8;
+    }
+    
+    /* ========== CARD STYLES ========== */
+    .modern-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(16, 185, 129, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    [data-theme="dark"] .modern-card {
+        background: #1e293b;
+        border-color: rgba(16, 185, 129, 0.2);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modern-card:hover {
+        box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    [data-theme="dark"] .modern-card:hover {
+        box-shadow: 0 8px 32px rgba(16, 185, 129, 0.25);
+    }
+    
+    .section-title {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        color: #1e293b;
+        margin-bottom: 1.5rem !important;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    [data-theme="dark"] .section-title {
+        color: #f1f5f9;
+    }
+    
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 24px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 2px;
+    }
+    
+    /* ========== BUTTON STYLES ========== */
     .stButton > button {
-        background-color: var(--primary-color) !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         color: white !important;
         border: none !important;
-        border-radius: 10px !important;
-        padding: 12px 24px !important;
+        border-radius: 12px !important;
+        padding: 0.75rem 2rem !important;
         font-weight: 600 !important;
-        font-size: 14px !important;
-        transition: all 0.2s ease !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
     }
     
     .stButton > button:hover {
-        background-color: var(--primary-dark) !important;
         transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3) !important;
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4) !important;
     }
     
-    .stButton > button[kind="secondary"] {
-        background-color: transparent !important;
-        color: var(--primary-color) !important;
-        border: 2px solid var(--primary-color) !important;
-    }
-    
-    .stButton > button[kind="secondary"]:hover {
-        background-color: var(--primary-light) !important;
-        color: var(--primary-dark) !important;
+    .stButton > button:active {
+        transform: translateY(0) !important;
     }
     
     /* Direction buttons */
-    .direction-btn-selected {
-        background-color: var(--primary-color) !important;
+    .direction-button-selected {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         color: white !important;
-        border: 3px solid var(--primary-dark) !important;
-        font-weight: bold !important;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+        border: 2px solid #059669 !important;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4) !important;
         transform: scale(1.02) !important;
     }
     
-    .direction-btn-unselected {
-        background-color: var(--surface) !important;
-        color: var(--text-secondary) !important;
-        border: 2px solid var(--border) !important;
-        font-weight: normal !important;
+    .direction-button {
+        background: white !important;
+        color: #64748b !important;
+        border: 2px solid #e2e8f0 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
     }
     
-    /* ========== INPUT FIELDS ========== */
+    [data-theme="dark"] .direction-button {
+        background: #334155 !important;
+        color: #cbd5e1 !important;
+        border-color: #475569 !important;
+    }
+    
+    /* ========== INPUT STYLES ========== */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input,
-    .stSelectbox > div > div > select,
-    .stTextArea > div > div > textarea {
-        background-color: var(--card-bg) !important;
-        color: var(--text) !important;
-        border: 2px solid var(--border) !important;
-        border-radius: 10px !important;
-        padding: 12px 16px !important;
-        font-size: 14px !important;
+    .stSelectbox > div > div,
+    .stSlider {
+        background: white !important;
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    [data-theme="dark"] .stTextInput > div > div > input,
+    [data-theme="dark"] .stNumberInput > div > div > input,
+    [data-theme="dark"] .stSelectbox > div > div {
+        background: #334155 !important;
+        border-color: #475569 !important;
+        color: #f1f5f9 !important;
     }
     
     .stTextInput > div > div > input:focus,
-    .stNumberInput > div > div > input:focus,
-    .stSelectbox > div > div > select:focus {
-        border-color: var(--primary-color) !important;
+    .stNumberInput > div > div > input:focus {
+        border-color: #10b981 !important;
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
-        outline: none !important;
     }
     
-    /* Input labels */
     .stTextInput label,
     .stNumberInput label,
     .stSelectbox label,
-    .stSlider label,
-    .stRadio label,
-    .stCheckbox label {
-        color: var(--text) !important;
+    .stSlider label {
+        color: #334155 !important;
         font-weight: 600 !important;
-        font-size: 14px !important;
-        margin-bottom: 8px !important;
+        font-size: 0.95rem !important;
+        margin-bottom: 0.5rem !important;
     }
     
-    /* Selectbox dropdown */
-    .stSelectbox > div > div {
-        background-color: var(--card-bg) !important;
+    [data-theme="dark"] .stTextInput label,
+    [data-theme="dark"] .stNumberInput label,
+    [data-theme="dark"] .stSelectbox label,
+    [data-theme="dark"] .stSlider label {
+        color: #e2e8f0 !important;
     }
     
-    .stSelectbox [data-baseweb="select"] > div {
-        background-color: var(--card-bg) !important;
-        border: 2px solid var(--border) !important;
-        border-radius: 8px !important;
-        color: var(--text) !important;
-    }
-    
-    .stSelectbox [role="listbox"] {
-        background-color: var(--card-bg) !important;
-        color: var(--text) !important;
-    }
-    
-    .stSelectbox [role="option"] {
-        color: var(--text) !important;
-        background-color: var(--card-bg) !important;
-    }
-    
-    .stSelectbox [role="option"]:hover {
-        background-color: var(--surface) !important;
-    }
-    
-    /* Slider */
+    /* Slider styling */
     .stSlider > div > div > div {
-        background-color: var(--primary-light) !important;
+        background: #e2e8f0 !important;
+    }
+    
+    [data-theme="dark"] .stSlider > div > div > div {
+        background: #475569 !important;
     }
     
     .stSlider > div > div > div > div {
-        background-color: var(--primary-color) !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
     }
     
-    /* Radio buttons */
-    .stRadio > div {
-        background-color: var(--card-bg) !important;
-        border: 2px solid var(--border) !important;
-        border-radius: 10px !important;
-        padding: 16px !important;
-    }
-    
-    .stRadio label {
-        color: var(--text) !important;
-        font-weight: 500 !important;
-    }
-    
-    /* ========== DATA TABLES ========== */
+    /* ========== TABLE STYLES ========== */
     .dataframe {
-        background-color: var(--card-bg) !important;
-        color: var(--text) !important;
-        border: 1px solid var(--border) !important;
+        border: none !important;
         border-radius: 12px !important;
         overflow: hidden !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
     }
     
-    .dataframe th {
-        background-color: var(--table-header) !important;
+    .dataframe thead tr th {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         color: white !important;
+        font-weight: 700 !important;
+        padding: 1rem !important;
+        font-size: 0.95rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none !important;
+    }
+    
+    .dataframe tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .dataframe tbody tr:nth-child(even) {
+        background: #f8fafc !important;
+    }
+    
+    [data-theme="dark"] .dataframe tbody tr:nth-child(even) {
+        background: #1e293b !important;
+    }
+    
+    .dataframe tbody tr:hover {
+        background: #ecfdf5 !important;
+        transform: scale(1.01);
+    }
+    
+    [data-theme="dark"] .dataframe tbody tr:hover {
+        background: #334155 !important;
+    }
+    
+    .dataframe tbody tr td {
+        padding: 1rem !important;
+        color: #334155 !important;
+        border-color: #e2e8f0 !important;
+        font-weight: 500;
+    }
+    
+    [data-theme="dark"] .dataframe tbody tr td {
+        color: #e2e8f0 !important;
+        border-color: #475569 !important;
+    }
+    
+    /* Holiday row styling */
+    .dataframe tbody tr[style*="background-color: #fef2f2"] {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important;
+    }
+    
+    [data-theme="dark"] .dataframe tbody tr[style*="background-color: #fef2f2"] {
+        background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%) !important;
+    }
+    
+    /* ========== MANUAL MURAJJAH STYLES ========== */
+    .murajjah-container {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-top: 2rem;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+    
+    [data-theme="dark"] .murajjah-container {
+        background: #1e293b;
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+    
+    .day-card {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+    
+    [data-theme="dark"] .day-card {
+        background: #334155;
+        border-color: #475569;
+    }
+    
+    .day-card:hover {
+        border-color: #10b981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    }
+    
+    .day-card strong {
+        color: #10b981 !important;
+        font-size: 1.1rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 1rem;
+    }
+    
+    /* Sipara buttons in grid */
+    .stButton[data-testid*="sipara"] > button {
+        min-height: 44px !important;
+        font-size: 0.95rem !important;
         font-weight: 600 !important;
-        padding: 16px !important;
-        border: none !important;
+        padding: 0.5rem !important;
     }
     
-    .dataframe td {
-        background-color: var(--card-bg) !important;
-        color: var(--text) !important;
-        padding: 12px 16px !important;
-        border-bottom: 1px solid var(--border) !important;
-        border-right: 1px solid var(--border) !important;
-    }
-    
-    .dataframe tr:nth-child(even) {
-        background-color: var(--table-row-even) !important;
-    }
-    
-    .dataframe tr:hover {
-        background-color: var(--table-row-hover) !important;
-    }
-    
-    /* ========== MESSAGES ========== */
+    /* ========== MESSAGE STYLES ========== */
     .stSuccess {
-        background-color: var(--success-bg) !important;
-        color: var(--success-text) !important;
-        border-radius: 10px !important;
-        border: none !important;
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+        color: #065f46 !important;
+        border-radius: 12px !important;
+        border: 1px solid #10b981 !important;
+        padding: 1rem 1.5rem !important;
+        font-weight: 600;
+    }
+    
+    [data-theme="dark"] .stSuccess {
+        background: linear-gradient(135deg, #064e3b 0%, #065f46 100%) !important;
+        color: #a7f3d0 !important;
     }
     
     .stError {
-        background-color: var(--error-bg) !important;
-        color: var(--error-text) !important;
-        border-radius: 10px !important;
-        border: none !important;
-    }
-    
-    .stWarning {
-        background-color: var(--warning-bg) !important;
-        color: var(--warning-text) !important;
-        border-radius: 10px !important;
-        border: none !important;
-    }
-    
-    .stInfo {
-        background-color: var(--info-bg) !important;
-        color: var(--info-text) !important;
-        border-radius: 10px !important;
-        border: none !important;
-    }
-    
-    /* ========== MANUAL MURAJJAH ========== */
-    .murajjah-container {
-        background-color: var(--card-bg) !important;
-        border: 1px solid var(--border) !important;
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+        color: #991b1b !important;
         border-radius: 12px !important;
-        padding: 20px !important;
-        margin-top: 20px !important;
+        border: 1px solid #ef4444 !important;
     }
     
-    .murajjah-day-card {
-        background-color: var(--surface) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 10px !important;
-        padding: 16px !important;
-        margin-bottom: 16px !important;
+    [data-theme="dark"] .stError {
+        background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%) !important;
+        color: #fecaca !important;
     }
     
-    .sipara-grid {
-        display: grid !important;
-        grid-template-columns: repeat(5, 1fr) !important;
-        gap: 8px !important;
-        margin-bottom: 12px !important;
+    /* ========== DIVIDER ========== */
+    hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+        margin: 2rem 0;
     }
     
-    .sipara-btn-box {
-        background-color: var(--card-bg) !important;
-        border: 2px solid var(--border) !important;
-        border-radius: 6px !important;
-        padding: 8px !important;
-        text-align: center !important;
-        cursor: pointer !important;
-        transition: all 0.2s !important;
-        font-size: 12px !important;
-        font-weight: 500 !important;
-        color: var(--text) !important;
-        min-height: 36px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+    [data-theme="dark"] hr {
+        background: linear-gradient(90deg, transparent, #475569, transparent);
     }
     
-    .sipara-btn-box:hover {
-        border-color: var(--primary-color) !important;
-        transform: translateY(-1px) !important;
+    /* ========== SPINNER ========== */
+    .stSpinner > div {
+        border-color: #10b981 transparent transparent transparent !important;
     }
     
-    .sipara-btn-box.selected {
-        background-color: var(--primary-color) !important;
-        color: white !important;
-        border-color: var(--primary-color) !important;
-        font-weight: 600 !important;
+    /* ========== SCROLLBAR ========== */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
     }
     
-    .selected-list {
-        background-color: var(--primary-light) !important;
-        border-radius: 6px !important;
-        padding: 8px 12px !important;
-        font-size: 12px !important;
-        color: var(--success-text) !important;
-        border-left: 3px solid var(--primary-color) !important;
+    ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 5px;
     }
     
-    /* ========== HOLIDAY ROWS ========== */
-    .holiday-row {
-        background-color: var(--holiday-bg) !important;
+    [data-theme="dark"] ::-webkit-scrollbar-track {
+        background: #1e293b;
     }
     
-    /* ========== DOWNLOAD BUTTON ========== */
-    .download-btn {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 10px !important;
-        padding: 14px 28px !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 5px;
     }
     
-    /* ========== STATUS INDICATORS ========== */
-    .status-indicator {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        margin-right: 8px;
-        vertical-align: middle;
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
     }
     
-    .status-backward {
-        background-color: var(--primary-color);
-    }
-    
-    .status-forward {
-        background-color: var(--secondary-color);
-    }
-    
-    /* ========== RESPONSIVE DESIGN ========== */
+    /* ========== RESPONSIVE ========== */
     @media (max-width: 768px) {
-        .takhteet-card {
+        .block-container {
             padding: 1rem !important;
         }
         
-        .murajjah-days-container {
-            column-count: 1 !important;
-        }
-        
-        .sipara-grid {
-            grid-template-columns: repeat(5, 1fr) !important;
-            gap: 6px !important;
-        }
-        
-        .sipara-btn-box {
-            padding: 6px !important;
-            font-size: 11px !important;
-            min-height: 32px !important;
-        }
-        
-        h1 {
+        .header-container h1 {
             font-size: 2rem !important;
         }
         
-        h2 {
-            font-size: 1.75rem !important;
+        .modern-card {
+            padding: 1.5rem !important;
         }
         
-        h3 {
+        .section-title {
             font-size: 1.25rem !important;
         }
     }
     
-    /* Desktop layout */
-    @media (min-width: 769px) {
-        .murajjah-days-container {
-            column-count: 2 !important;
-            column-gap: 24px !important;
+    /* ========== ANIMATIONS ========== */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
     
-    /* ========== CUSTOM SCROLLBAR ========== */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+    .modern-card {
+        animation: slideIn 0.5s ease-out;
     }
     
-    ::-webkit-scrollbar-track {
-        background: var(--surface);
-        border-radius: 4px;
+    /* ========== CAPTION STYLES ========== */
+    .stCaption {
+        color: #64748b !important;
+        font-size: 0.875rem;
+        font-weight: 500;
     }
     
-    ::-webkit-scrollbar-thumb {
-        background: var(--border);
-        border-radius: 4px;
+    [data-theme="dark"] .stCaption {
+        color: #94a3b8 !important;
     }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--primary-color);
-    }
-    
-    /* ========== UTILITY CLASSES ========== */
-    .text-center {
-        text-align: center !important;
-    }
-    
-    .text-right {
-        text-align: right !important;
-    }
-    
-    .text-left {
-        text-align: left !important;
-    }
-    
-    .mb-1 { margin-bottom: 0.25rem !important; }
-    .mb-2 { margin-bottom: 0.5rem !important; }
-    .mb-3 { margin-bottom: 1rem !important; }
-    .mb-4 { margin-bottom: 1.5rem !important; }
-    .mb-5 { margin-bottom: 2rem !important; }
-    
-    .mt-1 { margin-top: 0.25rem !important; }
-    .mt-2 { margin-top: 0.5rem !important; }
-    .mt-3 { margin-top: 1rem !important; }
-    .mt-4 { margin-top: 1.5rem !important; }
-    .mt-5 { margin-top: 2rem !important; }
 </style>
 """, unsafe_allow_html=True)
 # Initialize session state
@@ -1444,6 +1407,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
