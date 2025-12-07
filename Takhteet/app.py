@@ -517,13 +517,13 @@ st.markdown("""
         border-color: #e2e8f0 !important;
     }
     
-    /* === DAY CARDS - COMPACT VERSION === */
+    /* === DAY CARDS - ULTRA COMPACT VERSION === */
     .day-card, .day-card-compact {
         background: rgba(51, 65, 85, 0.5) !important;
         border: 2px solid rgba(71, 85, 105, 0.6) !important;
         border-radius: 16px !important;
-        padding: 1rem !important;
-        margin-bottom: 1rem !important;
+        padding: 0.8rem !important;
+        margin-bottom: 0.8rem !important;
         backdrop-filter: blur(10px);
         width: 100% !important;
     }
@@ -536,15 +536,14 @@ st.markdown("""
     
     .day-card strong {
         color: #10b981 !important;
-        font-size: 1.3rem !important;
+        font-size: 1.2rem !important;
         font-weight: 900 !important;
         display: block;
-        margin-bottom: 1rem;
+        margin-bottom: 0.6rem !important;
         text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
         background: linear-gradient(135deg, #10b981, #34d399);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        padding: 0.5rem 0;
     }
     
     [data-theme="light"] .day-card strong {
@@ -552,20 +551,36 @@ st.markdown("""
         text-shadow: none !important;
     }
     
-    /* COMPACT: Smaller sipara buttons for calendar grid */
+    /* ULTRA COMPACT: Tiny sipara buttons */
     .day-card-compact .stButton > button,
     .day-card .stButton > button {
-        padding: 0.5rem 0.2rem !important;
-        font-size: 0.85rem !important;
-        min-height: 36px !important;
-        height: 36px !important;
+        padding: 0.35rem 0.15rem !important;
+        font-size: 0.75rem !important;
+        min-height: 30px !important;
+        height: 30px !important;
         font-weight: 700 !important;
+        border-radius: 6px !important;
     }
     
-    /* Make columns tighter */
+    /* Remove all column gaps */
     .day-card-compact .stColumn,
     .day-card .stColumn {
-        padding: 0.15rem !important;
+        padding: 0.08rem !important;
+        min-width: 0 !important;
+    }
+    
+    /* Force row containers to be compact */
+    .day-card-compact .row-widget,
+    .day-card .row-widget {
+        gap: 0.15rem !important;
+        margin-bottom: 0.15rem !important;
+    }
+    
+    /* Compact captions */
+    .day-card-compact .stCaption,
+    .day-card .stCaption {
+        margin-top: 0.5rem !important;
+        font-size: 0.8rem !important;
     }
     
     /* === MESSAGES === */
@@ -662,16 +677,41 @@ st.markdown("""
             flex: 0 0 100% !important;
         }
         
-        /* Make day card container full width */
-        .day-card {
+        /* Make day card container ultra compact */
+        .day-card, .day-card-compact {
             width: 100% !important;
-            margin-bottom: 1.5rem !important;
+            margin-bottom: 1rem !important;
+            padding: 0.7rem 0.5rem !important;
         }
         
-        /* Ensure sipara buttons stay in proper grid inside cards */
-        .day-card .stButton {
-            width: calc(20% - 0.5rem) !important;
-            display: inline-block !important;
+        /* ULTRA COMPACT: Tiny buttons on mobile */
+        .day-card-compact .stButton > button,
+        .day-card .stButton > button {
+            padding: 0.3rem 0.1rem !important;
+            font-size: 0.7rem !important;
+            min-height: 28px !important;
+            height: 28px !important;
+            border-width: 1px !important;
+        }
+        
+        /* Remove all spacing between columns */
+        .day-card-compact .stColumn,
+        .day-card .stColumn {
+            padding: 0.05rem !important;
+            min-width: 0 !important;
+        }
+        
+        /* Compact row spacing */
+        .day-card-compact [data-testid="column"],
+        .day-card [data-testid="column"] {
+            padding: 0.05rem !important;
+        }
+        
+        /* Smaller day heading on mobile */
+        .day-card strong,
+        .day-card-compact strong {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.5rem !important;
         }
     }
 </style>
@@ -1560,6 +1600,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
