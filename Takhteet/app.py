@@ -1186,10 +1186,10 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
     # Set starting X position
     pdf.set_x(start_x)
     
-    # Draw table headers - SIMPLE STYLE, NO BACKGROUND COLORS
+    # Draw table headers - LIGHT BLUE BACKGROUND
     pdf.set_draw_color(100, 100, 100)  # Dark gray borders
     pdf.set_line_width(0.3)
-    pdf.set_fill_color(255, 255, 255)  # White background
+    pdf.set_fill_color(173, 216, 230)  # LIGHT BLUE background for headers
     pdf.set_text_color(0, 0, 0)        # Black text
     
     # Write headers in REVERSE order for RTL
@@ -1219,7 +1219,7 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
         row_height = 8.5  # Default if no data
     # ===== END ROW HEIGHT CALCULATION =====
     
-    # Draw table rows for this page's days - NO BACKGROUND COLORS
+    # Draw table rows for this page's days
     for idx, day_schedule in enumerate(days_data):
         day = day_schedule['Date']
         is_holiday = day_schedule['isHoliday']
@@ -1227,9 +1227,15 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
         # Set starting X for each row
         pdf.set_x(start_x)
         
-        # NO alternating colors - just white background
-        pdf.set_fill_color(255, 255, 255)  # Always white background
-        fill = False  # Don't fill cells
+        # Set default background (white for normal days)
+        if is_holiday:
+            # LIGHT BACKGROUND for holidays - Light Gray
+            pdf.set_fill_color(240, 240, 240)
+            fill = True
+        else:
+            # White background for regular days
+            pdf.set_fill_color(255, 255, 255)
+            fill = False
         
         # Set font for content
         if use_arabic:
@@ -1634,6 +1640,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
