@@ -1186,11 +1186,11 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
     # Set starting X position
     pdf.set_x(start_x)
     
-    # Draw table headers - LIGHT BLUE BACKGROUND
-    pdf.set_draw_color(100, 100, 100)  # Dark gray borders
-    pdf.set_line_width(0.3)
-    pdf.set_fill_color(173, 216, 230)  # LIGHT BLUE background for headers
-    pdf.set_text_color(0, 0, 0)        # Black text
+    # Draw table headers - SLIGHTLY DEEPER BLUE BACKGROUND
+    pdf.set_draw_color(50, 50, 50)    # DARKER BLACK BORDERS (was 100,100,100)
+    pdf.set_line_width(0.35)          # Slightly thicker borders
+    pdf.set_fill_color(153, 204, 255)  # SLIGHTLY MORE BLUE (was 173,216,230) - More vibrant blue
+    pdf.set_text_color(0, 0, 0)       # BLACK TEXT
     
     # Write headers in REVERSE order for RTL
     for i in range(6, -1, -1):
@@ -1229,22 +1229,25 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
         
         # Set default background (white for normal days)
         if is_holiday:
-            # LIGHT BACKGROUND for holidays - Light Gray
-            pdf.set_fill_color(240, 240, 240)
+            # Light background for holidays - Slightly darker gray for better contrast
+            pdf.set_fill_color(235, 235, 235)
             fill = True
         else:
             # White background for regular days
             pdf.set_fill_color(255, 255, 255)
             fill = False
         
-        # Set font for content
+        # Set font for content - BLACKER TEXT
         if use_arabic:
             try:
-                pdf.set_font('Arabic', '', 8)  # Smaller font
+                pdf.set_font('Arabic', '', 8)
+                pdf.set_text_color(0, 0, 0)  # Pure black text
             except:
                 pdf.set_font('Helvetica', '', 8)
+                pdf.set_text_color(0, 0, 0)  # Pure black text
         else:
             pdf.set_font('Helvetica', '', 8)
+            pdf.set_text_color(0, 0, 0)  # Pure black text
         
         # Prepare cell data with TRUNCATED text if needed
         if is_holiday:
@@ -1326,11 +1329,12 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
         
         pdf.ln()
     
-    # Footer note - SIMPLE STYLE, NO BACKGROUND
+    # Footer note
     pdf.set_y(275)
     
-    # Simple footer without background color
+    # Footer with black text
     pdf.set_font('Helvetica', 'I', 8)
+    pdf.set_text_color(0, 0, 0)  # Black text
     pdf.cell(0, 8, "Note: Right columns for student, left for teacher", 0, 0, 'C')
     
     # Add page number at bottom right
@@ -1640,6 +1644,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
