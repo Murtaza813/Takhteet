@@ -1069,218 +1069,228 @@ def format_arabic(text):
     return text
 
 def create_pdf(student_name, selected_month_name, selected_year, start_juz, days_in_month):
-    """Create PDF in PORTRAIT orientation with proper Arabic formatting"""
+    """Create PDF in PORTRAIT orientation with 15 days per page"""
     try:
         # Create PDF in PORTRAIT mode
         pdf = FPDF(orientation='P')
-        pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.add_page()
+        pdf.set_auto_page_break(auto=False)  # Manual page breaks
         
         # Add custom font for Arabic if available
         use_arabic = ARABIC_SUPPORT
         
-        # Title
-        title = f"{student_name} - {selected_month_name} {selected_year}"
-        pdf.set_font('Helvetica', 'B', 16)
-        pdf.cell(0, 10, title, 0, 1, 'C')
-        pdf.ln(5)
-        
-        # Add "تخطيط شهري" title in Arabic
-        if use_arabic:
-            try:
-                pdf.add_font('Arabic', '', 'arial.ttf', uni=True)
-                pdf.add_font('Arabic', 'B', 'arialbd.ttf', uni=True)
-                pdf.set_font('Arabic', 'B', 14)
-            except:
-                use_arabic = False
-        
-        if use_arabic:
-            arabic_title = format_arabic("تخطيط شهري")
-            pdf.cell(0, 10, arabic_title, 0, 1, 'C')
-        else:
-            pdf.set_font('Helvetica', 'B', 14)
-            pdf.cell(0, 10, "Monthly Plan", 0, 1, 'C')
-        pdf.ln(10)
-        
-        # Adjust column widths for PORTRAIT orientation - GIVING MORE WIDTH TO NOTES
-        total_width = 190
-        
-        # NEW COLUMN WIDTHS - Notes gets 25%, others reduced
-        col_widths = [
-            total_width * 0.25,   # ملاحظات (Notes) - INCREASED TO 25%
-            total_width * 0.15,   # هدف حاصل كيڈو؟ (Target) - REDUCED
-            total_width * 0.15,   # أجزاء المراجعة (Murajjah) - REDUCED
-            total_width * 0.12,   # الجزء الحالي (Juzz Hali) - REDUCED
-            total_width * 0.12,   # الجديد صفحة رقم (New Page) - REDUCED
-            total_width * 0.11,   # كمية الجديد (Amount) - REDUCED
-            total_width * 0.10    # التاريخ (Date) - SMALLEST
-        ]
-        
-        # Headers - RTL order
-        if use_arabic:
-            headers = [
-                format_arabic("ملاحظات"),          # Rightmost - WIDEST
-                format_arabic("هدف حاصل كيڈو؟"),   # 
-                format_arabic("أجزاء المراجعة"),   # 
-                format_arabic("الجزء الحالي"),     # 
-                format_arabic("الجديد (صفحة رقم)"),# 
-                format_arabic("كمية الجديد"),      # 
-                format_arabic("التاريخ")           # Leftmost - NARROWEST
-            ]
-        else:
-            headers = [
-                "Notes",            # WIDEST (25%)
-                "Target Achieved?", # 
-                "Murajjah Parts",   # 
-                "Current Juzz",     # 
-                "New (Page No.)",   # 
-                "Amount",           # 
-                "Date"              # NARROWEST (10%)
-            ]
-        
-        # Draw table headers
-        pdf.set_fill_color(200, 220, 255)
-        pdf.set_font('Helvetica', 'B', 10)
-        
-        # Write headers in REVERSE order for RTL
-        for i in range(6, -1, -1):
-            if use_arabic and i >= 2:
-                try:
-                    pdf.set_font('Arabic', 'B', 10)
-                except:
-                    pdf.set_font('Helvetica', 'B', 8)
-            else:
-                pdf.set_font('Helvetica', 'B', 8)
-            
-            pdf.cell(col_widths[i], 8, headers[i], 1, 0, 'C', True)
-        
-        pdf.ln()
-        
-        # Get days data - using the SAME schedule as display
+        # Get schedule data
         if st.session_state.schedule:
-            # Use the same schedule that was calculated for display
             schedule_data = st.session_state.schedule
         else:
-            # Fallback to generate_schedule if needed
             schedule_data = generate_schedule(start_juz, days_in_month)
         
-        # Draw table rows
-        row_height = 8
-        for day_schedule in schedule_data:
-            day = day_schedule['Date']
-            is_holiday = day_schedule['isHoliday']
-            
-            # Check if new page is needed
-            if pdf.get_y() + row_height > 270:
-                pdf.add_page()
-                # Redraw headers
-                pdf.set_fill_color(200, 220, 255)
-                for i in range(6, -1, -1):
-                    if use_arabic and i >= 2:
-                        try:
-                            pdf.set_font('Arabic', 'B', 10)
-                        except:
-                            pdf.set_font('Helvetica', 'B', 8)
-                    else:
-                        pdf.set_font('Helvetica', 'B', 8)
-                    pdf.cell(col_widths[i], row_height, headers[i], 1, 0, 'C', True)
-                pdf.ln()
-            
-            # Set font for content
-            if use_arabic:
-                try:
-                    pdf.set_font('Arabic', '', 8)
-                except:
-                    pdf.set_font('Helvetica', '', 8)
-            else:
-                pdf.set_font('Helvetica', '', 8)
-            
-            # Prepare cell data
-            if is_holiday:
-                cell_data = [
-                    "",  # Notes - WIDE COLUMN
-                    "",  # Target
-                    format_arabic("عطلة") if use_arabic else "Holiday",  # Murajjah
-                    "",  # Current Juzz
-                    "",  # New Page
-                    "",  # Amount
-                    str(day)  # Date - NARROW COLUMN
-                ]
-            else:
-                # Extract data from schedule
-                jadeen_text = day_schedule['Jadeen']
-                juzz_hali = day_schedule['Juzz Hali']
-                murajjah = day_schedule['Murajjah']
-                
-                # Parse Jadeen text to get page number and amount
-                page_number = ""
-                amount = ""
-                if "(" in jadeen_text:
-                    page_part = jadeen_text.split("(")[0].strip()
-                    amount_part = jadeen_text.split("(")[1].replace(")", "").strip()
-                    page_number = page_part
-                    amount = amount_part.capitalize()
-                
-                # Clean up Murajjah - remove "Para" prefix for PDF
-                if murajjah and murajjah != "—":
-                    # Remove "Para" prefix and keep just numbers
-                    murajjah_clean = murajjah.replace("Para", "").replace("para", "").strip()
-                else:
-                    murajjah_clean = ""
-                
-                # Clean up Juzz Hali
-                clean_juzz_hali = juzz_hali if juzz_hali != "None" else ""
-                
-                cell_data = [
-                    "",  # Notes - WIDE COLUMN (for teacher/student notes)
-                    "",  # Target
-                    murajjah_clean,  # Murajjah (just numbers)
-                    clean_juzz_hali,  # Current Juzz
-                    page_number,  # New Page
-                    amount,  # Amount
-                    str(day)  # Date - NARROW COLUMN
-                ]
-            
-            # Write row data
-            for i in range(6, -1, -1):
-                cell_content = cell_data[i]
-                
-                # Set alignment
-                align = 'C'
-                if i == 6:  # Date - right align in narrow column
-                    align = 'R'
-                elif i == 0:  # Notes - left align for wide column
-                    align = 'L'
-                elif i == 2 and cell_content == "Holiday":  # Holiday
-                    align = 'C'
-                elif i == 2 and murajjah_clean:  # Murajjah numbers
-                    align = 'C'
-                elif i == 3 and clean_juzz_hali:  # Juzz Hali
-                    align = 'C'
-                
-                # Format Arabic if needed
-                if use_arabic and isinstance(cell_content, str) and any('\u0600' <= c <= '\u06FF' for c in cell_content):
-                    cell_content = format_arabic(cell_content)
-                
-                if cell_content is None:
-                    cell_content = ""
-                
-                pdf.cell(col_widths[i], row_height, str(cell_content), 1, 0, align)
-            
-            pdf.ln()
+        # Split into two pages: days 1-15 and days 16-31
+        first_half = [d for d in schedule_data if d['Date'] <= 15]
+        second_half = [d for d in schedule_data if d['Date'] > 15]
         
-        # Footer note
-        pdf.ln(10)
+        # Page 1: Days 1-15
+        pdf.add_page()
+        draw_pdf_page(pdf, student_name, selected_month_name, selected_year, first_half, use_arabic, page_num=1)
+        
+        # Page 2: Days 16-31
+        if second_half:
+            pdf.add_page()
+            draw_pdf_page(pdf, student_name, selected_month_name, selected_year, second_half, use_arabic, page_num=2)
+        
+        # Return PDF as bytes
+        pdf_output = pdf.output()
+        
+        if isinstance(pdf_output, bytearray):
+            return bytes(pdf_output)
+        elif isinstance(pdf_output, str):
+            return pdf_output.encode('latin-1')
+        else:
+            return pdf_output
+            
+    except Exception as e:
+        st.error(f"Error creating PDF: {str(e)}")
+        import traceback
+        st.error(traceback.format_exc())
+        return None
+
+def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, page_num):
+    """Draw a single page of the PDF with 15 days"""
+    
+    # Title
+    title = f"{student_name} - {month_name} {year}"
+    pdf.set_font('Helvetica', 'B', 16)
+    pdf.cell(0, 10, title, 0, 1, 'C')
+    pdf.ln(5)
+    
+    # Add "Monthly Plan" subtitle
+    if use_arabic:
+        try:
+            pdf.add_font('Arabic', '', 'arial.ttf', uni=True)
+            pdf.add_font('Arabic', 'B', 'arialbd.ttf', uni=True)
+            pdf.set_font('Arabic', 'B', 14)
+        except:
+            use_arabic = False
+    
+    if use_arabic:
+        arabic_title = format_arabic("تخطيط شهري")
+        pdf.cell(0, 10, arabic_title, 0, 1, 'C')
+    else:
+        pdf.set_font('Helvetica', 'B', 14)
+        pdf.cell(0, 10, "Monthly Plan", 0, 1, 'C')
+    pdf.ln(10)
+    
+    # Column widths for PORTRAIT orientation
+    total_width = 190
+    
+    # NEW COLUMN WIDTHS - Updated headers
+    col_widths = [
+        total_width * 0.25,   # ملاحظات (Notes) - 25%
+        total_width * 0.15,   # هدف حاصل كيڈو؟ (Target) - 15%
+        total_width * 0.15,   # المراجعة (Murajaah) - 15% [CHANGED]
+        total_width * 0.12,   # جز حالی (Juzz Hali) - 12% [CHANGED]
+        total_width * 0.12,   # الجديد (صفحة رقم) (New Page) - 12%
+        total_width * 0.11,   # كمية الجديد (Amount) - 11%
+        total_width * 0.10    # التاريخ (Date) - 10%
+    ]
+    
+    # Headers - RTL order with UPDATED NAMES
+    if use_arabic:
+        headers = [
+            format_arabic("ملاحظات"),          # Notes
+            format_arabic("هدف حاصل كيڈو؟"),   # Target Achieved?
+            format_arabic("المراجعة"),         # Murajaah [CHANGED]
+            format_arabic("جز حالی"),          # Juzz Hali [CHANGED]
+            format_arabic("الجديد (صفحة رقم)"),# New (Page No.)
+            format_arabic("كمية الجديد"),      # Amount
+            format_arabic("التاريخ")           # Date
+        ]
+    else:
+        headers = [
+            "Notes",            # 25%
+            "Target Achieved?", # 15%
+            "Murajaah",         # 15% [CHANGED from "Murajjah Parts"]
+            "Juzz Hali",        # 12% [CHANGED from "Current Juzz"]
+            "New (Page No.)",   # 12%
+            "Amount",           # 11%
+            "Date"              # 10%
+        ]
+    
+    # Draw table headers
+    pdf.set_fill_color(200, 220, 255)
+    pdf.set_font('Helvetica', 'B', 10)
+    
+    # Write headers in REVERSE order for RTL
+    for i in range(6, -1, -1):
+        if use_arabic and i >= 2:
+            try:
+                pdf.set_font('Arabic', 'B', 10)
+            except:
+                pdf.set_font('Helvetica', 'B', 8)
+        else:
+            pdf.set_font('Helvetica', 'B', 8)
+        
+        pdf.cell(col_widths[i], 8, headers[i], 1, 0, 'C', True)
+    
+    pdf.ln()
+    
+    # Draw table rows for this page's days
+    row_height = 8
+    for day_schedule in days_data:
+        day = day_schedule['Date']
+        is_holiday = day_schedule['isHoliday']
+        
+        # Check if new page is needed (shouldn't be with 15 days per page)
+        if pdf.get_y() + row_height > 270:
+            break  # Stop if we run out of space
+        
+        # Set font for content
         if use_arabic:
             try:
                 pdf.set_font('Arabic', '', 8)
             except:
-                pdf.set_font('Helvetica', 'I', 8)
-            footer = format_arabic("ملاحظة: العمودان الأيمن للطالب واليسار للمعلم")
-            pdf.cell(0, 5, footer, 0, 0, 'C')
+                pdf.set_font('Helvetica', '', 8)
         else:
+            pdf.set_font('Helvetica', '', 8)
+        
+        # Prepare cell data
+        if is_holiday:
+            cell_data = [
+                "",  # Notes
+                "",  # Target
+                format_arabic("عطلة") if use_arabic else "Holiday",  # Murajaah
+                "",  # Juzz Hali
+                "",  # New Page
+                "",  # Amount
+                str(day)  # Date
+            ]
+        else:
+            # Extract data from schedule
+            jadeen_text = day_schedule['Jadeen']
+            juzz_hali = day_schedule['Juzz Hali']
+            murajjah = day_schedule['Murajjah']
+            
+            # Parse Jadeen text
+            page_number = ""
+            amount = ""
+            if "(" in jadeen_text:
+                page_part = jadeen_text.split("(")[0].strip()
+                amount_part = jadeen_text.split("(")[1].replace(")", "").strip()
+                page_number = page_part
+                amount = amount_part.capitalize()
+            
+            # Clean up Murajjah - remove "Para" prefix
+            if murajjah and murajjah != "—":
+                murajjah_clean = murajjah.replace("Para", "").replace("para", "").strip()
+            else:
+                murajjah_clean = ""
+            
+            # Clean up Juzz Hali
+            clean_juzz_hali = juzz_hali if juzz_hali != "None" else ""
+            
+            cell_data = [
+                "",  # Notes
+                "",  # Target
+                murajjah_clean,  # Murajaah
+                clean_juzz_hali,  # Juzz Hali
+                page_number,  # New Page
+                amount,  # Amount
+                str(day)  # Date
+            ]
+        
+        # Write row data in reverse order (RTL)
+        for i in range(6, -1, -1):
+            cell_content = cell_data[i]
+            
+            # Set alignment
+            align = 'C'
+            if i == 6:  # Date
+                align = 'R'
+            elif i == 0:  # Notes
+                align = 'L'
+            
+            # Format Arabic if needed
+            if use_arabic and isinstance(cell_content, str) and any('\u0600' <= c <= '\u06FF' for c in cell_content):
+                cell_content = format_arabic(cell_content)
+            
+            if cell_content is None:
+                cell_content = ""
+            
+            pdf.cell(col_widths[i], row_height, str(cell_content), 1, 0, align)
+        
+        pdf.ln()
+    
+    # Footer note
+    pdf.ln(10)
+    if use_arabic:
+        try:
+            pdf.set_font('Arabic', '', 8)
+        except:
             pdf.set_font('Helvetica', 'I', 8)
-            pdf.cell(0, 5, "Note: Right columns for student, left for teacher", 0, 0, 'C')
+        footer = format_arabic("ملاحظة: العمودان الأيمن للطالب واليسار للمعلم")
+        pdf.cell(0, 5, footer, 0, 0, 'C')
+    else:
+        pdf.set_font('Helvetica', 'I', 8)
+        pdf.cell(0, 5, "Note: Right columns for student, left for teacher", 0, 0, 'C')
         
         # Return PDF as bytes
         pdf_output = pdf.output()
@@ -1600,6 +1610,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
