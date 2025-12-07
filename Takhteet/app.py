@@ -1443,9 +1443,12 @@ def main():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("""
-        <div style='text-align: center; margin-bottom: 2rem;'>
-            <h1>Quran Hifz Takhteet Generator</h1>
-        </div>
+        <div style='text-align: center;'>
+            <h1>Takhteet</h1>
+            <div style='color: #6b7280; font-size: 1rem; margin-bottom: 0.5rem;'>
+                Made with ❤️ for Huffaz
+            </div>
+         </div>   
         """, unsafe_allow_html=True)
     
     # Main card
@@ -1648,6 +1651,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
