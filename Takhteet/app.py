@@ -1245,7 +1245,7 @@ def create_pdf(student_name, selected_month_name, selected_year, start_juz, days
         return None
         
 def render_manual_murajjah_section():
-    """Render the manual murajjah selection interface"""
+    """Render the manual murajjah selection interface - MOBILE OPTIMIZED"""
     if st.session_state.murajjah_option == "Manual Selection":
         st.markdown("---")
         
@@ -1263,19 +1263,13 @@ def render_manual_murajjah_section():
             st.markdown('<div class="stCard">', unsafe_allow_html=True)
             st.markdown("#### 📋 Select Siparas for Each Day")
             
-            # Create 3 columns for the 6 days (2 rows)
-            col1, col2, col3 = st.columns(3)
-            
+            # FIXED: Display all 6 days in a single column (stacked vertically)
             days = ['day1', 'day2', 'day3', 'day4', 'day5', 'day6']
             day_names = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6']
             
-            for i, (day, day_name) in enumerate(zip(days, day_names)):
-                if i < 3:
-                    with col1 if i == 0 else col2 if i == 1 else col3:
-                        render_day_card(day, day_name)
-                else:
-                    with col1 if i == 3 else col2 if i == 4 else col3:
-                        render_day_card(day, day_name)
+            # Render each day card one after another (no columns)
+            for day, day_name in zip(days, day_names):
+                render_day_card(day, day_name)
             
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1309,7 +1303,6 @@ def render_day_card(day_key, day_name):
         st.caption("No siparas selected")
     
     st.markdown('</div>', unsafe_allow_html=True)
-
 # Main App
 def main():
     # Sidebar
@@ -1551,6 +1544,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
