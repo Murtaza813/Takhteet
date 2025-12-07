@@ -1263,7 +1263,7 @@ def render_manual_murajjah_section():
             st.markdown('<div class="stCard">', unsafe_allow_html=True)
             st.markdown("#### 📋 Select Siparas for Each Day")
             
-            # FIXED: Display all 6 days in a single column (stacked vertically)
+            # Display all 6 days in a single column (stacked vertically)
             days = ['day1', 'day2', 'day3', 'day4', 'day5', 'day6']
             day_names = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6']
             
@@ -1274,17 +1274,17 @@ def render_manual_murajjah_section():
             st.markdown('</div>', unsafe_allow_html=True)
 
 def render_day_card(day_key, day_name):
-    """Render a card for selecting siparas for a day"""
-    st.markdown(f'<div class="day-card">', unsafe_allow_html=True)
+    """Render a card for selecting siparas - COMPACT CALENDAR GRID (6x5)"""
+    st.markdown(f'<div class="day-card-compact">', unsafe_allow_html=True)
     
-    # FIXED: More visible day heading with emoji and better formatting
-    st.markdown(f'<strong style="color: #10b981; font-size: 1.4rem; font-weight: 900; display: block; margin-bottom: 1rem;">📅 {day_name}</strong>', unsafe_allow_html=True)
+    # Day heading
+    st.markdown(f'<div style="color: #10b981; font-size: 1.3rem; font-weight: 900; margin-bottom: 0.8rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">📅 {day_name}</div>', unsafe_allow_html=True)
     
-    # Create 6 rows of 5 siparas each
-    for row in range(6):
-        cols = st.columns(5)
-        for col_idx in range(5):
-            sipara = row * 5 + col_idx + 1
+    # COMPACT GRID: 5 rows x 6 columns = 30 siparas (like a calendar)
+    for row in range(5):
+        cols = st.columns(6)
+        for col_idx in range(6):
+            sipara = row * 6 + col_idx + 1
             if sipara <= 30:
                 with cols[col_idx]:
                     is_selected = sipara in st.session_state.manual_murajjah[day_key]
@@ -1546,6 +1546,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
