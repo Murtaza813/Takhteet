@@ -22,353 +22,566 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS with clear direction button differentiation
+# Replace the st.markdown CSS section with this FIXED version:
+
 st.markdown("""
 <style>
-    /* FORCE LIGHT THEME BUT MAKE DARK MODE SAFE */
-    body {
-        color: #000000 !important;
-        background-color: #ffffff !important;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    
+    /* === HIDE MATERIAL ICONS TEXT === */
+    .material-icons, 
+    span[data-baseweb="icon"],
+    [data-testid="stHeaderActionElements"] span {
+        font-size: 0 !important;
     }
     
-    /* Force all text to be dark */
+    /* Hide "keyboard_double_arrow" text globally */
+    *:not(input):not(textarea) {
+        text-rendering: optimizeLegibility;
+    }
+    
+    /* === GLOBAL RESET === */
     * {
-        color: #000000 !important;
+        font-family: 'Inter', -apple-system, sans-serif !important;
+        letter-spacing: -0.01em;
     }
     
-    /* Force all backgrounds to be light */
-    .main, .block-container, .stApp {
-        background-color: #ffffff !important;
+    /* === MAIN CONTAINER === */
+    .main, .stApp {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
     }
     
-    /* Cards - force white background with dark text */
-    .takhteet-card {
-        background-color: #ffffff !important;
-        border: 1px solid #e5e7eb !important;
-        border-radius: 12px !important;
-        padding: 24px !important;
-        margin-bottom: 20px !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-        color: #000000 !important;
+    [data-theme="light"] .main,
+    [data-theme="light"] .stApp {
+        background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%) !important;
     }
     
-    /* Headers */
-    h1, h2, h3, h4, h5, h6 {
-        color: #1f2937 !important;
-        font-weight: 700 !important;
+    .block-container {
+        padding: 1.5rem 2rem 3rem 2rem !important;
+        max-width: 1600px !important;
     }
     
-    /* All text elements */
-    p, span, div, label, li, td, th, strong, em, small {
-        color: #000000 !important;
-    }
-    
-    /* DIRECTION BUTTONS - CLEAR DIFFERENTIATION */
-    .direction-btn-selected {
-        background-color: #10b981 !important;
-        color: white !important;
-        border: 3px solid #059669 !important;
-        font-weight: bold !important;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
-        transform: scale(1.02) !important;
-    }
-    
-    .direction-btn-unselected {
-        background-color: #f3f4f6 !important;
-        color: #6b7280 !important;
-        border: 2px solid #d1d5db !important;
-        font-weight: normal !important;
-    }
-    
-    .direction-btn-unselected:hover {
-        background-color: #e5e7eb !important;
-        color: #374151 !important;
-        border-color: #9ca3af !important;
-    }
-    
-    /* Input fields - always visible */
-    input, select, textarea {
-        background-color: white !important;
-        color: black !important;
-        border: 2px solid #e5e7eb !important;
-    }
-    
-    input:focus, select:focus, textarea:focus {
-        border-color: #10b981 !important;
-        background-color: white !important;
-        color: black !important;
-    }
-    
-    /* Regular Buttons */
-    .stButton > button {
-        background-color: #10b981 !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 10px 20px !important;
-        font-weight: 600 !important;
-        transition: all 0.2s !important;
-    }
-    
-    .stButton > button:hover {
-        background-color: #059669 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-    }
-    
-    .stButton > button[kind="secondary"] {
-        background-color: transparent !important;
-        color: #6b7280 !important;
-        border: 2px solid #e5e7eb !important;
-    }
-    
-    .stButton > button[kind="secondary"]:hover {
-        background-color: #f9fafb !important;
-        color: #374151 !important;
-        border-color: #d1d5db !important;
-    }
-    
-    /* DataFrames - force visibility */
-    .dataframe {
-        background-color: white !important;
-        color: black !important;
-    }
-    
-    .dataframe th {
-        background-color: #10b981 !important;
-        color: white !important;
-    }
-    
-    .dataframe td {
-        background-color: white !important;
-        color: black !important;
-        border-color: #e5e7eb !important;
-    }
-    
-    /* Streamlit specific overrides */
-    .stTextInput > div > div > input,
-    .stNumberInput > div > div > input,
-    .stSelectbox > div > div > select,
-    .stTextArea > div > div > textarea {
-        background-color: white !important;
-        color: black !important;
-        border: 2px solid #e5e7eb !important;
-    }
-    
-    .stTextInput label,
-    .stNumberInput label,
-    .stSelectbox label,
-    .stSlider label,
-    .stRadio label,
-    .stCheckbox label {
-        color: #1f2937 !important;
-        font-weight: 600 !important;
-    }
-    
-    /* Radio buttons */
-    .stRadio > div {
-        background-color: white !important;
-        border: 2px solid #e5e7eb !important;
-        color: black !important;
-    }
-    
-    /* Selectbox */
-    .stSelectbox > div > div {
-        background-color: white !important;
-        color: black !important;
-    }
-    
-    /* Sidebar */
+    /* === MODERN SIDEBAR - FIXED === */
     section[data-testid="stSidebar"] {
-        background-color: #f8fafc !important;
+        background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%) !important;
+        border-right: none !important;
+        box-shadow: 4px 0 40px rgba(59, 130, 246, 0.3);
     }
     
     section[data-testid="stSidebar"] * {
-        color: #1f2937 !important;
+        color: white !important;
     }
     
-    /* Expanders */
-    .streamlit-expanderHeader {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #e5e7eb !important;
+    section[data-testid="stSidebar"] h1 {
+        font-size: 1.4rem !important;
+        font-weight: 800 !important;
+        text-align: center;
+        padding: 1rem 0.5rem !important;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        line-height: 1.4 !important;
+        margin-bottom: 1rem !important;
     }
     
-    .streamlit-expanderContent {
-        background-color: white !important;
-        color: black !important;
+    /* FIXED: Sidebar Expander Headers - CLEAR ARROWS */
+    section[data-testid="stSidebar"] .streamlit-expanderHeader {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        padding: 0.8rem 1rem !important;
+        transition: all 0.3s ease !important;
+        backdrop-filter: blur(10px);
+        color: white !important;
     }
     
-    /* Messages */
-    .stAlert {
-        background-color: #d1fae5 !important;
-        color: #065f46 !important;
-        border: none !important;
+    section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
     }
     
-    .stError {
-        background-color: #fee2e2 !important;
-        color: #991b1b !important;
+    /* FIXED: Expander Arrow Icons - Make them VISIBLE */
+    section[data-testid="stSidebar"] .streamlit-expanderHeader svg {
+        fill: white !important;
+        stroke: white !important;
+        opacity: 1 !important;
+        width: 20px !important;
+        height: 20px !important;
     }
     
-    .stWarning {
-        background-color: #fef3c7 !important;
-        color: #92400e !important;
+    section[data-testid="stSidebar"] .streamlit-expanderContent {
+        background: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 0 0 12px 12px !important;
+        margin-top: -5px !important;
+        padding: 1rem !important;
     }
     
-    .stInfo {
-        background-color: #dbeafe !important;
+    /* FIXED: Sidebar List Items - Better spacing */
+    section[data-testid="stSidebar"] ul li {
+        margin: 0.5rem 0 !important;
+        padding: 0.3rem 0 !important;
+        line-height: 1.5 !important;
+    }
+    
+    section[data-testid="stSidebar"] .stButton > button {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 12px !important;
+        padding: 1rem !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        margin: 0.5rem 0 !important;
+        width: 100% !important;
+    }
+    
+    section[data-testid="stSidebar"] .stButton > button:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+        transform: translateX(-5px);
+        box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+    }
+    
+    section[data-testid="stSidebar"] hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        margin: 1.5rem 0;
+    }
+    
+    /* === HEADER SECTION === */
+    .header-container {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+        border-radius: 20px;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        backdrop-filter: blur(10px);
+    }
+    
+    [data-theme="light"] .header-container {
+        background: white;
+        border-color: rgba(59, 130, 246, 0.2);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    }
+    
+    .header-container h1 {
+        font-size: 2.5rem !important;
+        font-weight: 900 !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0 !important;
+    }
+    
+    /* === MODERN CARDS === */
+    .stCard, .modern-card {
+        background: rgba(30, 41, 59, 0.6) !important;
+        border: 1px solid rgba(71, 85, 105, 0.5) !important;
+        border-radius: 20px !important;
+        padding: 2rem !important;
+        margin-bottom: 1.5rem !important;
+        backdrop-filter: blur(20px) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    [data-theme="light"] .stCard,
+    [data-theme="light"] .modern-card {
+        background: white !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08) !important;
+    }
+    
+    .stCard:hover, .modern-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.2) !important;
+    }
+    
+    /* === HEADINGS === */
+    h1, h2, h3, h4, h5, h6 {
+        color: #f1f5f9 !important;
+        font-weight: 700 !important;
+    }
+    
+    [data-theme="light"] h1,
+    [data-theme="light"] h2,
+    [data-theme="light"] h3,
+    [data-theme="light"] h4 {
+        color: #1e293b !important;
+    }
+    
+    h2 {
+        font-size: 1.75rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    h4 {
+        font-size: 1.25rem !important;
+        color: #3b82f6 !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    [data-theme="light"] h4 {
         color: #1e40af !important;
     }
     
-    /* Tables */
-    table {
-        background-color: white !important;
-        color: black !important;
-    }
-    
-    th {
-        background-color: #10b981 !important;
+    /* === PRIMARY BUTTONS === */
+    .stButton > button[kind="primary"],
+    .stButton > button:not([kind="secondary"]) {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
         color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 0.75rem 2rem !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4) !important;
+        transition: all 0.3s ease !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
-    td {
-        background-color: white !important;
-        color: black !important;
+    .stButton > button[kind="primary"]:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.6) !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
     }
     
-    /* Dark mode override - if user forces dark mode */
-    @media (prefers-color-scheme: dark) {
-        .stApp, .main, .block-container {
-            background-color: #1e293b !important;
-        }
-        
-        .takhteet-card {
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-        }
-        
-        * {
-            color: #f1f5f9 !important;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-            color: #f1f5f9 !important;
-        }
-        
-        /* Dark mode direction buttons */
-        .direction-btn-selected {
-            background-color: #10b981 !important;
-            color: white !important;
-            border: 3px solid #34d399 !important;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.6) !important;
-        }
-        
-        .direction-btn-unselected {
-            background-color: #334155 !important;
-            color: #cbd5e1 !important;
-            border: 2px solid #475569 !important;
-        }
-        
-        .direction-btn-unselected:hover {
-            background-color: #475569 !important;
-            color: #f1f5f9 !important;
-            border-color: #64748b !important;
-        }
-        
-        input, select, textarea {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #475569 !important;
-        }
-        
-        .stTextInput > div > div > input,
-        .stNumberInput > div > div > input,
-        .stSelectbox > div > div > select {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #475569 !important;
-        }
-        
-        .dataframe {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-        }
-        
-        .dataframe th {
-            background-color: #065f46 !important;
-            color: white !important;
-        }
-        
-        .dataframe td {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #334155 !important;
-        }
-        
-        .stRadio > div {
-            background-color: #1e293b !important;
-            border-color: #475569 !important;
-            color: #f1f5f9 !important;
-        }
-        
-        section[data-testid="stSidebar"] {
-            background-color: #0f172a !important;
-        }
-        
-        section[data-testid="stSidebar"] * {
-            color: #f1f5f9 !important;
-        }
-        
-        .stButton > button {
-            background-color: #10b981 !important;
-            color: white !important;
-        }
-        
-        .stButton > button[kind="secondary"] {
-            background-color: transparent !important;
-            color: #cbd5e1 !important;
-            border-color: #475569 !important;
-        }
+    /* === SECONDARY BUTTONS === */
+    .stButton > button[kind="secondary"] {
+        background: rgba(71, 85, 105, 0.3) !important;
+        color: #cbd5e1 !important;
+        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        border-radius: 12px !important;
+        padding: 0.75rem 2rem !important;
+        font-weight: 600 !important;
+        backdrop-filter: blur(10px);
     }
     
-    /* Manual Murajjah buttons */
-    .sipara-btn {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #e5e7eb !important;
+    [data-theme="light"] .stButton > button[kind="secondary"] {
+        background: white !important;
+        color: #64748b !important;
+        border-color: #cbd5e1 !important;
     }
     
-    @media (prefers-color-scheme: dark) {
-        .sipara-btn {
-            background-color: #334155 !important;
-            color: #f1f5f9 !important;
-            border-color: #475569 !important;
-        }
-    }
-    
-    .sipara-btn.selected {
-        background-color: #10b981 !important;
+    .stButton > button[kind="secondary"]:hover {
+        border-color: #3b82f6 !important;
+        background: rgba(59, 130, 246, 0.2) !important;
         color: white !important;
+        transform: scale(1.02);
+    }
+    
+    /* === FIXED: INPUT FIELDS === */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input {
+        background: rgba(51, 65, 85, 0.6) !important;
+        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        border-radius: 12px !important;
+        padding: 0.75rem 1rem !important;
+        color: #f1f5f9 !important;
+        font-weight: 500 !important;
+        font-size: 1rem !important;
+        backdrop-filter: blur(10px);
+        transition: all 0.2s ease;
+    }
+    
+    [data-theme="light"] .stTextInput > div > div > input,
+    [data-theme="light"] .stNumberInput > div > div > input {
+        background: white !important;
+        border-color: #cbd5e1 !important;
+        color: #1e293b !important;
+    }
+    
+    .stTextInput > div > div > input:focus,
+    .stNumberInput > div > div > input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+        background: rgba(51, 65, 85, 0.8) !important;
+    }
+    
+    /* === FIXED: SELECTBOX DROPDOWN - NO CUT OFF === */
+    .stSelectbox > div > div {
+        background: rgba(51, 65, 85, 0.6) !important;
+        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        border-radius: 12px !important;
+        color: #f1f5f9 !important;
+        font-weight: 500 !important;
+        font-size: 1rem !important;
+        backdrop-filter: blur(10px);
+        min-height: 50px !important;
+        padding: 0.5rem 1rem !important;
+    }
+    
+    [data-theme="light"] .stSelectbox > div > div {
+        background: white !important;
+        border-color: #cbd5e1 !important;
+        color: #1e293b !important;
+    }
+    
+    /* FIXED: Dropdown text visibility */
+    .stSelectbox [data-baseweb="select"] > div {
+        padding: 0.5rem 1rem !important;
+        min-height: 50px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    .stSelectbox [data-baseweb="select"] span {
+        color: #f1f5f9 !important;
+        font-size: 1rem !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+    }
+    
+    [data-theme="light"] .stSelectbox [data-baseweb="select"] span {
+        color: #1e293b !important;
+    }
+    
+    /* FIXED: Dropdown arrow icon */
+    .stSelectbox svg {
+        fill: #cbd5e1 !important;
+        width: 20px !important;
+        height: 20px !important;
+        min-width: 20px !important;
+    }
+    
+    /* === FIXED: LABELS === */
+    .stTextInput label,
+    .stNumberInput label,
+    .stSelectbox label,
+    .stSlider label {
+        color: #cbd5e1 !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        margin-bottom: 0.75rem !important;
+        display: block !important;
+    }
+    
+    [data-theme="light"] .stTextInput label,
+    [data-theme="light"] .stNumberInput label,
+    [data-theme="light"] .stSelectbox label,
+    [data-theme="light"] .stSlider label {
+        color: #475569 !important;
+    }
+    
+    /* === SLIDER === */
+    .stSlider > div > div > div {
+        background: rgba(71, 85, 105, 0.5) !important;
+        border-radius: 10px;
+        height: 8px !important;
+    }
+    
+    [data-theme="light"] .stSlider > div > div > div {
+        background: #e2e8f0 !important;
+    }
+    
+    .stSlider > div > div > div > div {
+        background: linear-gradient(90deg, #3b82f6, #10b981) !important;
+    }
+    
+    .stSlider [role="slider"] {
+        background: white !important;
+        border: 3px solid #3b82f6 !important;
+        width: 24px !important;
+        height: 24px !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5) !important;
+    }
+    
+    /* === TABLE STYLING === */
+    .dataframe {
+        border: none !important;
+        border-radius: 16px !important;
+        overflow: hidden !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+        backdrop-filter: blur(10px);
+    }
+    
+    .dataframe thead tr th {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+        color: white !important;
+        font-weight: 800 !important;
+        padding: 1.2rem !important;
+        font-size: 0.9rem !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: none !important;
+    }
+    
+    .dataframe tbody tr {
+        background: rgba(30, 41, 59, 0.5) !important;
+        transition: all 0.2s ease;
+    }
+    
+    [data-theme="light"] .dataframe tbody tr {
+        background: white !important;
+    }
+    
+    .dataframe tbody tr:nth-child(even) {
+        background: rgba(51, 65, 85, 0.3) !important;
+    }
+    
+    [data-theme="light"] .dataframe tbody tr:nth-child(even) {
+        background: #f8fafc !important;
+    }
+    
+    .dataframe tbody tr:hover {
+        background: rgba(59, 130, 246, 0.2) !important;
+        transform: scale(1.01);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    }
+    
+    .dataframe tbody tr td {
+        padding: 1rem !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(71, 85, 105, 0.3) !important;
+        font-weight: 500 !important;
+    }
+    
+    [data-theme="light"] .dataframe tbody tr td {
+        color: #334155 !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    /* === DAY CARDS === */
+    .day-card {
+        background: rgba(51, 65, 85, 0.4) !important;
+        border: 2px solid rgba(71, 85, 105, 0.5) !important;
+        border-radius: 16px !important;
+        padding: 1.5rem !important;
+        margin-bottom: 1rem !important;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    
+    [data-theme="light"] .day-card {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+    
+    .day-card:hover {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px);
+    }
+    
+    .day-card strong {
+        color: #3b82f6 !important;
+        font-size: 1.1rem !important;
+        font-weight: 800 !important;
+        display: block;
+        margin-bottom: 1rem;
+    }
+    
+    /* === MESSAGES === */
+    .stSuccess {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1)) !important;
+        color: #6ee7b7 !important;
+        border-radius: 12px !important;
+        border: 2px solid rgba(16, 185, 129, 0.5) !important;
+        padding: 1rem !important;
+        font-weight: 600 !important;
+        backdrop-filter: blur(10px);
+    }
+    
+    [data-theme="light"] .stSuccess {
+        background: #d1fae5 !important;
+        color: #065f46 !important;
         border-color: #10b981 !important;
     }
     
-    /* Status indicator */
-    .status-indicator {
-        display: inline-block;
+    .stError {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1)) !important;
+        color: #fca5a5 !important;
+        border-radius: 12px !important;
+        border: 2px solid rgba(239, 68, 68, 0.5) !important;
+        backdrop-filter: blur(10px);
+    }
+    
+    [data-theme="light"] .stError {
+        background: #fee2e2 !important;
+        color: #991b1b !important;
+        border-color: #ef4444 !important;
+    }
+    
+    /* === CAPTIONS === */
+    .stCaption {
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+        font-size: 0.9rem !important;
+    }
+    
+    [data-theme="light"] .stCaption {
+        color: #64748b !important;
+    }
+    
+    /* === DIVIDER === */
+    hr {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(71, 85, 105, 0.5), transparent);
+        margin: 2rem 0;
+    }
+    
+    [data-theme="light"] hr {
+        background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+    }
+    
+    /* === SCROLLBAR === */
+    ::-webkit-scrollbar {
         width: 12px;
         height: 12px;
-        border-radius: 50%;
-        margin-right: 8px;
-        vertical-align: middle;
     }
     
-    .status-backward {
-        background-color: #10b981;
+    ::-webkit-scrollbar-track {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 10px;
     }
     
-    .status-forward {
-        background-color: #3b82f6;
+    [data-theme="light"] ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        border-radius: 10px;
+        border: 2px solid rgba(30, 41, 59, 0.5);
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    }
+    
+    /* === LOADING SPINNER === */
+    .stSpinner > div {
+        border-color: #3b82f6 transparent transparent transparent !important;
+    }
+    
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+        .block-container {
+            padding: 1rem !important;
+        }
+        
+        .header-container h1 {
+            font-size: 2rem !important;
+        }
+    }
+    
+    /* === ANIMATIONS === */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .stCard, .modern-card {
+        animation: fadeInUp 0.5s ease-out;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1262,6 +1475,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
