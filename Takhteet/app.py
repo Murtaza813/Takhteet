@@ -1779,16 +1779,17 @@ def main():
         
         # Manual Murajjah Section
         render_manual_murajjah_section()
-        
+
         # Generate button
         st.markdown("---")
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             if st.button("✨ Generate Takhteet", type="primary", use_container_width=True):
-                with st.spinner("Generating schedule..."):
-                    calculate_schedule()
-                    st.success("Schedule generated successfully!")
-                    st.rerun()
+                with st.spinner("Checking if target can be reached..."):
+                    result = calculate_schedule()
+                    if result:  # Only show success and rerun if schedule was actually generated
+                        st.success("Schedule generated successfully!")
+                        st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -1867,6 +1868,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
