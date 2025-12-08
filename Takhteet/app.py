@@ -923,7 +923,7 @@ def generate_schedule(start_juz, days_in_month):
     return schedule
 
 def calculate_schedule():
-    """Calculate the complete schedule with actual calendar dates - SHOW SOLUTIONS TO REACH TARGET"""
+    """Calculate the complete schedule with actual calendar dates - SHOW SINGLE SOLUTION"""
     month = st.session_state.month
     year = st.session_state.year
     direction = st.session_state.direction
@@ -969,155 +969,119 @@ def calculate_schedule():
     can_reach_target = current_working_days >= min_days_needed
     
     if not can_reach_target:
-        # TARGET CANNOT BE REACHED! Show solutions
+        # TARGET CANNOT BE REACHED! Show single best solution
         
         st.error(f"""
         ❌ **TARGET CANNOT BE REACHED WITH CURRENT PLAN!**
         
-        **Current Settings:**
-        - Target pages: {total_pages_needed}
-        - Working days available: {current_working_days}
-        - Daily amount: {daily_amount}
-        - Extra holidays: {extra_holidays}
-        
-        **You need at least {min_days_needed} working days, but only have {current_working_days}.**
+        **Problem:**
+        - You need **{min_days_needed}** working days
+        - You only have **{current_working_days}** working days
+        - Shortfall: **{min_days_needed - current_working_days}** days
         """)
         
-        # SHOW SOLUTIONS SECTION
-        st.markdown("---")
-        st.markdown("### 🎯 Solutions to Reach Your Target")
+        # FIND THE BEST SOLUTION
+        solution_found = False
         
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            # Solution 1: Reduce holidays
-            reduce_to = max(0, extra_holidays - (min_days_needed - current_working_days))
-            new_working_days = min(max_working_days, current_working_days + (min_days_needed - current_working_days))
-            pages_with_this = min(total_pages_needed, current_working_days * avg_pages_per_day)
-            status1 = "✅ REACH TARGET" if max_working_days >= min_days_needed else "❌ STILL NOT ENOUGH"
+        # Check if reducing holidays will work
+        if max_working_days >= min_days_needed:
+            holidays_needed = max(0, days_in_month - len(sundays) - min_days_needed)
+            st.success(f"""
+            **✅ SOLUTION: Reduce Holidays**
             
-            st.markdown(f"""
-            #### **Solution 1: Reduce Holidays**
-            **What to do:**
-            - Keep same daily amount: **{daily_amount}**
-            - Reduce extra holidays from **{extra_holidays}** to **{reduce_to}**
+            **Action needed:**
+            - Reduce extra holidays from **{extra_holidays}** to **{holidays_needed}**
             
             **Result:**
-            - Working days: **{new_working_days}** (was {current_working_days})
-            - Can complete: **{pages_with_this}** pages
-            - Status: **{status1}**
+            - Working days: **{min_days_needed}** (from {current_working_days})
+            - You can complete all **{total_pages_needed}** pages
             """)
-            
-            if max_working_days >= min_days_needed:
-                st.success(f"**Action needed:** Reduce holidays to {reduce_to}")
-            else:
-                st.error("Even with NO extra holidays, you still can't reach target!")
+            solution_found = True
         
-        with col2:
-            # Solution 2: Increase daily amount
-            if "0.5" in daily_amount:
-                new_amount = "1 page daily"
-                new_min_days = total_pages_needed  # 1 page per day
-                can_reach_with_this = current_working_days >= new_min_days
-                status2 = "✅ REACH TARGET" if can_reach_with_this else "❌ STILL NOT ENOUGH"
-            elif "Mixed" in daily_amount:
-                new_amount = "1 page daily"
-                new_min_days = total_pages_needed
-                can_reach_with_this = current_working_days >= new_min_days
-                status2 = "✅ REACH TARGET" if can_reach_with_this else "❌ STILL NOT ENOUGH"
-            else:
-                new_amount = "Already at maximum"
-                new_min_days = min_days_needed
-                can_reach_with_this = False
-                status2 = "❌ ALREADY AT MAX"
-            
-            st.markdown(f"""
-            #### **Solution 2: Increase Daily Amount**
-            **What to do:**
-            - Change from **{daily_amount}** to **{new_amount}**
-            - Keep holidays: **{extra_holidays}**
-            
-            **Result:**
-            - Working days needed: **{new_min_days}** (was {min_days_needed})
-            - You have: **{current_working_days}** days
-            - Status: **{status2}**
-            """)
-            
-            if can_reach_with_this:
-                st.success(f"**Action needed:** Change to {new_amount}")
-            else:
-                st.warning("Already at maximum daily amount")
+        # If reducing holidays alone won't work, try increasing daily amount
+        elif not solution_found and "0.5" in daily_amount:
+            # Try 1 page daily
+            new_min_days_1page = total_pages_needed
+            if max_working_days >= new_min_days_1page:
+                holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_1page)
+                st.success(f"""
+                **✅ SOLUTION: Increase Daily Amount**
+                
+                **Action needed:**
+                - Change from **{daily_amount}** to **1 page daily**
+                - Set holidays to **{holidays_needed}**
+                
+                **Result:**
+                - Working days needed: **{new_min_days_1page}** (down from {min_days_needed})
+                - You can complete all **{total_pages_needed}** pages
+                """)
+                solution_found = True
         
-        with col3:
-            # Solution 3: Combination (reduce holidays + increase amount)
-            best_solution = ""
-            best_action = ""
-            
-            if "0.5" in daily_amount:
-                # Try 1 page daily first
-                new_min_days_1page = total_pages_needed
-                if max_working_days >= new_min_days_1page:
-                    holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_1page)
-                    best_solution = f"**1 page daily** with **{holidays_needed}** holidays"
-                    best_action = f"Change to 1 page daily and set holidays to {holidays_needed}"
-                elif "Mixed" in daily_amount:
-                    # Try Mixed
-                    new_min_days_mixed = int(total_pages_needed / 0.75) + 1
-                    if max_working_days >= new_min_days_mixed:
-                        holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_mixed)
-                        best_solution = f"**Mixed pages** with **{holidays_needed}** holidays"
-                        best_action = f"Keep Mixed pages and set holidays to {holidays_needed}"
-            elif "Mixed" in daily_amount:
-                # Try 1 page daily
-                new_min_days_1page = total_pages_needed
-                if max_working_days >= new_min_days_1page:
-                    holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_1page)
-                    best_solution = f"**1 page daily** with **{holidays_needed}** holidays"
-                    best_action = f"Change to 1 page daily and set holidays to {holidays_needed}"
-            
-            st.markdown(f"""
-            #### **Solution 3: Best Combination**
-            **Recommended solution:**
-            {best_solution if best_solution else "No combination works!"}
-            
-            **To reach target you need:**
-            - Minimum working days: **{total_pages_needed}** (for 1 page daily)
-            - Available maximum: **{max_working_days}** days
-            """)
-            
-            if best_solution:
-                st.success(f"**Best action:** {best_action}")
-            else:
-                st.error("Even with maximum adjustments, target cannot be reached!")
+        # If still not working, try Mixed pages (if currently on 0.5)
+        elif not solution_found and "0.5" in daily_amount:
+            # Try Mixed pages
+            new_min_days_mixed = int(total_pages_needed / 0.75) + 1
+            if max_working_days >= new_min_days_mixed:
+                holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_mixed)
+                st.success(f"""
+                **✅ SOLUTION: Use Mixed Pages**
+                
+                **Action needed:**
+                - Change from **{daily_amount}** to **Mixed (0.5 & 1 page)**
+                - Set holidays to **{holidays_needed}**
+                
+                **Result:**
+                - Working days needed: **{new_min_days_mixed}** (down from {min_days_needed})
+                - You can complete all **{total_pages_needed}** pages
+                """)
+                solution_found = True
+        
+        # If still not working, check if Mixed to 1 page works
+        elif not solution_found and "Mixed" in daily_amount:
+            # Try 1 page daily
+            new_min_days_1page = total_pages_needed
+            if max_working_days >= new_min_days_1page:
+                holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_1page)
+                st.success(f"""
+                **✅ SOLUTION: Increase to 1 Page Daily**
+                
+                **Action needed:**
+                - Change from **Mixed pages** to **1 page daily**
+                - Set holidays to **{holidays_needed}**
+                
+                **Result:**
+                - Working days needed: **{new_min_days_1page}** (down from {min_days_needed})
+                - You can complete all **{total_pages_needed}** pages
+                """)
+                solution_found = True
         
         # FINAL CHECK - If IMPOSSIBLE even with all adjustments
-        if max_working_days < total_pages_needed:
-            st.markdown("---")
-            st.error(f"""
-            ⚠️ **IMPOSSIBLE TO REACH TARGET THIS MONTH!**
-            
-            **Reason:** You need {total_pages_needed} pages but only have {max_working_days} maximum working days.
-            
-            **Solutions:**
-            1. **Reduce target** - Choose closer end page
-            2. **Extend timeline** - Split across multiple months
-            3. **Start earlier** - Begin from different page
-            """)
-            
-            # Show what IS possible
-            possible_pages = int(max_working_days * avg_pages_per_day)
-            st.info(f"""
-            **What IS possible with current settings:**
-            - Maximum pages you can complete: **{possible_pages}**
-            - Suggested new target: **Page {start_page + possible_pages if direction == 'Forward (1 → 30)' else start_page - possible_pages}**
-            """)
+        if not solution_found:
+            # Check if it's truly impossible
+            if max_working_days < total_pages_needed:
+                st.error(f"""
+                ⚠️ **IMPOSSIBLE TO REACH TARGET THIS MONTH!**
+                
+                **Reason:** You need {total_pages_needed} pages but only have {max_working_days} maximum working days.
+                
+                **What you CAN do:**
+                - Complete maximum of **{int(max_working_days * avg_pages_per_day)}** pages
+                - New target: **Page {start_page + int(max_working_days * avg_pages_per_day) if direction == 'Forward (1 → 30)' else start_page - int(max_working_days * avg_pages_per_day)}**
+                """)
+            else:
+                st.error("""
+                ⚠️ **CANNOT FIND A WORKABLE SOLUTION!**
+                
+                Please try:
+                1. Reducing your target pages
+                2. Choosing a different month with more days
+                3. Reducing your extra holidays
+                """)
             
             return None
         
-        # If we get here, it means adjustments ARE possible
-        st.markdown("---")
-        st.success("""
-        **📝 Choose one of the solutions above and adjust your settings accordingly, then click "Generate Takhteet" again.**
+        st.info("""
+        **📝 Adjust your settings according to the solution above, then click "Generate Takhteet" again.**
         """)
         
         return None
@@ -1258,7 +1222,6 @@ def calculate_schedule():
     """)
     
     return full_schedule
-
 def format_arabic(text):
     """Format Arabic text for RTL display"""
     if ARABIC_SUPPORT and isinstance(text, str) and any('\u0600' <= c <= '\u06FF' for c in text):
@@ -1868,6 +1831,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
