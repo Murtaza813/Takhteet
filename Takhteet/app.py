@@ -742,6 +742,48 @@ sipara_ranges = {
     26: (502, 521), 27: (522, 541), 28: (542, 561), 29: (562, 581), 30: (582, 604)
 }
 
+def convert_schedule_for_pdf(schedule_data, days_in_month):
+    """Convert display schedule to PDF format"""
+    pdf_schedule = {}
+    weekday_counter = 0
+    
+    for day_data in schedule_data:
+        day = day_data['Date']
+        
+        if day_data['isHoliday']:
+            pdf_schedule[day] = {'isHoliday': True}
+        else:
+            # Parse the Jadeen text
+            jadeen_text = day_data['Jadeen']
+            
+            if jadeen_text == 'REVISION':
+                current_page = day_data.get('Juzz Hali', '').split('-')[0] if day_data.get('Juzz Hali') != '—' else '0'
+            else:
+                current_page = jadeen_text.split()[0] if jadeen_text else '0'
+            
+            # Get juz range and murajjah
+            juz_range = day_data['Juzz Hali']
+            murajjah_display = day_data['Murajjah']
+            
+            # Convert murajjah to PDF format (remove "Para" prefix)
+            if murajjah_display and murajjah_display != "—":
+                murajjah = murajjah_display.replace("Para", "").replace("para", "").strip()
+            else:
+                murajjah = ""
+            
+            pdf_schedule[day] = {
+                'current_page': current_page,
+                'juz_range': juz_range if juz_range != "—" else "",
+                'murajjah': murajjah,
+                'isHoliday': False
+            }
+            
+            weekday_counter += 1
+            if weekday_counter >= 6:
+                weekday_counter = 0
+    
+    return pdf_schedule
+
 def toggle_sipara(day, sipara):
     """Toggle sipara selection for manual murajjah"""
     if sipara in st.session_state.manual_murajjah[day]:
@@ -807,7 +849,12 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
         return ", ".join([f"Para {p}" for p in day_paras])
 
 def generate_schedule(start_juz, days_in_month):
-    """Generate schedule data for PDF - FIXED VERSION"""
+    """Generate schedule data for PDF - FIXED VERSION with TARGET-FIRST logic"""
+    # If we already have a calculated schedule in session state, use it
+    if st.session_state.schedule:
+        return convert_schedule_for_pdf(st.session_state.schedule, days_in_month)
+    
+    # Otherwise, we need to calculate from scratch
     schedule = {}
     current_page = st.session_state.start_page
     current_juz = start_juz
@@ -819,39 +866,63 @@ def generate_schedule(start_juz, days_in_month):
         if datetime(st.session_state.year, st.session_state.month, d).weekday() == 6:
             sundays.append(d)
     
+    # Use adjusted holidays from session state if available
+    extra_holidays = st.session_state.get('adjusted_extra_holidays', st.session_state.get('extra_holidays', 4))
+    
     last_days = []
-    extra_holidays = st.session_state.get('extra_holidays', 4)
     for i in range(days_in_month, days_in_month - extra_holidays, -1):
         if i not in sundays:
             last_days.append(i)
     
     all_holidays = sorted(set(sundays + last_days))
     
-    # Calculate jadeen schedule (same as calculate_schedule function)
-    days_in_month = calendar.monthrange(st.session_state.year, st.session_state.month)[1]
+    # Calculate total pages needed
     start_page = st.session_state.start_page
     end_page = st.session_state.end_page
-    daily_amount = st.session_state.daily_amount
-    is_backward = "Backward" in st.session_state.direction
-    total_pages = abs(end_page - start_page) + 1
+    total_pages_needed = abs(end_page - start_page) + 1
+    
+    # Get adjusted daily amount from session state
+    daily_amount = st.session_state.get('adjusted_daily_amount', st.session_state.daily_amount)
     
     # Calculate working days
     working_days = days_in_month - len(all_holidays)
     
+    # Calculate jadeen schedule with TARGET-FIRST logic
     schedule_list = []
+    
     if daily_amount == "Mixed (0.5 & 1 page)":
-        full_page_days = int(total_pages - (total_pages / 2))
-        current_page = start_page
-        day_count = 0
+        # Calculate optimal pattern to EXACTLY reach target
+        full_page_days = int(total_pages_needed - (total_pages_needed / 2))
         
         pattern = []
         for i in range(working_days):
-            if day_count < full_page_days and (i % 3 == 0 or working_days - i <= full_page_days - day_count):
+            if len(pattern) < full_page_days and (i % 3 == 0 or working_days - i <= full_page_days - len([p for p in pattern if p == 1])):
                 pattern.append(1)
-                day_count += 1
             else:
                 pattern.append(0.5)
         
+        # Adjust pattern to EXACTLY reach target
+        current_sum = sum(pattern)
+        if current_sum > total_pages_needed:
+            # Too many pages - convert some 1s to 0.5s from the end
+            excess = current_sum - total_pages_needed
+            for i in range(len(pattern) - 1, -1, -1):
+                if pattern[i] == 1 and excess >= 0.5:
+                    pattern[i] = 0.5
+                    excess -= 0.5
+                if excess <= 0:
+                    break
+        elif current_sum < total_pages_needed:
+            # Too few pages - convert some 0.5s to 1s
+            deficit = total_pages_needed - current_sum
+            for i in range(len(pattern)):
+                if pattern[i] == 0.5 and deficit >= 0.5:
+                    pattern[i] = 1
+                    deficit -= 0.5
+                if deficit <= 0:
+                    break
+        
+        # Generate schedule from pattern
         for i in range(working_days):
             amount = pattern[i]
             if is_backward:
@@ -859,6 +930,7 @@ def generate_schedule(start_juz, days_in_month):
             else:
                 current_page_val = start_page + sum(pattern[:i])
             
+            # Ensure we don't go past target
             if is_backward and current_page_val < end_page:
                 current_page_val = end_page
             elif not is_backward and current_page_val > end_page:
@@ -869,23 +941,36 @@ def generate_schedule(start_juz, days_in_month):
                 'amount': amount
             })
     else:
+        # Fixed amount per day (0.5 or 1)
         amount = 0.5 if "0.5" in daily_amount else 1.0
         current_page_val = start_page
+        
+        # Calculate how many days needed to reach target
+        days_to_target = int(total_pages_needed / amount)
+        
         for i in range(working_days):
-            schedule_list.append({
-                'page': current_page_val,
-                'amount': amount
-            })
-            if is_backward:
-                current_page_val -= amount
-                if current_page_val < end_page:
-                    current_page_val = end_page
+            if i < days_to_target:
+                schedule_list.append({
+                    'page': current_page_val,
+                    'amount': amount
+                })
+                
+                if is_backward:
+                    current_page_val -= amount
+                    if current_page_val < end_page:
+                        current_page_val = end_page
+                else:
+                    current_page_val += amount
+                    if current_page_val > end_page:
+                        current_page_val = end_page
             else:
-                current_page_val += amount
-                if current_page_val > end_page:
-                    current_page_val = end_page
+                # After reaching target, continue with same page (revision days)
+                schedule_list.append({
+                    'page': end_page,
+                    'amount': 0
+                })
     
-    # Now create the schedule for each day
+    # Create full monthly schedule
     jadeen_idx = 0
     weekday_counter = 0
     
@@ -895,35 +980,116 @@ def generate_schedule(start_juz, days_in_month):
             continue
         
         # Get jadeen for this day
-        jadeen = schedule_list[jadeen_idx]
-        
-        # Calculate juz range
-        if is_backward:
-            juz_range = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8}"
+        if jadeen_idx < len(schedule_list):
+            jadeen = schedule_list[jadeen_idx]
+            
+            # Calculate juz range
+            if is_backward:
+                juz_range = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8}"
+            else:
+                start = max(1, jadeen['page'] - 10)
+                end = jadeen['page'] - 1
+                juz_range = f"{int(start)}-{int(end)}" if start <= end else "None"
+            
+            # Get murajjah for PDF (just numbers)
+            murajjah = get_murajjah_for_day(weekday_counter, st.session_state.murajjah_option, for_pdf=True)
+            
+            schedule[day] = {
+                'current_page': str(int(jadeen['page'])),
+                'juz_range': juz_range,
+                'murajjah': murajjah,
+                'isHoliday': False
+            }
+            
+            jadeen_idx += 1
+            weekday_counter += 1
+            if weekday_counter >= 6:
+                weekday_counter = 0
         else:
-            start = max(1, jadeen['page'] - 10)
-            end = jadeen['page'] - 1
-            juz_range = f"{int(start)}-{int(end)}" if start <= end else "None"
-        
-        # Get murajjah for PDF (just numbers)
-        murajjah = get_murajjah_for_day(weekday_counter, st.session_state.murajjah_option, for_pdf=True)
-        
-        schedule[day] = {
-            'current_page': str(int(jadeen['page'])),
-            'juz_range': juz_range,
-            'murajjah': murajjah,
-            'isHoliday': False
-        }
-        
-        jadeen_idx += 1
-        weekday_counter += 1
-        if weekday_counter >= 6:
-            weekday_counter = 0
+            # No more jadeen - holiday
+            schedule[day] = {'isHoliday': True}
     
     return schedule
 
+def convert_schedule_for_pdf(schedule_list, days_in_month):
+    """Convert the calculated schedule to PDF format"""
+    pdf_schedule = {}
+    
+    for day_data in schedule_list:
+        day = day_data['Date']
+        
+        if day_data['isHoliday']:
+            pdf_schedule[day] = {'isHoliday': True}
+            continue
+        
+        # Extract page number from Jadeen field
+        jadeen_text = day_data['Jadeen']
+        page_number = ""
+        
+        if jadeen_text == 'REVISION':
+            page_number = str(st.session_state.end_page)
+        elif "(" in jadeen_text:
+            page_part = jadeen_text.split("(")[0].strip()
+            page_number = page_part
+        
+        # Calculate juz range
+        is_backward = "Backward" in st.session_state.direction
+        if is_backward and page_number:
+            try:
+                page_int = int(page_number)
+                juz_range = f"{page_int-1}-{page_int+8}"
+            except:
+                juz_range = "None"
+        elif page_number:
+            try:
+                page_int = int(page_number)
+                start = max(1, page_int - 10)
+                end = page_int - 1
+                juz_range = f"{int(start)}-{int(end)}" if start <= end else "None"
+            except:
+                juz_range = "None"
+        else:
+            juz_range = "None"
+        
+        # Get murajjah for PDF
+        murajjah = day_data['Murajjah']
+        if murajjah and murajjah != "—":
+            # Remove "Para" prefix and keep just numbers
+            murajjah_clean = murajjah.replace("Para", "").replace("para", "").strip()
+        else:
+            murajjah_clean = ""
+        
+        pdf_schedule[day] = {
+            'current_page': page_number if page_number else "0",
+            'juz_range': juz_range,
+            'murajjah': murajjah_clean,
+            'isHoliday': False
+        }
+    
+    # Fill in missing days (if any)
+    for day in range(1, days_in_month + 1):
+        if day not in pdf_schedule:
+            # Check if it's a Sunday
+            if datetime(st.session_state.year, st.session_state.month, day).weekday() == 6:
+                pdf_schedule[day] = {'isHoliday': True}
+            else:
+                # Check if it's in the last few days (extra holidays)
+                extra_holidays = st.session_state.get('adjusted_extra_holidays', st.session_state.get('extra_holidays', 4))
+                if day > days_in_month - extra_holidays:
+                    pdf_schedule[day] = {'isHoliday': True}
+                else:
+                    # Regular day with no data - mark as revision
+                    pdf_schedule[day] = {
+                        'current_page': str(st.session_state.end_page),
+                        'juz_range': "None",
+                        'murajjah': "",
+                        'isHoliday': False
+                    }
+    
+    return pdf_schedule
+
 def calculate_schedule():
-    """Calculate the complete schedule with actual calendar dates"""
+    """Calculate the complete schedule with actual calendar dates - TARGET-FIRST LOGIC"""
     month = st.session_state.month
     year = st.session_state.year
     direction = st.session_state.direction
@@ -936,39 +1102,131 @@ def calculate_schedule():
     # Get days in month
     days_in_month = calendar.monthrange(year, month)[1]
     
-    # Get Sundays
+    # Calculate TOTAL PAGES NEEDED
+    total_pages_needed = abs(end_page - start_page) + 1
+    
+    # Get Sundays (MANDATORY holidays)
     sundays = []
     for day in range(1, days_in_month + 1):
         if datetime(year, month, day).weekday() == 6:
             sundays.append(day)
     
-    # Get extra holidays from end of month
+    # SMART ADJUSTMENT LOGIC - TARGET FIRST!
+    adjusted_extra_holidays = extra_holidays
+    adjusted_daily_amount = daily_amount
+    adjustment_message = ""
+    
+    # Calculate minimum days needed based on daily amount
+    if "0.5" in daily_amount:
+        # If 0.5 page daily: need 2 days per page
+        min_days_needed = total_pages_needed * 2
+    elif "Mixed" in daily_amount:
+        # Mixed: average 0.75 pages per day, so need roughly 1.33 days per page
+        min_days_needed = int(total_pages_needed / 0.75) + 1
+    else:
+        # 1 page daily
+        min_days_needed = total_pages_needed
+    
+    # Calculate maximum available working days (only Sundays as holidays)
+    max_working_days = days_in_month - len(sundays)
+    
+    # CHECK 1: Can we reach target with current settings?
+    current_working_days = days_in_month - len(sundays) - extra_holidays
+    
+    if current_working_days < min_days_needed:
+        # NOT ENOUGH DAYS! Need to adjust
+        
+        # STEP 1: Try reducing extra holidays
+        if max_working_days >= min_days_needed:
+            # We can reach target by reducing holidays
+            adjusted_extra_holidays = max(0, days_in_month - len(sundays) - min_days_needed)
+            adjustment_message += f"⚠️ **Adjusted holidays from {extra_holidays} to {adjusted_extra_holidays}** to reach target.\n\n"
+        
+        # STEP 2: If still not enough, upgrade to 1 page daily
+        if max_working_days < min_days_needed and "0.5" in daily_amount:
+            adjusted_daily_amount = "1 page daily"
+            min_days_needed = total_pages_needed
+            adjustment_message += f"⚠️ **Changed from 0.5 pages to 1 page daily** to reach target.\n\n"
+            
+            # Recalculate holidays needed
+            if max_working_days >= min_days_needed:
+                adjusted_extra_holidays = max(0, days_in_month - len(sundays) - min_days_needed)
+        
+        # STEP 3: If STILL not enough with Mixed, force 1 page daily
+        if max_working_days < min_days_needed and "Mixed" in adjusted_daily_amount:
+            adjusted_daily_amount = "1 page daily"
+            min_days_needed = total_pages_needed
+            adjustment_message += f"⚠️ **Changed from Mixed to 1 page daily** to reach target.\n\n"
+            
+            # Recalculate holidays needed
+            if max_working_days >= min_days_needed:
+                adjusted_extra_holidays = max(0, days_in_month - len(sundays) - min_days_needed)
+        
+        # STEP 4: Final check - if IMPOSSIBLE even with adjustments
+        if max_working_days < total_pages_needed:
+            st.error(f"❌ **IMPOSSIBLE TO REACH TARGET!**\n\nYou need {total_pages_needed} pages but only have {max_working_days} working days (excluding Sundays).\n\nPlease either:\n- Reduce target pages\n- Choose a longer month\n- Start from a different page")
+            return None
+    
+    # Show adjustment message if any changes were made
+    if adjustment_message:
+        st.warning(f"🎯 **Smart Adjustments Made to Reach Target:**\n\n{adjustment_message}")
+        # Store adjusted values in session state
+        st.session_state.adjusted_extra_holidays = adjusted_extra_holidays
+        st.session_state.adjusted_daily_amount = adjusted_daily_amount
+    else:
+        # No adjustments needed
+        st.session_state.adjusted_extra_holidays = extra_holidays
+        st.session_state.adjusted_daily_amount = daily_amount
+    
+    # Get extra holidays from end of month (using ADJUSTED value)
     last_days = []
-    for i in range(days_in_month, days_in_month - extra_holidays, -1):
+    for i in range(days_in_month, days_in_month - adjusted_extra_holidays, -1):
         if i not in sundays:
             last_days.append(i)
     
     all_holidays = sorted(set(sundays + last_days))
     working_days = days_in_month - len(all_holidays)
     
-    # Calculate jadeen schedule
+    # Calculate jadeen schedule with ADJUSTED daily_amount
     is_backward = "Backward" in direction
     total_pages = abs(end_page - start_page) + 1
     
     schedule = []
-    if daily_amount == "Mixed (0.5 & 1 page)":
+    
+    # SMART DISTRIBUTION: Try to use Mixed/0.5 if there's room AFTER reaching target
+    if adjusted_daily_amount == "Mixed (0.5 & 1 page)":
+        # Calculate optimal pattern to EXACTLY reach target
         full_page_days = int(total_pages - (total_pages / 2))
-        current_page = start_page
-        day_count = 0
         
         pattern = []
         for i in range(working_days):
-            if day_count < full_page_days and (i % 3 == 0 or working_days - i <= full_page_days - day_count):
+            if len(pattern) < full_page_days and (i % 3 == 0 or working_days - i <= full_page_days - len([p for p in pattern if p == 1])):
                 pattern.append(1)
-                day_count += 1
             else:
                 pattern.append(0.5)
         
+        # Adjust pattern to EXACTLY reach target
+        current_sum = sum(pattern)
+        if current_sum > total_pages:
+            # Too many pages - convert some 1s to 0.5s from the end
+            excess = current_sum - total_pages
+            for i in range(len(pattern) - 1, -1, -1):
+                if pattern[i] == 1 and excess >= 0.5:
+                    pattern[i] = 0.5
+                    excess -= 0.5
+                if excess <= 0:
+                    break
+        elif current_sum < total_pages:
+            # Too few pages - convert some 0.5s to 1s
+            deficit = total_pages - current_sum
+            for i in range(len(pattern)):
+                if pattern[i] == 0.5 and deficit >= 0.5:
+                    pattern[i] = 1
+                    deficit -= 0.5
+                if deficit <= 0:
+                    break
+        
+        # Generate schedule from pattern
         for i in range(working_days):
             amount = pattern[i]
             if is_backward:
@@ -976,6 +1234,7 @@ def calculate_schedule():
             else:
                 current_page_val = start_page + sum(pattern[:i])
             
+            # Ensure we don't go past target
             if is_backward and current_page_val < end_page:
                 current_page_val = end_page
             elif not is_backward and current_page_val > end_page:
@@ -986,21 +1245,34 @@ def calculate_schedule():
                 'amount': amount
             })
     else:
-        amount = 0.5 if "0.5" in daily_amount else 1.0
+        # Fixed amount per day (0.5 or 1)
+        amount = 0.5 if "0.5" in adjusted_daily_amount else 1.0
         current_page_val = start_page
+        
+        # Calculate how many days needed to reach target
+        days_to_target = int(total_pages / amount)
+        
         for i in range(working_days):
-            schedule.append({
-                'page': current_page_val,
-                'amount': amount
-            })
-            if is_backward:
-                current_page_val -= amount
-                if current_page_val < end_page:
-                    current_page_val = end_page
+            if i < days_to_target:
+                schedule.append({
+                    'page': current_page_val,
+                    'amount': amount
+                })
+                
+                if is_backward:
+                    current_page_val -= amount
+                    if current_page_val < end_page:
+                        current_page_val = end_page
+                else:
+                    current_page_val += amount
+                    if current_page_val > end_page:
+                        current_page_val = end_page
             else:
-                current_page_val += amount
-                if current_page_val > end_page:
-                    current_page_val = end_page
+                # After reaching target, continue with same page (revision days)
+                schedule.append({
+                    'page': end_page,
+                    'amount': 0
+                })
     
     # Create full monthly schedule - FOLLOWING ACTUAL CALENDAR DATES
     full_schedule = []
@@ -1010,6 +1282,8 @@ def calculate_schedule():
     # Get actual calendar for the selected month
     cal = calendar.Calendar()
     month_days = cal.itermonthdays2(year, month)  # Returns (day_of_month, weekday)
+    
+    pages_completed = 0
     
     for day_num, weekday in month_days:
         if day_num == 0:  # Skip days from other months
@@ -1028,34 +1302,55 @@ def calculate_schedule():
                 'isHoliday': True
             })
         else:
-            jadeen = schedule[jadeen_idx]
-            
-            # Calculate juzz hali
-            if is_backward:
-                juzz_hali = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8}"
-            else:
-                start = max(1, jadeen['page'] - 10)
-                end = jadeen['page'] - 1
-                juzz_hali = f"{int(start)}-{int(end)}" if start <= end else "None"
-            
-            # Calculate murajjah (with "Para" prefix for display)
-            murajjah = get_murajjah_for_day(weekday_counter, murajjah_option, for_pdf=False)
-            
-            full_schedule.append({
-                'Date': day_num,
-                'Day': day_name,
-                'Jadeen': f"{int(jadeen['page'])} ({'full' if jadeen['amount'] == 1 else 'half'})",
-                'Juzz Hali': juzz_hali,
-                'Murajjah': murajjah,
-                'isHoliday': False
-            })
-            
-            jadeen_idx += 1
-            weekday_counter += 1
-            if weekday_counter >= 6:
-                weekday_counter = 0
+            if jadeen_idx < len(schedule):
+                jadeen = schedule[jadeen_idx]
+                pages_completed += jadeen['amount']
+                
+                # Calculate juzz hali
+                if is_backward:
+                    juzz_hali = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8}"
+                else:
+                    start = max(1, jadeen['page'] - 10)
+                    end = jadeen['page'] - 1
+                    juzz_hali = f"{int(start)}-{int(end)}" if start <= end else "None"
+                
+                # Calculate murajjah (with "Para" prefix for display)
+                murajjah = get_murajjah_for_day(weekday_counter, murajjah_option, for_pdf=False)
+                
+                # Show revision day if amount is 0
+                if jadeen['amount'] == 0:
+                    jadeen_display = 'REVISION'
+                else:
+                    jadeen_display = f"{int(jadeen['page'])} ({'full' if jadeen['amount'] == 1 else 'half'})"
+                
+                full_schedule.append({
+                    'Date': day_num,
+                    'Day': day_name,
+                    'Jadeen': jadeen_display,
+                    'Juzz Hali': juzz_hali,
+                    'Murajjah': murajjah,
+                    'isHoliday': False
+                })
+                
+                jadeen_idx += 1
+                weekday_counter += 1
+                if weekday_counter >= 6:
+                    weekday_counter = 0
     
     st.session_state.schedule = full_schedule
+    
+    # SHOW SUCCESS SUMMARY
+    st.success(f"""
+    ✅ **Target Successfully Reached!**
+    
+    📊 **Summary:**
+    - **Total Pages to Complete:** {total_pages_needed}
+    - **Working Days:** {working_days}
+    - **Holidays:** {len(all_holidays)} (Sundays: {len(sundays)}, Extra: {adjusted_extra_holidays})
+    - **Daily Amount:** {adjusted_daily_amount}
+    - **Pages Completed:** {pages_completed:.1f} / {total_pages_needed}
+    """)
+    
     return full_schedule
 
 def format_arabic(text):
@@ -1585,8 +1880,8 @@ def main():
         with col2:
             if st.button("✨ Generate Takhteet", type="primary", use_container_width=True):
                 with st.spinner("Generating schedule..."):
-                    calculate_schedule()
-                    st.success("Schedule generated successfully!")
+                    result = calculate_schedule()
+                    if result:  # Only rerun if schedule was successfully generated
                     st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1596,10 +1891,22 @@ def main():
         st.markdown("---")
         month_name = datetime(2000, st.session_state.month, 1).strftime('%B')
         
+        # Show adjusted settings if they exist
+        adjusted_info = ""
+        if hasattr(st.session_state, 'adjusted_extra_holidays') and hasattr(st.session_state, 'adjusted_daily_amount'):
+            if (st.session_state.adjusted_extra_holidays != st.session_state.extra_holidays or 
+                st.session_state.adjusted_daily_amount != st.session_state.daily_amount):
+                adjusted_info = f"""
+                <p style='color: #f59e0b; font-weight: 600; font-size: 0.9rem; margin-top: 0.5rem;'>
+                    ⚙️ Adjusted: {st.session_state.adjusted_extra_holidays} holidays, {st.session_state.adjusted_daily_amount}
+                </p>
+                """
+        
         st.markdown(f"""
         <div class="stCard">
             <h2>Takhteet for {st.session_state.student_name} - {month_name} {st.session_state.year}</h2>
             <p style='color: #10b981; font-weight: 600;'>({st.session_state.direction})</p>
+            {adjusted_info}
         </div>
         """, unsafe_allow_html=True)
         
@@ -1666,6 +1973,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
