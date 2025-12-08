@@ -990,7 +990,13 @@ def calculate_schedule():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.markdown("""
+            # Solution 1: Reduce holidays
+            reduce_to = max(0, extra_holidays - (min_days_needed - current_working_days))
+            new_working_days = min(max_working_days, current_working_days + (min_days_needed - current_working_days))
+            pages_with_this = min(total_pages_needed, current_working_days * avg_pages_per_day)
+            status1 = "✅ REACH TARGET" if max_working_days >= min_days_needed else "❌ STILL NOT ENOUGH"
+            
+            st.markdown(f"""
             #### **Solution 1: Reduce Holidays**
             **What to do:**
             - Keep same daily amount: **{daily_amount}**
@@ -1000,17 +1006,10 @@ def calculate_schedule():
             - Working days: **{new_working_days}** (was {current_working_days})
             - Can complete: **{pages_with_this}** pages
             - Status: **{status1}**
-            """.format(
-                daily_amount=daily_amount,
-                extra_holidays=extra_holidays,
-                reduce_to=max(0, extra_holidays - (min_days_needed - current_working_days)),
-                new_working_days=min(max_working_days, current_working_days + (min_days_needed - current_working_days)),
-                pages_with_this=min(total_pages_needed, current_working_days * avg_pages_per_day),
-                status1="✅ REACH TARGET" if max_working_days >= min_days_needed else "❌ STILL NOT ENOUGH"
-            ))
+            """)
             
             if max_working_days >= min_days_needed:
-                st.success(f"**Action needed:** Reduce holidays to {max(0, extra_holidays - (min_days_needed - current_working_days))}")
+                st.success(f"**Action needed:** Reduce holidays to {reduce_to}")
             else:
                 st.error("Even with NO extra holidays, you still can't reach target!")
         
@@ -1868,6 +1867,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
