@@ -1011,82 +1011,6 @@ def generate_schedule(start_juz, days_in_month):
     
     return schedule
 
-def convert_schedule_for_pdf(schedule_list, days_in_month):
-    """Convert the calculated schedule to PDF format"""
-    pdf_schedule = {}
-    
-    for day_data in schedule_list:
-        day = day_data['Date']
-        
-        if day_data['isHoliday']:
-            pdf_schedule[day] = {'isHoliday': True}
-            continue
-        
-        # Extract page number from Jadeen field
-        jadeen_text = day_data['Jadeen']
-        page_number = ""
-        
-        if jadeen_text == 'REVISION':
-            page_number = str(st.session_state.end_page)
-        elif "(" in jadeen_text:
-            page_part = jadeen_text.split("(")[0].strip()
-            page_number = page_part
-        
-        # Calculate juz range
-        is_backward = "Backward" in st.session_state.direction
-        if is_backward and page_number:
-            try:
-                page_int = int(page_number)
-                juz_range = f"{page_int-1}-{page_int+8}"
-            except:
-                juz_range = "None"
-        elif page_number:
-            try:
-                page_int = int(page_number)
-                start = max(1, page_int - 10)
-                end = page_int - 1
-                juz_range = f"{int(start)}-{int(end)}" if start <= end else "None"
-            except:
-                juz_range = "None"
-        else:
-            juz_range = "None"
-        
-        # Get murajjah for PDF
-        murajjah = day_data['Murajjah']
-        if murajjah and murajjah != "—":
-            # Remove "Para" prefix and keep just numbers
-            murajjah_clean = murajjah.replace("Para", "").replace("para", "").strip()
-        else:
-            murajjah_clean = ""
-        
-        pdf_schedule[day] = {
-            'current_page': page_number if page_number else "0",
-            'juz_range': juz_range,
-            'murajjah': murajjah_clean,
-            'isHoliday': False
-        }
-    
-    # Fill in missing days (if any)
-    for day in range(1, days_in_month + 1):
-        if day not in pdf_schedule:
-            # Check if it's a Sunday
-            if datetime(st.session_state.year, st.session_state.month, day).weekday() == 6:
-                pdf_schedule[day] = {'isHoliday': True}
-            else:
-                # Check if it's in the last few days (extra holidays)
-                extra_holidays = st.session_state.get('adjusted_extra_holidays', st.session_state.get('extra_holidays', 4))
-                if day > days_in_month - extra_holidays:
-                    pdf_schedule[day] = {'isHoliday': True}
-                else:
-                    # Regular day with no data - mark as revision
-                    pdf_schedule[day] = {
-                        'current_page': str(st.session_state.end_page),
-                        'juz_range': "None",
-                        'murajjah': "",
-                        'isHoliday': False
-                    }
-    
-    return pdf_schedule
 
 def calculate_schedule():
     """Calculate the complete schedule with actual calendar dates - TARGET-FIRST LOGIC"""
@@ -1874,7 +1798,7 @@ def main():
         # Manual Murajjah Section
         render_manual_murajjah_section()
         
-        # Generate button
+                # Generate button
         st.markdown("---")
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
@@ -1882,7 +1806,7 @@ def main():
                 with st.spinner("Generating schedule..."):
                     result = calculate_schedule()
                     if result:  # Only rerun if schedule was successfully generated
-                    st.rerun()
+                        st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -1973,6 +1897,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
