@@ -14,6 +14,186 @@ try:
 except:
     ARABIC_SUPPORT = False
 
+# ================ SURAH DATABASE FOR BACKWARD HIFZ ================
+# Based on Mushaf Tajweed Dar Al-Maarifah Damascus (604 pages)
+# Surahs in BACKWARD order (from end to beginning)
+
+SURAH_DATA_BACKWARD = [
+    # Juz 30 (Pages 582-604) - Backward order
+    {"surah": 114, "name": "An-Nas", "arabic": "الناس", "start_page": 604, "end_page": 604},
+    {"surah": 113, "name": "Al-Falaq", "arabic": "الفلق", "start_page": 604, "end_page": 604},
+    {"surah": 112, "name": "Al-Ikhlas", "arabic": "الإخلاص", "start_page": 604, "end_page": 604},
+    {"surah": 111, "name": "Al-Masad", "arabic": "المسد", "start_page": 603, "end_page": 603},
+    {"surah": 110, "name": "An-Nasr", "arabic": "النصر", "start_page": 603, "end_page": 603},
+    {"surah": 109, "name": "Al-Kafirun", "arabic": "الكافرون", "start_page": 603, "end_page": 603},
+    {"surah": 108, "name": "Al-Kawthar", "arabic": "الكوثر", "start_page": 602, "end_page": 602},
+    {"surah": 107, "name": "Al-Ma'un", "arabic": "الماعون", "start_page": 602, "end_page": 602},
+    {"surah": 106, "name": "Quraysh", "arabic": "قريش", "start_page": 602, "end_page": 602},
+    {"surah": 105, "name": "Al-Fil", "arabic": "الفيل", "start_page": 601, "end_page": 601},
+    {"surah": 104, "name": "Al-Humazah", "arabic": "الهمزة", "start_page": 601, "end_page": 601},
+    {"surah": 103, "name": "Al-'Asr", "arabic": "العصر", "start_page": 601, "end_page": 601},
+    {"surah": 102, "name": "At-Takathur", "arabic": "التكاثر", "start_page": 600, "end_page": 600},
+    {"surah": 101, "name": "Al-Qari'ah", "arabic": "القارعة", "start_page": 600, "end_page": 600},
+    {"surah": 100, "name": "Al-'Adiyat", "arabic": "العاديات", "start_page": 599, "end_page": 600},
+    {"surah": 99, "name": "Az-Zalzalah", "arabic": "الزلزلة", "start_page": 599, "end_page": 599},
+    {"surah": 98, "name": "Al-Bayyinah", "arabic": "البينة", "start_page": 598, "end_page": 599},
+    {"surah": 97, "name": "Al-Qadr", "arabic": "القدر", "start_page": 598, "end_page": 598},
+    {"surah": 96, "name": "Al-'Alaq", "arabic": "العلق", "start_page": 597, "end_page": 597},
+    {"surah": 95, "name": "At-Tin", "arabic": "التين", "start_page": 597, "end_page": 597},
+    {"surah": 94, "name": "Ash-Sharh", "arabic": "الشرح", "start_page": 596, "end_page": 596},
+    {"surah": 93, "name": "Ad-Duha", "arabic": "الضحى", "start_page": 596, "end_page": 596},
+    {"surah": 92, "name": "Al-Layl", "arabic": "الليل", "start_page": 595, "end_page": 596},
+    {"surah": 91, "name": "Ash-Shams", "arabic": "الشمس", "start_page": 595, "end_page": 595},
+    {"surah": 90, "name": "Al-Balad", "arabic": "البلد", "start_page": 594, "end_page": 594},
+    {"surah": 89, "name": "Al-Fajr", "arabic": "الفجر", "start_page": 593, "end_page": 594},
+    {"surah": 88, "name": "Al-Ghashiyah", "arabic": "الغاشية", "start_page": 592, "end_page": 592},
+    {"surah": 87, "name": "Al-A'la", "arabic": "الأعلى", "start_page": 591, "end_page": 592},
+    {"surah": 86, "name": "At-Tariq", "arabic": "الطارق", "start_page": 591, "end_page": 591},
+    {"surah": 85, "name": "Al-Buruj", "arabic": "البروج", "start_page": 590, "end_page": 590},
+    {"surah": 84, "name": "Al-Inshiqaq", "arabic": "الإنشقاق", "start_page": 589, "end_page": 589},
+    {"surah": 83, "name": "Al-Mutaffifin", "arabic": "المطففين", "start_page": 587, "end_page": 589},
+    {"surah": 82, "name": "Al-Infitar", "arabic": "الإنفطار", "start_page": 587, "end_page": 587},
+    {"surah": 81, "name": "At-Takwir", "arabic": "التكوير", "start_page": 586, "end_page": 586},
+    {"surah": 80, "name": "'Abasa", "arabic": "عبس", "start_page": 585, "end_page": 585},
+    {"surah": 79, "name": "An-Nazi'at", "arabic": "النازعات", "start_page": 583, "end_page": 584},
+    {"surah": 78, "name": "An-Naba'", "arabic": "النبأ", "start_page": 582, "end_page": 583},
+    
+    # Juz 29 (Pages 562-581)
+    {"surah": 77, "name": "Al-Mursalat", "arabic": "المرسلات", "start_page": 580, "end_page": 581},
+    {"surah": 76, "name": "Al-Insan", "arabic": "الإنسان", "start_page": 578, "end_page": 580},
+    {"surah": 75, "name": "Al-Qiyamah", "arabic": "القيامة", "start_page": 577, "end_page": 578},
+    {"surah": 74, "name": "Al-Muddaththir", "arabic": "المدثر", "start_page": 575, "end_page": 577},
+    {"surah": 73, "name": "Al-Muzzammil", "arabic": "المزمل", "start_page": 574, "end_page": 575},
+    {"surah": 72, "name": "Al-Jinn", "arabic": "الجن", "start_page": 572, "end_page": 573},
+    {"surah": 71, "name": "Nuh", "arabic": "نوح", "start_page": 570, "end_page": 571},
+    {"surah": 70, "name": "Al-Ma'arij", "arabic": "المعارج", "start_page": 568, "end_page": 570},
+    {"surah": 69, "name": "Al-Haqqah", "arabic": "الحاقة", "start_page": 566, "end_page": 568},
+    {"surah": 68, "name": "Al-Qalam", "arabic": "القلم", "start_page": 564, "end_page": 566},
+    {"surah": 67, "name": "Al-Mulk", "arabic": "الملك", "start_page": 562, "end_page": 564},
+    
+    # Juz 28 (Pages 542-561)
+    {"surah": 66, "name": "At-Tahrim", "arabic": "التحريم", "start_page": 560, "end_page": 561},
+    {"surah": 65, "name": "At-Talaq", "arabic": "الطلاق", "start_page": 558, "end_page": 559},
+    {"surah": 64, "name": "At-Taghabun", "arabic": "التغابن", "start_page": 556, "end_page": 557},
+    {"surah": 63, "name": "Al-Munafiqun", "arabic": "المنافقون", "start_page": 554, "end_page": 555},
+    {"surah": 62, "name": "Al-Jumu'ah", "arabic": "الجمعة", "start_page": 553, "end_page": 554},
+    {"surah": 61, "name": "As-Saff", "arabic": "الصف", "start_page": 551, "end_page": 552},
+    {"surah": 60, "name": "Al-Mumtahanah", "arabic": "الممتحنة", "start_page": 549, "end_page": 551},
+    {"surah": 59, "name": "Al-Hashr", "arabic": "الحشر", "start_page": 545, "end_page": 548},
+    {"surah": 58, "name": "Al-Mujadila", "arabic": "المجادلة", "start_page": 542, "end_page": 545},
+    
+    # Juz 27 (Pages 522-541)
+    {"surah": 57, "name": "Al-Hadid", "arabic": "الحديد", "start_page": 537, "end_page": 541},
+    {"surah": 56, "name": "Al-Waqi'ah", "arabic": "الواقعة", "start_page": 534, "end_page": 537},
+    {"surah": 55, "name": "Ar-Rahman", "arabic": "الرحمن", "start_page": 531, "end_page": 534},
+    {"surah": 54, "name": "Al-Qamar", "arabic": "القمر", "start_page": 528, "end_page": 531},
+    {"surah": 53, "name": "An-Najm", "arabic": "النجم", "start_page": 526, "end_page": 528},
+    {"surah": 52, "name": "At-Tur", "arabic": "الطور", "start_page": 523, "end_page": 525},
+    {"surah": 51, "name": "Adh-Dhariyat", "arabic": "الذاريات", "start_page": 520, "end_page": 523},
+    
+    # Juz 26 (Pages 502-521) - Partial surahs
+    {"surah": 50, "name": "Qaf", "arabic": "ق", "start_page": 518, "end_page": 520},
+    {"surah": 49, "name": "Al-Hujurat", "arabic": "الحجرات", "start_page": 515, "end_page": 517},
+    {"surah": 48, "name": "Al-Fath", "arabic": "الفتح", "start_page": 511, "end_page": 515},
+    {"surah": 47, "name": "Muhammad", "arabic": "محمد", "start_page": 507, "end_page": 510},
+    {"surah": 46, "name": "Al-Ahqaf", "arabic": "الأحقاف", "start_page": 502, "end_page": 506},
+    {"surah": 45, "name": "Al-Jathiyah", "arabic": "الجاثية", "start_page": 499, "end_page": 502},
+]
+
+# Create lookup dictionaries for easy access
+SURAH_BY_NUMBER = {s["surah"]: s for s in SURAH_DATA_BACKWARD}
+SURAH_BY_NAME = {s["name"]: s for s in SURAH_DATA_BACKWARD}
+
+def get_surah_at_page(page):
+    """Find which surah contains a given page"""
+    for surah in SURAH_DATA_BACKWARD:
+        if surah["start_page"] <= page <= surah["end_page"]:
+            return surah
+    return None
+
+def get_next_surah_backward(current_surah_num):
+    """Get the next surah in backward sequence (previous surah number)"""
+    for i, surah in enumerate(SURAH_DATA_BACKWARD):
+        if surah["surah"] == current_surah_num:
+            if i + 1 < len(SURAH_DATA_BACKWARD):
+                return SURAH_DATA_BACKWARD[i + 1]
+    return None
+
+def get_previous_surah_backward(current_surah_num):
+    """Get the previous surah in backward sequence (next surah number - going forward)"""
+    for i, surah in enumerate(SURAH_DATA_BACKWARD):
+        if surah["surah"] == current_surah_num:
+            if i - 1 >= 0:
+                return SURAH_DATA_BACKWARD[i - 1]
+    return None
+
+def generate_backward_schedule(start_surah_num, start_page, daily_amount, working_days):
+    """Generate backward schedule based on surah-by-surah progression"""
+    schedule = []
+    current_surah = SURAH_BY_NUMBER.get(start_surah_num)
+    if not current_surah:
+        return schedule
+    
+    current_page = start_page
+    current_surah_num = start_surah_num
+    day_count = 0
+    
+    while day_count < working_days:
+        if not current_surah:
+            break
+            
+        # Calculate pages left in current surah
+        pages_in_surah = current_surah["end_page"] - current_surah["start_page"] + 1
+        current_page_in_surah = current_page - current_surah["start_page"]
+        pages_left_in_surah = pages_in_surah - current_page_in_surah
+        
+        if pages_left_in_surah <= 0:
+            # Move to next surah in backward sequence
+            current_surah = get_next_surah_backward(current_surah_num)
+            if not current_surah:
+                break
+            current_surah_num = current_surah["surah"]
+            current_page = current_surah["start_page"]
+            continue
+        
+        # Determine today's amount
+        if daily_amount == "Mixed (0.5 & 1 page)":
+            # Alternate pattern: 0.5, 0.5, 1, 0.5, 0.5, 1...
+            pattern = [0.5, 0.5, 1, 0.5, 0.5, 1]
+            today_amount = pattern[day_count % len(pattern)]
+        elif "0.5" in daily_amount:
+            today_amount = 0.5
+        else:
+            today_amount = 1.0
+        
+        # Adjust amount if it exceeds pages left in surah
+        if today_amount > pages_left_in_surah:
+            today_amount = pages_left_in_surah
+        
+        # Add to schedule
+        schedule.append({
+            "day": day_count + 1,
+            "surah_num": current_surah_num,
+            "surah_name": current_surah["name"],
+            "page": current_page,
+            "amount": today_amount,
+            "surah_pages_left": pages_left_in_surah - today_amount
+        })
+        
+        # Update current page
+        current_page += today_amount
+        
+        # If we completed the surah, move to next one
+        if current_page > current_surah["end_page"]:
+            current_surah = get_next_surah_backward(current_surah_num)
+            if current_surah:
+                current_surah_num = current_surah["surah"]
+                current_page = current_surah["start_page"]
+        
+        day_count += 1
+    
+    return schedule
+
 # Page configuration
 st.set_page_config(
     page_title="Quran Hifz Takhteet Generator",
@@ -1103,48 +1283,94 @@ def calculate_schedule():
     
     schedule = []
     
-    if daily_amount == "Mixed (0.5 & 1 page)":
-        full_page_days = int(total_pages - (total_pages / 2))
-        current_page = start_page
-        day_count = 0
+    if is_backward:
+        # ============ BACKWARD SURAH-BASED SCHEDULE ============
+        # Get surah for starting page
+        start_surah = get_surah_at_page(start_page)
+        if not start_surah:
+            st.error(f"❌ Page {start_page} is not in the surah database. Please check the page number.")
+            return None
         
-        pattern = []
-        for i in range(working_days):
-            if day_count < full_page_days and (i % 3 == 0 or working_days - i <= full_page_days - day_count):
-                pattern.append(1)
-                day_count += 1
-            else:
-                pattern.append(0.5)
+        # Check if start page is valid within surah
+        if start_page < start_surah["start_page"] or start_page > start_surah["end_page"]:
+            st.error(f"❌ Page {start_page} is not within {start_surah['name']} (pages {start_surah['start_page']}-{start_surah['end_page']})")
+            return None
         
-        for i in range(working_days):
-            amount = pattern[i]
-            if is_backward:
-                current_page_val = start_page - sum(pattern[:i])
-            else:
-                current_page_val = start_page + sum(pattern[:i])
+        # Generate backward schedule
+        backward_schedule = generate_backward_schedule(
+            start_surah_num=start_surah["surah"],
+            start_page=start_page,
+            daily_amount=daily_amount,
+            working_days=working_days
+        )
+        
+        if not backward_schedule:
+            st.error("❌ Could not generate backward schedule. Please check your inputs.")
+            return None
+        
+        # Calculate total pages from backward schedule
+        total_pages_scheduled = sum(item["amount"] for item in backward_schedule)
+        
+        # Check if schedule reaches target
+        if total_pages_scheduled < total_pages:
+            st.error(f"""
+            ❌ **Target cannot be reached with backward surah progression!**
             
-            if is_backward and current_page_val < end_page:
-                current_page_val = end_page
-            elif not is_backward and current_page_val > end_page:
-                current_page_val = end_page
+            **Reason:**
+            - You need **{total_pages}** pages to reach target
+            - With current settings, you can complete **{total_pages_scheduled:.1f}** pages
+            - Shortfall: **{total_pages - total_pages_scheduled:.1f}** pages
             
+            **Solutions:**
+            1. Increase daily amount
+            2. Reduce target pages
+            3. Add more working days
+            """)
+            return None
+        
+        # Convert backward schedule to the format expected by the rest of the code
+        for day_schedule in backward_schedule[:working_days]:
             schedule.append({
-                'page': round(current_page_val, 1),
-                'amount': amount
+                'page': day_schedule["page"],
+                'amount': day_schedule["amount"],
+                'surah_name': day_schedule["surah_name"],
+                'surah_num': day_schedule["surah_num"]
             })
+        
     else:
-        amount = 0.5 if "0.5" in daily_amount else 1.0
-        current_page_val = start_page
-        for i in range(working_days):
-            schedule.append({
-                'page': current_page_val,
-                'amount': amount
-            })
-            if is_backward:
-                current_page_val -= amount
-                if current_page_val < end_page:
+        # ============ FORWARD DIRECTION (ORIGINAL LOGIC) ============
+        if daily_amount == "Mixed (0.5 & 1 page)":
+            full_page_days = int(total_pages - (total_pages / 2))
+            current_page = start_page
+            day_count = 0
+            
+            pattern = []
+            for i in range(working_days):
+                if day_count < full_page_days and (i % 3 == 0 or working_days - i <= full_page_days - day_count):
+                    pattern.append(1)
+                    day_count += 1
+                else:
+                    pattern.append(0.5)
+            
+            for i in range(working_days):
+                amount = pattern[i]
+                current_page_val = start_page + sum(pattern[:i])
+                
+                if current_page_val > end_page:
                     current_page_val = end_page
-            else:
+                
+                schedule.append({
+                    'page': round(current_page_val, 1),
+                    'amount': amount
+                })
+        else:
+            amount = 0.5 if "0.5" in daily_amount else 1.0
+            current_page_val = start_page
+            for i in range(working_days):
+                schedule.append({
+                    'page': current_page_val,
+                    'amount': amount
+                })
                 current_page_val += amount
                 if current_page_val > end_page:
                     current_page_val = end_page
@@ -1222,6 +1448,7 @@ def calculate_schedule():
     """)
     
     return full_schedule
+    
 def format_arabic(text):
     """Format Arabic text for RTL display"""
     if ARABIC_SUPPORT and isinstance(text, str) and any('\u0600' <= c <= '\u06FF' for c in text):
@@ -1652,7 +1879,14 @@ def main():
         
         st.markdown("---")
         
-        # Form inputs in grid - REORDERED FIELDS
+        # === DAILY JADEEN AMOUNT - MUST BE BEFORE backward/forward section ===
+        st.session_state.daily_amount = st.selectbox(
+            "**Daily Jadeen Amount**",
+            options=["0.5 page daily", "1 page daily", "Mixed (0.5 & 1 page)"],
+            index=2
+        )
+        
+        # Form inputs in grid
         col1, col2 = st.columns(2)
         
         with col1:
@@ -1680,44 +1914,88 @@ def main():
             )
             
             if "Backward" in st.session_state.direction:
-                st.session_state.start_page = st.number_input(
-                    "**Start Jadeen Page**",
-                    min_value=1,
-                    max_value=604,
-                    value=527,
-                    step=1
+                # For backward direction: Surah-based selection
+                
+                # Create surah options for dropdown
+                surah_options = []
+                for surah in SURAH_DATA_BACKWARD:
+                    surah_text = f"Surah {surah['surah']}: {surah['name']} (pages {surah['start_page']}-{surah['end_page']})"
+                    surah_options.append((surah['surah'], surah_text))
+                
+                # Default to Surah 77 (Al-Mursalat) - common starting point
+                default_index = next((i for i, (num, text) in enumerate(surah_options) if num == 77), 0)
+                
+                # Surah selection
+                selected_surah_text = st.selectbox(
+                    "**Select Starting Surah**",
+                    options=[text for _, text in surah_options],
+                    index=default_index,
+                    help="Select the surah you're currently memorizing"
                 )
+                
+                # Get selected surah number
+                selected_surah_num = None
+                for num, text in surah_options:
+                    if text == selected_surah_text:
+                        selected_surah_num = num
+                        break
+                
+                if selected_surah_num:
+                    selected_surah = SURAH_BY_NUMBER[selected_surah_num]
+                    
+                    # Page within selected surah
+                    page_col1, page_col2 = st.columns(2)
+                    with page_col1:
+                        st.session_state.start_page = st.number_input(
+                            "**Starting Page within Surah**",
+                            min_value=float(selected_surah["start_page"]),
+                            max_value=float(selected_surah["end_page"]),
+                            value=float(selected_surah["start_page"]),
+                            step=0.5 if "0.5" in st.session_state.daily_amount else 1.0,
+                            format="%.1f",
+                            help=f"Pages {selected_surah['start_page']}-{selected_surah['end_page']} in {selected_surah['name']}"
+                        )
+                    
+                    with page_col2:
+                        # Show surah info
+                        st.markdown(f"""
+                        <div style='background: rgba(59, 130, 246, 0.1); padding: 10px; border-radius: 10px; margin-top: 25px;'>
+                        <p style='margin: 0; font-size: 0.9rem; color: #3b82f6;'><strong>{selected_surah['name']}</strong></p>
+                        <p style='margin: 0; font-size: 0.8rem; color: #6b7280;'>Pages: {selected_surah['start_page']}–{selected_surah['end_page']}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                # Target page
                 st.session_state.end_page = st.number_input(
-                    "**End Jadeen Page (Target)**",
+                    "**Target Page (Where to stop)**",
                     min_value=1,
                     max_value=604,
                     value=511,
-                    step=1
+                    step=1,
+                    help="The page number where you want to stop memorizing"
                 )
+                
             else:
-                st.session_state.start_page = st.number_input(
-                    "**Current Jadeen Page**",
-                    min_value=1,
-                    max_value=604,
-                    value=418,
-                    step=1
-                )
-                st.session_state.end_page = st.number_input(
-                    "**Target Jadeen Page**",
-                    min_value=1,
-                    max_value=604,
-                    value=430,
-                    step=1
-                )
+                # Forward direction remains the same
+                forward_col1, forward_col2 = st.columns(2)
+                with forward_col1:
+                    st.session_state.start_page = st.number_input(
+                        "**Current Jadeen Page**",
+                        min_value=1,
+                        max_value=604,
+                        value=418,
+                        step=1
+                    )
+                with forward_col2:
+                    st.session_state.end_page = st.number_input(
+                        "**Target Jadeen Page**",
+                        min_value=1,
+                        max_value=604,
+                        value=430,
+                        step=1
+                    )
         
         with col2:
-            # DAILY JADEEN AMOUNT moved here (after end page)
-            st.session_state.daily_amount = st.selectbox(
-                "**Daily Jadeen Amount**",
-                options=["0.5 page daily", "1 page daily", "Mixed (0.5 & 1 page)"],
-                index=2
-            )
-            
             # Rest of the fields
             st.session_state.current_sipara = st.slider(
                 "**Current Sipara (Para)**",
@@ -1768,9 +2046,45 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        # Create DataFrame for display
+        # Create DataFrame for display - ADD SURAH COLUMN FOR BACKWARD
         df = pd.DataFrame(st.session_state.schedule)
-        display_df = df[['Date', 'Day', 'Jadeen', 'Juzz Hali', 'Murajjah']]
+        
+        if "Backward" in st.session_state.direction:
+            # For backward direction: Add surah information
+            display_columns = ['Date', 'Day', 'Jadeen', 'Surah', 'Juzz Hali', 'Murajjah']
+            
+            # Create a new list with surah info
+            display_data = []
+            for day_data in st.session_state.schedule:
+                if not day_data['isHoliday']:
+                    # Get surah info for this page
+                    page_num = int(day_data['Jadeen'].split()[0]) if day_data['Jadeen'] != 'OFF' else 0
+                    surah = get_surah_at_page(page_num) if page_num > 0 else None
+                    surah_info = f"{surah['name']}" if surah else ""
+                    
+                    display_data.append({
+                        'Date': day_data['Date'],
+                        'Day': day_data['Day'],
+                        'Jadeen': day_data['Jadeen'],
+                        'Surah': surah_info,
+                        'Juzz Hali': day_data['Juzz Hali'],
+                        'Murajjah': day_data['Murajjah']
+                    })
+                else:
+                    display_data.append({
+                        'Date': day_data['Date'],
+                        'Day': day_data['Day'],
+                        'Jadeen': 'OFF',
+                        'Surah': '—',
+                        'Juzz Hali': '—',
+                        'Murajjah': '—'
+                    })
+            
+            display_df = pd.DataFrame(display_data)
+        else:
+            # Forward direction: Original format
+            display_columns = ['Date', 'Day', 'Jadeen', 'Juzz Hali', 'Murajjah']
+            display_df = df[display_columns]
         
         # Sort by Date
         display_df = display_df.sort_values('Date')
@@ -1788,6 +2102,31 @@ def main():
             use_container_width=True,
             height=600
         )
+        
+        # Show schedule summary with surah info for backward
+        if "Backward" in st.session_state.direction:
+            st.markdown("---")
+            with st.expander("📋 Surah Progression Summary", expanded=True):
+                # Extract unique surahs from schedule
+                surahs_progress = {}
+                for day_data in st.session_state.schedule:
+                    if not day_data['isHoliday'] and day_data['Jadeen'] != 'OFF':
+                        page_num = int(day_data['Jadeen'].split()[0])
+                        surah = get_surah_at_page(page_num)
+                        if surah:
+                            surahs_progress[surah['surah']] = surah['name']
+                
+                if surahs_progress:
+                    st.markdown("**Surahs in this schedule:**")
+                    surah_list = []
+                    for surah_num in sorted(surahs_progress.keys()):
+                        surah_list.append(f"{surah_num}. {surahs_progress[surah_num]}")
+                    
+                    # Display in columns
+                    cols = st.columns(3)
+                    for i, surah_item in enumerate(surah_list):
+                        with cols[i % 3]:
+                            st.markdown(f"• {surah_item}")
         
         # PDF Download button
         st.markdown("---")
@@ -1831,6 +2170,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
