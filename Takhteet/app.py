@@ -194,6 +194,65 @@ def generate_backward_schedule(start_surah_num, start_page, daily_amount, workin
     
     return schedule
 
+def generate_backward_schedule_with_pattern(start_surah_num, start_page, pattern, working_days):
+    """Generate backward schedule with custom pattern"""
+    schedule = []
+    current_surah = SURAH_BY_NUMBER.get(start_surah_num)
+    if not current_surah:
+        return schedule
+    
+    current_page = start_page
+    current_surah_num = start_surah_num
+    day_count = 0
+    
+    while day_count < working_days:
+        if not current_surah:
+            break
+            
+        # Calculate pages left in current surah
+        pages_in_surah = current_surah["end_page"] - current_surah["start_page"] + 1
+        current_page_in_surah = current_page - current_surah["start_page"]
+        pages_left_in_surah = pages_in_surah - current_page_in_surah
+        
+        if pages_left_in_surah <= 0:
+            # Move to next surah in backward sequence
+            current_surah = get_next_surah_backward(current_surah_num)
+            if not current_surah:
+                break
+            current_surah_num = current_surah["surah"]
+            current_page = current_surah["start_page"]
+            continue
+        
+        # Get amount from pattern
+        today_amount = pattern[day_count % len(pattern)]
+        
+        # Adjust amount if it exceeds pages left in surah
+        if today_amount > pages_left_in_surah:
+            today_amount = pages_left_in_surah
+        
+        # Add to schedule
+        schedule.append({
+            "day": day_count + 1,
+            "surah_num": current_surah_num,
+            "surah_name": current_surah["name"],
+            "page": current_page,
+            "amount": today_amount
+        })
+        
+        # Update current page
+        current_page += today_amount
+        
+        # If we completed the surah, move to next one
+        if current_page > current_surah["end_page"]:
+            current_surah = get_next_surah_backward(current_surah_num)
+            if current_surah:
+                current_surah_num = current_surah["surah"]
+                current_page = current_surah["start_page"]
+        
+        day_count += 1
+    
+    return schedule
+
 # Page configuration
 st.set_page_config(
     page_title="Quran Hifz Takhteet Generator",
@@ -1131,40 +1190,117 @@ def calculate_schedule():
     # Calculate current working days with user's settings
     current_working_days = days_in_month - len(sundays) - extra_holidays
     
+    # ============ NEW: ADAPTIVE MIXED CALCULATION ============
+    def find_optimal_mix(total_pages, available_days):
+        """Find optimal combination of 0.5 and 1.0 pages to reach target"""
+        
+        # If we can't even complete with all 1.0 pages
+        if available_days < total_pages:
+            return None, None  # Impossible
+        
+        # Try different ratios
+        for full_days in range(0, available_days + 1):
+            half_days = available_days - full_days
+            total_possible = (full_days * 1.0) + (half_days * 0.5)
+            
+            if total_possible >= total_pages:
+                # Found a working combination
+                # Create pattern: distribute full days evenly among half days
+                pattern = []
+                if full_days > 0:
+                    # Calculate spacing between full days
+                    spacing = max(1, half_days // full_days)
+                    half_counter = 0
+                    
+                    for i in range(available_days):
+                        if half_counter >= spacing and full_days > 0:
+                            pattern.append(1.0)
+                            full_days -= 1
+                            half_counter = 0
+                        elif half_days > 0:
+                            pattern.append(0.5)
+                            half_days -= 1
+                            half_counter += 1
+                        elif full_days > 0:
+                            pattern.append(1.0)
+                            full_days -= 1
+                else:
+                    # All half days
+                    pattern = [0.5] * available_days
+                
+                return pattern, total_possible
+        
+        return None, None
+    
     # Calculate minimum days needed based on daily amount
     if "0.5" in daily_amount:
         # If 0.5 page daily: need 2 days per page
         min_days_needed = total_pages_needed * 2
         avg_pages_per_day = 0.5
+        can_use_mixed = True
     elif "Mixed" in daily_amount:
-        # Mixed: average 0.75 pages per day, so need roughly 1.33 days per page
-        min_days_needed = int(total_pages_needed / 0.75) + 1
-        avg_pages_per_day = 0.75
+        # NEW: Use adaptive mixed calculation
+        optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
+        
+        if optimal_pattern:
+            # We found a pattern that works
+            min_days_needed = current_working_days
+            avg_pages_per_day = sum(optimal_pattern) / len(optimal_pattern)
+            can_use_mixed = True
+        else:
+            # Try with maximum working days (reduce holidays)
+            optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, max_working_days)
+            if optimal_pattern:
+                min_days_needed = max_working_days
+                avg_pages_per_day = sum(optimal_pattern) / len(optimal_pattern)
+                can_use_mixed = True
+            else:
+                min_days_needed = total_pages_needed  # Need all 1.0 pages
+                avg_pages_per_day = 1.0
+                can_use_mixed = False
     else:
         # 1 page daily
         min_days_needed = total_pages_needed
         avg_pages_per_day = 1.0
+        can_use_mixed = False
     
     # CHECK: Can we reach target with current settings?
     can_reach_target = current_working_days >= min_days_needed
     
     if not can_reach_target:
-        # TARGET CANNOT BE REACHED! Show single best solution
+        # TARGET CANNOT BE REACHED! Show adaptive solutions
         
         st.error(f"""
         ❌ **TARGET CANNOT BE REACHED WITH CURRENT PLAN!**
         
         **Problem:**
-        - You need **{min_days_needed}** working days
+        - You need at least **{min_days_needed:.1f}** working days
         - You only have **{current_working_days}** working days
-        - Shortfall: **{min_days_needed - current_working_days}** days
+        - Shortfall: **{min_days_needed - current_working_days:.1f}** days
         """)
         
-        # FIND THE BEST SOLUTION
+        # ============ ADAPTIVE SOLUTIONS ============
         solution_found = False
         
-        # Check if reducing holidays will work
-        if max_working_days >= min_days_needed:
+        # Solution 1: Try Mixed pattern if not already using it
+        if "Mixed" not in daily_amount and can_use_mixed:
+            optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
+            if optimal_pattern:
+                st.success(f"""
+                **✅ SOLUTION: Use Adaptive Mixed Pages**
+                
+                **Action needed:**
+                - Change from **{daily_amount}** to **Mixed (0.5 & 1 page)**
+                
+                **Result:**
+                - Working days needed: **{current_working_days}** (same)
+                - Pattern: {optimal_pattern[:10]}...
+                - You can complete **{max_possible:.1f}** pages
+                """)
+                solution_found = True
+        
+        # Solution 2: Reduce holidays
+        if not solution_found and max_working_days >= min_days_needed:
             holidays_needed = max(0, days_in_month - len(sundays) - min_days_needed)
             st.success(f"""
             **✅ SOLUTION: Reduce Holidays**
@@ -1178,14 +1314,13 @@ def calculate_schedule():
             """)
             solution_found = True
         
-        # If reducing holidays alone won't work, try increasing daily amount
-        elif not solution_found and "0.5" in daily_amount:
-            # Try 1 page daily
+        # Solution 3: Increase to 1 page daily (if currently on 0.5 or Mixed)
+        if not solution_found and ("0.5" in daily_amount or "Mixed" in daily_amount):
             new_min_days_1page = total_pages_needed
             if max_working_days >= new_min_days_1page:
                 holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_1page)
                 st.success(f"""
-                **✅ SOLUTION: Increase Daily Amount**
+                **✅ SOLUTION: Increase to 1 Page Daily**
                 
                 **Action needed:**
                 - Change from **{daily_amount}** to **1 page daily**
@@ -1197,41 +1332,23 @@ def calculate_schedule():
                 """)
                 solution_found = True
         
-        # If still not working, try Mixed pages (if currently on 0.5)
-        elif not solution_found and "0.5" in daily_amount:
-            # Try Mixed pages
-            new_min_days_mixed = int(total_pages_needed / 0.75) + 1
-            if max_working_days >= new_min_days_mixed:
-                holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_mixed)
+        # Solution 4: Try different mixed pattern with reduced holidays
+        if not solution_found and "Mixed" in daily_amount:
+            # Try with maximum working days
+            optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, max_working_days)
+            if optimal_pattern:
+                holidays_needed = max(0, days_in_month - len(sundays) - max_working_days)
                 st.success(f"""
-                **✅ SOLUTION: Use Mixed Pages**
+                **✅ SOLUTION: Use Adaptive Mixed with Reduced Holidays**
                 
                 **Action needed:**
-                - Change from **{daily_amount}** to **Mixed (0.5 & 1 page)**
                 - Set holidays to **{holidays_needed}**
+                - Use adaptive mixed pattern
                 
                 **Result:**
-                - Working days needed: **{new_min_days_mixed}** (down from {min_days_needed})
-                - You can complete all **{total_pages_needed}** pages
-                """)
-                solution_found = True
-        
-        # If still not working, check if Mixed to 1 page works
-        elif not solution_found and "Mixed" in daily_amount:
-            # Try 1 page daily
-            new_min_days_1page = total_pages_needed
-            if max_working_days >= new_min_days_1page:
-                holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_1page)
-                st.success(f"""
-                **✅ SOLUTION: Increase to 1 Page Daily**
-                
-                **Action needed:**
-                - Change from **Mixed pages** to **1 page daily**
-                - Set holidays to **{holidays_needed}**
-                
-                **Result:**
-                - Working days needed: **{new_min_days_1page}** (down from {min_days_needed})
-                - You can complete all **{total_pages_needed}** pages
+                - Working days: **{max_working_days}** (from {current_working_days})
+                - Pattern: {optimal_pattern[:10]}...
+                - You can complete **{max_possible:.1f}** pages
                 """)
                 solution_found = True
         
@@ -1297,12 +1414,25 @@ def calculate_schedule():
             return None
         
         # Generate backward schedule
-        backward_schedule = generate_backward_schedule(
-            start_surah_num=start_surah["surah"],
-            start_page=start_page,
-            daily_amount=daily_amount,
-            working_days=working_days
-        )
+        if daily_amount == "Mixed (0.5 & 1 page)":
+            # Use adaptive pattern
+            optimal_pattern, _ = find_optimal_mix(total_pages, working_days)
+            if not optimal_pattern:
+                optimal_pattern = [0.5, 0.5, 1, 0.5, 0.5, 1]  # Fallback to default
+            
+            backward_schedule = generate_backward_schedule_with_pattern(
+                start_surah_num=start_surah["surah"],
+                start_page=start_page,
+                pattern=optimal_pattern,
+                working_days=working_days
+            )
+        else:
+            backward_schedule = generate_backward_schedule(
+                start_surah_num=start_surah["surah"],
+                start_page=start_page,
+                daily_amount=daily_amount,
+                working_days=working_days
+            )
         
         if not backward_schedule:
             st.error("❌ Could not generate backward schedule. Please check your inputs.")
@@ -1313,20 +1443,30 @@ def calculate_schedule():
         
         # Check if schedule reaches target
         if total_pages_scheduled < total_pages:
-            st.error(f"""
-            ❌ **Target cannot be reached with backward surah progression!**
+            # Show what we CAN achieve
+            st.warning(f"""
+            ⚠️ **Note: With backward surah progression, you'll complete {total_pages_scheduled:.1f} pages instead of {total_pages}**
             
-            **Reason:**
-            - You need **{total_pages}** pages to reach target
-            - With current settings, you can complete **{total_pages_scheduled:.1f}** pages
-            - Shortfall: **{total_pages - total_pages_scheduled:.1f}** pages
+            **Reason:** Backward progression follows surah boundaries, not simple page counts.
             
-            **Solutions:**
-            1. Increase daily amount
-            2. Reduce target pages
-            3. Add more working days
+            **Actual target reachable:** Page {start_page - total_pages_scheduled if is_backward else start_page + total_pages_scheduled}
+            
+            **Surahs covered:**
             """)
-            return None
+            
+            # Show surahs that WILL be covered
+            surahs_covered = {}
+            for item in backward_schedule:
+                surahs_covered[item["surah_num"]] = item["surah_name"]
+            
+            if surahs_covered:
+                cols = st.columns(3)
+                for i, (surah_num, surah_name) in enumerate(sorted(surahs_covered.items())):
+                    with cols[i % 3]:
+                        st.markdown(f"• {surah_num}. {surah_name}")
+            
+            # Update total_pages to what's actually achievable
+            total_pages = total_pages_scheduled
         
         # Convert backward schedule to the format expected by the rest of the code
         for day_schedule in backward_schedule[:working_days]:
@@ -1338,31 +1478,28 @@ def calculate_schedule():
             })
         
     else:
-        # ============ FORWARD DIRECTION (ORIGINAL LOGIC) ============
+        # ============ FORWARD DIRECTION (ORIGINAL LOGIC WITH ADAPTIVE MIXED) ============
         if daily_amount == "Mixed (0.5 & 1 page)":
-            full_page_days = int(total_pages - (total_pages / 2))
-            current_page = start_page
-            day_count = 0
+            # Use adaptive pattern
+            optimal_pattern, _ = find_optimal_mix(total_pages, working_days)
+            if not optimal_pattern:
+                optimal_pattern = [0.5, 0.5, 1, 0.5, 0.5, 1]  # Fallback
             
-            pattern = []
+            current_page_val = start_page
             for i in range(working_days):
-                if day_count < full_page_days and (i % 3 == 0 or working_days - i <= full_page_days - day_count):
-                    pattern.append(1)
-                    day_count += 1
+                if i < len(optimal_pattern):
+                    amount = optimal_pattern[i]
                 else:
-                    pattern.append(0.5)
-            
-            for i in range(working_days):
-                amount = pattern[i]
-                current_page_val = start_page + sum(pattern[:i])
-                
-                if current_page_val > end_page:
-                    current_page_val = end_page
+                    # Repeat pattern if needed
+                    amount = optimal_pattern[i % len(optimal_pattern)]
                 
                 schedule.append({
-                    'page': round(current_page_val, 1),
+                    'page': current_page_val,
                     'amount': amount
                 })
+                current_page_val += amount
+                if current_page_val > end_page:
+                    current_page_val = end_page
         else:
             amount = 0.5 if "0.5" in daily_amount else 1.0
             current_page_val = start_page
@@ -1436,14 +1573,14 @@ def calculate_schedule():
     
     # SHOW SUCCESS SUMMARY
     st.success(f"""
-    ✅ **Target Successfully Reached!**
+    ✅ **Schedule Generated Successfully!**
     
     📊 **Schedule Summary:**
-    - **Total Pages to Complete:** {total_pages_needed}
+    - **Total Pages to Complete:** {total_pages}
     - **Working Days:** {working_days}
     - **Holidays:** {len(all_holidays)} (Sundays: {len(sundays)}, Extra: {extra_holidays})
     - **Daily Amount:** {daily_amount}
-    - **Pages Completed:** {pages_completed:.1f} / {total_pages_needed}
+    - **Pages Completed:** {pages_completed:.1f} / {total_pages}
     - **Completion Date:** Day {working_days} of month
     """)
     
@@ -2170,6 +2307,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
