@@ -155,15 +155,10 @@ def generate_backward_schedule(start_surah_num, start_page, daily_amount, workin
             current_surah_num = current_surah["surah"]
             current_page = current_surah["start_page"]
             continue
-        
-        # Determine today's amount
-        if daily_amount == "Mixed (0.5 & 1 page)":
-            # Alternate pattern: 0.5, 0.5, 1, 0.5, 0.5, 1...
-            pattern = [0.5, 0.5, 1, 0.5, 0.5, 1]
-            today_amount = pattern[day_count % len(pattern)]
-        elif "0.5" in daily_amount:
+
+        if "0.5" in daily_amount:
             today_amount = 0.5
-        else:
+        else:  # "1 page daily" or any other
             today_amount = 1.0
         
         # Adjust amount if it exceeds pages left in surah
@@ -2307,6 +2302,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
