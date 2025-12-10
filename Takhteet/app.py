@@ -1184,6 +1184,15 @@ def calculate_schedule():
     
     # Calculate current working days with user's settings
     current_working_days = days_in_month - len(sundays) - extra_holidays
+
+    # ============ DEBUG CODE - ADD HERE ============
+    st.write(f"DEBUG: daily_amount = '{daily_amount}'")
+    st.write(f"DEBUG: total_pages_needed = {total_pages_needed}")
+    st.write(f"DEBUG: '0.5' in daily_amount = {'0.5' in daily_amount}")
+    st.write(f"DEBUG: 'Mixed' in daily_amount = {'Mixed' in daily_amount}")
+    st.write(f"DEBUG: start_page = {start_page}, end_page = {end_page}")
+    st.write(f"DEBUG: current_working_days = {current_working_days}")
+    # ============ END DEBUG CODE ============#
     
     # ============ NEW: ADAPTIVE MIXED CALCULATION ============
     def find_optimal_mix(total_pages, available_days):
@@ -2302,6 +2311,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
