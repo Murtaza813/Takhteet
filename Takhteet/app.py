@@ -1235,33 +1235,33 @@ def calculate_schedule():
                 return pattern, total_possible
         
         return None, None
-    
+
     # Calculate minimum days needed based on daily amount
-    if "0.5" in daily_amount:
-        # If 0.5 page daily: need 2 days per page
-        min_days_needed = total_pages_needed * 2
-        avg_pages_per_day = 0.5
-        can_use_mixed = True
-    elif "Mixed" in daily_amount:
+    if "Mixed" in daily_amount:
         # NEW: Use adaptive mixed calculation
         optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
         
         if optimal_pattern:
             # We found a pattern that works
-            min_days_needed = current_working_days
+            min_days_needed = len(optimal_pattern)
             avg_pages_per_day = sum(optimal_pattern) / len(optimal_pattern)
             can_use_mixed = True
         else:
             # Try with maximum working days (reduce holidays)
             optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, max_working_days)
             if optimal_pattern:
-                min_days_needed = max_working_days
+                min_days_needed = len(optimal_pattern)
                 avg_pages_per_day = sum(optimal_pattern) / len(optimal_pattern)
                 can_use_mixed = True
             else:
                 min_days_needed = total_pages_needed  # Need all 1.0 pages
                 avg_pages_per_day = 1.0
                 can_use_mixed = False
+    elif "0.5" in daily_amount:
+        # If 0.5 page daily: need 2 days per page
+        min_days_needed = total_pages_needed * 2
+        avg_pages_per_day = 0.5
+        can_use_mixed = True
     else:
         # 1 page daily
         min_days_needed = total_pages_needed
@@ -2311,6 +2311,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
