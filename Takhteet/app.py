@@ -1184,7 +1184,6 @@ def calculate_schedule():
     extra_holidays = st.session_state.extra_holidays
     murajjah_option = st.session_state.murajjah_option
 
-        # ✅ ADD THIS LINE:
     is_backward = "Backward" in direction
     
     # Get days in month
@@ -1340,29 +1339,30 @@ def calculate_schedule():
         # ============ SOLUTION 2: ADJUST DAILY AMOUNT ONLY (Keep same holidays) ============
         solution2_found = False
         
-        # Try 1 page daily
-        if daily_amount != "1 page daily" and total_pages_needed <= current_working_days:
-            solution2_found = True
-            st.success(f"""
-            **✅ SOLUTION 2: Increase Daily Amount (Keep same holidays)**
-            
-            **Action needed:**
-            - Change from **{daily_amount}** to **1 page daily**
-            - Keep holidays at **{extra_holidays}**
-            
-            **Result:**
-            - Working days needed: **{total_pages_needed}** (from {min_days_needed})
-            - You can complete all **{total_pages_needed}** pages
-            """)
-            solutions_shown += 1
+        # Try 1 page daily (check if it would work with current holidays)
+        if total_pages_needed <= current_working_days:
+            if daily_amount != "1 page daily":  # Only suggest if not already using 1 page daily
+                solution2_found = True
+                st.success(f"""
+                **✅ SOLUTION 2: Switch to 1 Page Daily (Keep same holidays)**
+                
+                **Action needed:**
+                - Change from **{daily_amount}** to **1 page daily**
+                - Keep holidays at **{extra_holidays}**
+                
+                **Result:**
+                - Working days needed: **{total_pages_needed}** (from {min_days_needed})
+                - You can complete all **{total_pages_needed}** pages
+                """)
+                solutions_shown += 1
         
-        # Try Mixed if not already using it and 1 page daily doesn't work
-        elif not solution2_found and daily_amount != "Mixed (0.5 & 1 page)":
+        # Try Mixed pattern for 0.5 page daily users (if 1 page daily doesn't work)
+        elif daily_amount == "0.5 page daily":
             optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
             if optimal_pattern and max_possible >= total_pages_needed:
                 solution2_found = True
                 st.success(f"""
-                **✅ SOLUTION 2: Use Mixed Pattern (Keep same holidays)**
+                **✅ SOLUTION 2: Switch to Mixed Pattern (Keep same holidays)**
                 
                 **Action needed:**
                 - Change from **{daily_amount}** to **Mixed (0.5 & 1 page)**
@@ -2361,6 +2361,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
