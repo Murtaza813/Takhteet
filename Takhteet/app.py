@@ -1292,109 +1292,149 @@ def calculate_schedule():
         """)
         
         # ============ ADAPTIVE SOLUTIONS ============
-        solution_found = False
+        st.markdown("---")
+        st.markdown("### 💡 **Possible Solutions:**")
         
-        # Solution 1: Try Mixed pattern if not already using it
-        if "Mixed" not in daily_amount and can_use_mixed:
-            optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
-            if optimal_pattern:
+        solutions_shown = 0
+        
+        # ============ SOLUTION 1: ADJUST HOLIDAYS ONLY (Keep same daily amount) ============
+        solution1_found = False
+        
+        # Calculate days needed with current daily amount
+        if daily_amount == "0.5 page daily":
+            required_days = total_pages_needed * 2
+            pattern_type = "0.5 page daily"
+        elif daily_amount == "1 page daily":
+            required_days = total_pages_needed
+            pattern_type = "1 page daily"
+        else:  # Mixed
+            # For Mixed: find optimal pattern
+            optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, max_working_days)
+            if optimal_pattern and max_possible >= total_pages_needed:
+                required_days = len(optimal_pattern)
+                pattern_type = f"Mixed pattern"
+            else:
+                required_days = total_pages_needed  # Fallback to 1 page daily
+                pattern_type = "1 page daily"
+        
+        if required_days <= max_working_days:
+            new_holidays_needed = max(0, days_in_month - len(sundays) - required_days)
+            if new_holidays_needed != extra_holidays:
+                solution1_found = True
                 st.success(f"""
-                **✅ SOLUTION: Use Adaptive Mixed Pages**
+                **✅ SOLUTION 1: Adjust Holidays (Keep same daily amount)**
+                
+                **Action needed:**
+                - Keep daily amount: **{daily_amount}**
+                - Change holidays from **{extra_holidays}** to **{new_holidays_needed}**
+                
+                **Result:**
+                - Working days: **{required_days}** (from {current_working_days})
+                - You can complete **{total_pages_needed}** pages
+                """)
+                solutions_shown += 1
+        
+        # ============ SOLUTION 2: ADJUST DAILY AMOUNT ONLY (Keep same holidays) ============
+        solution2_found = False
+        
+        # Try 1 page daily
+        if daily_amount != "1 page daily" and total_pages_needed <= current_working_days:
+            solution2_found = True
+            st.success(f"""
+            **✅ SOLUTION 2: Increase Daily Amount (Keep same holidays)**
+            
+            **Action needed:**
+            - Change from **{daily_amount}** to **1 page daily**
+            - Keep holidays at **{extra_holidays}**
+            
+            **Result:**
+            - Working days needed: **{total_pages_needed}** (from {min_days_needed})
+            - You can complete all **{total_pages_needed}** pages
+            """)
+            solutions_shown += 1
+        
+        # Try Mixed if not already using it and 1 page daily doesn't work
+        elif not solution2_found and daily_amount != "Mixed (0.5 & 1 page)":
+            optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
+            if optimal_pattern and max_possible >= total_pages_needed:
+                solution2_found = True
+                st.success(f"""
+                **✅ SOLUTION 2: Use Mixed Pattern (Keep same holidays)**
                 
                 **Action needed:**
                 - Change from **{daily_amount}** to **Mixed (0.5 & 1 page)**
+                - Keep holidays at **{extra_holidays}**
                 
                 **Result:**
-                - Working days needed: **{current_working_days}** (same)
+                - Working days: **{len(optimal_pattern)}** (same)
                 - Pattern: {optimal_pattern[:10]}...
                 - You can complete **{max_possible:.1f}** pages
                 """)
-                solution_found = True
+                solutions_shown += 1
         
-        # Solution 2: Reduce holidays
-        if not solution_found and max_working_days >= min_days_needed:
-            holidays_needed = max(0, days_in_month - len(sundays) - min_days_needed)
-            st.success(f"""
-            **✅ SOLUTION: Reduce Holidays**
+        # ============ SOLUTION 3: BALANCED APPROACH (Adjust both) ============
+        solution3_found = False
+        
+        if solutions_shown < 3:  # If we haven't shown 3 solutions yet
+            # Try different holiday reductions with Mixed pattern
+            for holidays_to_try in range(0, extra_holidays + 1):
+                test_working_days = max_working_days - holidays_to_try
+                optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, test_working_days)
+                if optimal_pattern and max_possible >= total_pages_needed:
+                    solution3_found = True
+                    holiday_change = extra_holidays - holidays_to_try
+                    st.success(f"""
+                    **✅ SOLUTION 3: Balanced Approach (Adjust both)**
+                    
+                    **Action needed:**
+                    - Change to **Mixed (0.5 & 1 page)**
+                    - Reduce holidays by **{holiday_change}** (from {extra_holidays} to {holidays_to_try})
+                    
+                    **Result:**
+                    - Working days: **{test_working_days}** (from {current_working_days})
+                    - You can complete all **{total_pages_needed}** pages
+                    """)
+                    solutions_shown += 1
+                    break
+        
+        # ============ FALLBACK: WHAT'S POSSIBLE ============
+        if solutions_shown == 0:
+            # Calculate what IS possible with current settings
+            if daily_amount == "0.5 page daily":
+                max_possible = current_working_days * 0.5
+            elif daily_amount == "1 page daily":
+                max_possible = min(current_working_days, total_pages_needed)
+            else:  # Mixed
+                optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
+                if not optimal_pattern:
+                    max_possible = min(current_working_days, total_pages_needed)
             
-            **Action needed:**
-            - Reduce extra holidays from **{extra_holidays}** to **{holidays_needed}**
-            
-            **Result:**
-            - Working days: **{min_days_needed}** (from {current_working_days})
-            - You can complete all **{total_pages_needed}** pages
-            """)
-            solution_found = True
-        
-        # Solution 3: Increase to 1 page daily (if currently on 0.5 or Mixed)
-        if not solution_found and ("0.5" in daily_amount or "Mixed" in daily_amount):
-            new_min_days_1page = total_pages_needed
-            if max_working_days >= new_min_days_1page:
-                holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_1page)
-                st.success(f"""
-                **✅ SOLUTION: Increase to 1 Page Daily**
-                
-                **Action needed:**
-                - Change from **{daily_amount}** to **1 page daily**
-                - Set holidays to **{holidays_needed}**
-                
-                **Result:**
-                - Working days needed: **{new_min_days_1page}** (down from {min_days_needed})
-                - You can complete all **{total_pages_needed}** pages
-                """)
-                solution_found = True
-        
-        # Solution 4: Try different mixed pattern with reduced holidays
-        if not solution_found and "Mixed" in daily_amount:
-            # Try with maximum working days
-            optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, max_working_days)
-            if optimal_pattern:
-                holidays_needed = max(0, days_in_month - len(sundays) - max_working_days)
-                st.success(f"""
-                **✅ SOLUTION: Use Adaptive Mixed with Reduced Holidays**
-                
-                **Action needed:**
-                - Set holidays to **{holidays_needed}**
-                - Use adaptive mixed pattern
-                
-                **Result:**
-                - Working days: **{max_working_days}** (from {current_working_days})
-                - Pattern: {optimal_pattern[:10]}...
-                - You can complete **{max_possible:.1f}** pages
-                """)
-                solution_found = True
-        
-        # FINAL CHECK - If IMPOSSIBLE even with all adjustments
-        if not solution_found:
-            # Check if it's truly impossible
-            if max_working_days < total_pages_needed:
-                st.error(f"""
-                ⚠️ **IMPOSSIBLE TO REACH TARGET THIS MONTH!**
-                
-                **Reason:** You need {total_pages_needed} pages but only have {max_working_days} maximum working days.
-                
-                **What you CAN do:**
-                - Complete maximum of **{int(max_working_days * avg_pages_per_day)}** pages
-                - New target: **Page {start_page + int(max_working_days * avg_pages_per_day) if direction == 'Forward (1 → 30)' else start_page - int(max_working_days * avg_pages_per_day)}**
-                """)
+            # Calculate reachable page
+            if is_backward:
+                reachable_page = start_page - max_possible
             else:
-                st.error("""
-                ⚠️ **CANNOT FIND A WORKABLE SOLUTION!**
-                
-                Please try:
-                1. Reducing your target pages
-                2. Choosing a different month with more days
-                3. Reducing your extra holidays
-                """)
+                reachable_page = start_page + max_possible
+            
+            # Calculate percentage of target
+            percentage = (max_possible / total_pages_needed * 100) if total_pages_needed > 0 else 0
+            
+            st.info(f"""
+            **📊 What you CAN do with current settings:**
+            
+            - Complete maximum of **{max_possible:.1f}** pages
+            - Reach page **{reachable_page:.1f}**
+            - This is **{percentage:.0f}%** of your target
+            
+            **Consider reducing your target page to {reachable_page:.0f}**
+            """)
             
             return None
         
-        st.info("""
-        **📝 Adjust your settings according to the solution above, then click "Generate Takhteet" again.**
+        st.warning("""
+        **📝 Adjust your settings according to one of the solutions above, then click "Generate Takhteet" again.**
         """)
         
         return None
-    
     # ================ TARGET CAN BE REACHED - GENERATE SCHEDULE ================
     
     # Get extra holidays from end of month
@@ -2319,6 +2359,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
