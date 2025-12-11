@@ -1324,7 +1324,7 @@ def calculate_schedule():
             if new_holidays_needed != extra_holidays:
                 solution1_found = True
                 st.success(f"""
-                **✅ SOLUTION 1: Adjust Holidays (Keep same daily amount)**
+                **✅ SOLUTION : Adjust Holidays (Keep same daily amount)**
                 
                 **Action needed:**
                 - Keep daily amount: **{daily_amount}**
@@ -1344,7 +1344,7 @@ def calculate_schedule():
             if daily_amount != "1 page daily":  # Only suggest if not already 1 page daily
                 solution2_found = True
                 st.success(f"""
-                **✅ SOLUTION 2: Switch to 1 Page Daily (Keep same holidays)**
+                **✅ SOLUTION : Switch to 1 Page Daily (Keep same holidays)**
                 
                 **Action needed:**
                 - Change from **{daily_amount}** to **1 page daily**
@@ -1362,7 +1362,7 @@ def calculate_schedule():
             if optimal_pattern and max_possible >= total_pages_needed:
                 solution2_found = True
                 st.success(f"""
-                **✅ SOLUTION 2: Switch to Mixed Pattern (Keep same holidays)**
+                **✅ SOLUTION : Switch to Mixed Pattern (Keep same holidays)**
                 
                 **Action needed:**
                 - Change from **{daily_amount}** to **Mixed (0.5 & 1 page)**
@@ -1379,22 +1379,18 @@ def calculate_schedule():
         solution3_found = False
         
         if solutions_shown < 3:  # If we haven't shown 3 solutions yet
-            # Try different holiday reductions
+            # Try different holiday reductions with DIFFERENT daily amount than current
             for holidays_to_try in range(0, extra_holidays + 1):
                 test_working_days = max_working_days - holidays_to_try
                 
-                # Try Mixed pattern first
-                optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, test_working_days)
-                
-                # If Mixed doesn't work, try 1 page daily
-                if not optimal_pattern or max_possible < total_pages_needed:
+                # If already on Mixed, try 1 page daily for Solution 3
+                if daily_amount == "Mixed (0.5 & 1 page)":
                     # Check if 1 page daily would work
                     if total_pages_needed <= test_working_days:
                         solution3_found = True
                         holiday_change = extra_holidays - holidays_to_try
-                        daily_change = "1 page daily"
                         st.success(f"""
-                        **✅ SOLUTION 3: Balanced Approach (Adjust both)**
+                        **✅ SOLUTION : Balanced Approach (1 page daily + reduced holidays)**
                         
                         **Action needed:**
                         - Change to **1 page daily**
@@ -1406,15 +1402,14 @@ def calculate_schedule():
                         """)
                         solutions_shown += 1
                         break
-                elif optimal_pattern and max_possible >= total_pages_needed:
-                    solution3_found = True
-                    holiday_change = extra_holidays - holidays_to_try
-                    daily_change = "Mixed (0.5 & 1 page)"
-                    
-                    # Only suggest Mixed if not already using it
-                    if daily_amount != "Mixed (0.5 & 1 page)":
+                else:
+                    # If not on Mixed, try Mixed pattern
+                    optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, test_working_days)
+                    if optimal_pattern and max_possible >= total_pages_needed:
+                        solution3_found = True
+                        holiday_change = extra_holidays - holidays_to_try
                         st.success(f"""
-                        **✅ SOLUTION 3: Balanced Approach (Adjust both)**
+                        **✅ SOLUTION : Balanced Approach (Mixed pattern + reduced holidays)**
                         
                         **Action needed:**
                         - Change to **Mixed (0.5 & 1 page)**
@@ -1424,21 +1419,8 @@ def calculate_schedule():
                         - Working days: **{test_working_days}** (from {current_working_days})
                         - You can complete all **{total_pages_needed}** pages
                         """)
-                    else:
-                        # Already using Mixed, just show holiday adjustment
-                        st.success(f"""
-                        **✅ SOLUTION 3: Reduce Holidays Only**
-                        
-                        **Action needed:**
-                        - Keep **Mixed (0.5 & 1 page)**
-                        - Reduce holidays by **{holiday_change}** (from {extra_holidays} to {holidays_to_try})
-                        
-                        **Result:**
-                        - Working days: **{test_working_days}** (from {current_working_days})
-                        - You can complete all **{total_pages_needed}** pages
-                        """)
-                    solutions_shown += 1
-                    break
+                        solutions_shown += 1
+                        break
         
         # ============ FALLBACK: WHAT'S POSSIBLE ============
         if solutions_shown == 0:
@@ -2401,6 +2383,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
