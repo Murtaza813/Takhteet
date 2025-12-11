@@ -985,7 +985,7 @@ def toggle_sipara(day, sipara):
         st.session_state.manual_murajjah[day].sort()
 
 def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
-    """Get murajjah for a specific day"""
+    """Get murajjah for a specific day with GROUP-BASED distribution"""
     if murajjah_option == "No Murajjah":
         return "Teacher will assign" if not for_pdf else ""
     
@@ -993,51 +993,68 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
         day_key = f"day{(day_number % 6) + 1}"
         selected = st.session_state.manual_murajjah[day_key]
         if selected:
-            # For PDF, return just numbers, for display return "Para X"
             if for_pdf:
                 return ", ".join([str(s) for s in selected])
             else:
                 return ", ".join([f"Para {s}" for s in selected])
         return "Not assigned" if not for_pdf else ""
     
-    # Auto Generate
+    # Auto Generate - GROUP-BASED DISTRIBUTION
     current_sipara = st.session_state.current_sipara
     is_backward = "Backward" in st.session_state.direction
     
     if is_backward:
         # For backward direction: All siparas from 30 down to (but NOT including) current_sipara
-        # If on sipara 21, you've completed 30, 29, 28, ..., 22 (not 21 itself)
         completed = list(range(30, current_sipara, -1))
     else:
         # For forward direction: All siparas from 1 up to (but NOT including) current_sipara
-        # If on sipara 21, you've completed 1, 2, 3, ..., 20 (not 21 itself)
         completed = list(range(1, current_sipara))
     
     if not completed or len(completed) == 0:
         return "Revision Day" if not for_pdf else "Revision"
     
-    # Distribute completed paras evenly across 6 days
-    paras_per_day = max(1, len(completed) // 6)
-    remainder = len(completed) % 6
+    # GROUP THE COMPLETED SIPARAS (6 groups of 5)
+    # Group 1: 1-5, Group 2: 6-10, Group 3: 11-15, etc.
+    groups = {}
+    for sipara in completed:
+        group_num = (sipara - 1) // 5  # 0-based group number
+        if group_num not in groups:
+            groups[group_num] = []
+        groups[group_num].append(sipara)
     
-    # Calculate start and end indices for this day
-    day_index = day_number % 6
-    start_idx = day_index * paras_per_day + min(day_index, remainder)
-    end_idx = start_idx + paras_per_day + (1 if day_index < remainder else 0)
+    # Sort groups by group number
+    sorted_groups = sorted(groups.items())
     
-    if start_idx >= len(completed):
-        return "Revision Day" if not for_pdf else "Revision"
-    
-    day_paras = completed[start_idx:end_idx]
+    # If we have less than 2 groups, just return all siparas
+    if len(sorted_groups) < 2:
+        day_paras = completed
+    else:
+        # DISTRIBUTE BY DAY USING ROUND-ROBIN ACROSS GROUPS
+        day_paras = []
+        day_index = day_number % 6  # Which day of the 6-day cycle
+        
+        # For each group, take the (day_index)th element
+        # This gives us: Day 0: 1st from each group, Day 1: 2nd from each group, etc.
+        for group_num, group_siparas in sorted_groups:
+            # Sort siparas within each group
+            group_siparas.sort()
+            
+            # Take one sipara from this group based on day_index
+            if day_index < len(group_siparas):
+                day_paras.append(group_siparas[day_index])
+            # If we've taken all from this group, start from beginning
+            elif len(group_siparas) > 0:
+                day_paras.append(group_siparas[day_index % len(group_siparas)])
     
     # Remove duplicates and sort
     day_paras = sorted(list(set(day_paras)))
     
+    if not day_paras:
+        return "Revision Day" if not for_pdf else "Revision"
+    
     if for_pdf:
-        # For PDF: return just numbers
         return ", ".join([str(p) for p in day_paras])
     else:
-        # For display: return "Para X"
         return ", ".join([f"Para {p}" for p in day_paras])
 
 def generate_schedule(start_juz, days_in_month):
@@ -2302,6 +2319,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
