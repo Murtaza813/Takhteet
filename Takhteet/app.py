@@ -985,7 +985,7 @@ def toggle_sipara(day, sipara):
         st.session_state.manual_murajjah[day].sort()
 
 def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
-    """Get murajjah for a specific day with GROUP-BASED distribution"""
+    """Get murajjah for a specific day with UNIQUE siparas per 6-day cycle"""
     if murajjah_option == "No Murajjah":
         return "Teacher will assign" if not for_pdf else ""
     
@@ -999,7 +999,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
                 return ", ".join([f"Para {s}" for s in selected])
         return "Not assigned" if not for_pdf else ""
     
-    # Auto Generate - GROUP-BASED DISTRIBUTION
+    # Auto Generate - UNIQUE SIPARAS PER 6-DAY CYCLE
     current_sipara = st.session_state.current_sipara
     is_backward = "Backward" in st.session_state.direction
     
@@ -1013,38 +1013,33 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
     if not completed or len(completed) == 0:
         return "Revision Day" if not for_pdf else "Revision"
     
-    # GROUP THE COMPLETED SIPARAS (6 groups of 5)
-    # Group 1: 1-5, Group 2: 6-10, Group 3: 11-15, etc.
-    groups = {}
-    for sipara in completed:
-        group_num = (sipara - 1) // 5  # 0-based group number
-        if group_num not in groups:
-            groups[group_num] = []
-        groups[group_num].append(sipara)
+    # =========== NEW: EACH SIPARA ONLY ONCE PER 6 DAYS ===========
+    # Sort completed siparas
+    completed_sorted = sorted(completed)
+    total_completed = len(completed_sorted)
     
-    # Sort groups by group number
-    sorted_groups = sorted(groups.items())
+    # If less than 6 siparas, distribute one per day
+    if total_completed <= 6:
+        day_index = day_number % 6
+        if day_index < total_completed:
+            day_paras = [completed_sorted[day_index]]
+        else:
+            # No sipara for this day (all assigned to earlier days)
+            return "Revision Day" if not for_pdf else "Revision"
     
-    # If we have less than 2 groups, just return all siparas
-    if len(sorted_groups) < 2:
-        day_paras = completed
     else:
-        # DISTRIBUTE BY DAY USING ROUND-ROBIN ACROSS GROUPS
-        day_paras = []
-        day_index = day_number % 6  # Which day of the 6-day cycle
+        # MORE THAN 6 SIPARAS - Use round-robin distribution
+        # Create 6 "buckets" for the 6-day cycle
+        buckets = [[] for _ in range(6)]
         
-        # For each group, take the (day_index)th element
-        # This gives us: Day 0: 1st from each group, Day 1: 2nd from each group, etc.
-        for group_num, group_siparas in sorted_groups:
-            # Sort siparas within each group
-            group_siparas.sort()
-            
-            # Take one sipara from this group based on day_index
-            if day_index < len(group_siparas):
-                day_paras.append(group_siparas[day_index])
-            # If we've taken all from this group, start from beginning
-            elif len(group_siparas) > 0:
-                day_paras.append(group_siparas[day_index % len(group_siparas)])
+        # Distribute siparas evenly among the 6 buckets
+        for i, sipara in enumerate(completed_sorted):
+            bucket_index = i % 6
+            buckets[bucket_index].append(sipara)
+        
+        # Get which day in the 6-day cycle
+        cycle_day = day_number % 6
+        day_paras = buckets[cycle_day]
     
     # Remove duplicates and sort
     day_paras = sorted(list(set(day_paras)))
@@ -1056,6 +1051,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
         return ", ".join([str(p) for p in day_paras])
     else:
         return ", ".join([f"Para {p}" for p in day_paras])
+
 
 def generate_schedule(start_juz, days_in_month):
     """Generate schedule data for PDF - FIXED VERSION"""
@@ -2319,6 +2315,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
