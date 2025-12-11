@@ -1183,6 +1183,9 @@ def calculate_schedule():
     daily_amount = st.session_state.daily_amount
     extra_holidays = st.session_state.extra_holidays
     murajjah_option = st.session_state.murajjah_option
+
+        # ✅ ADD THIS LINE:
+    is_backward = "Backward" in direction
     
     # Get days in month
     days_in_month = calendar.monthrange(year, month)[1]
@@ -1447,7 +1450,6 @@ def calculate_schedule():
     working_days = days_in_month - len(all_holidays)
     
     # Calculate jadeen schedule
-    is_backward = "Backward" in direction
     total_pages = abs(end_page - start_page) + 1
     
     schedule = []
@@ -2359,6 +2361,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
