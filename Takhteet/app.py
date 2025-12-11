@@ -1339,9 +1339,9 @@ def calculate_schedule():
         # ============ SOLUTION 2: ADJUST DAILY AMOUNT ONLY (Keep same holidays) ============
         solution2_found = False
         
-        # Try 1 page daily (check if it would work with current holidays)
-        if total_pages_needed <= current_working_days:
-            if daily_amount != "1 page daily":  # Only suggest if not already using 1 page daily
+        # Try 1 page daily (for ANY daily amount if it would work)
+        if total_pages_needed <= current_working_days:  # ⚠️ REMOVED: daily_amount != "1 page daily"
+            if daily_amount != "1 page daily":  # Only suggest if not already 1 page daily
                 solution2_found = True
                 st.success(f"""
                 **✅ SOLUTION 2: Switch to 1 Page Daily (Keep same holidays)**
@@ -1356,7 +1356,7 @@ def calculate_schedule():
                 """)
                 solutions_shown += 1
         
-        # Try Mixed pattern for 0.5 page daily users (if 1 page daily doesn't work)
+        # Try Mixed if not already using it (for 0.5 page daily users)
         elif daily_amount == "0.5 page daily":
             optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
             if optimal_pattern and max_possible >= total_pages_needed:
@@ -2361,6 +2361,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
