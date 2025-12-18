@@ -104,6 +104,12 @@ SURAH_DATA_BACKWARD = [
 SURAH_BY_NUMBER = {s["surah"]: s for s in SURAH_DATA_BACKWARD}
 SURAH_BY_NAME = {s["name"]: s for s in SURAH_DATA_BACKWARD}
 
+def get_surah_at_page(page):
+    """Find which surah contains a given page"""
+    for surah in SURAH_DATA_BACKWARD:
+        if surah["start_page"] <= page <= surah["end_page"]:
+            return surah
+    return None
 
 def get_next_surah_backward(current_surah_num):
     """Get the next surah in backward sequence (previous surah number)"""
@@ -119,77 +125,6 @@ def get_previous_surah_backward(current_surah_num):
         if surah["surah"] == current_surah_num:
             if i - 1 >= 0:
                 return SURAH_DATA_BACKWARD[i - 1]
-    return None
-
-def calculate_juzz_hali(current_jadeen_page, memorized_pages, is_backward=True):
-    """
-    CORRECT VERSION: Juzz Hali = 10 MEMORIZED PAGES going FORWARD
-    Rules:
-    1. Start from last memorized page BEFORE current jadeen
-    2. Count FORWARD through memorized pages only
-    3. Skip unmemoized pages
-    4. Current jadeen NEVER included (it's today's new work)
-    5. Count exactly 10 pages
-    """
-    
-    if not memorized_pages:
-        return "Revision Day"
-    
-    # Remove current jadeen page from memorized (it's today's new memorization)
-    memorized_without_today = {p for p in memorized_pages if p != current_jadeen_page}
-    
-    if not memorized_without_today:
-        return "Revision Day"
-    
-    # Sort pages in ascending order (lowest to highest)
-    sorted_pages = sorted(memorized_without_today)
-    
-    # Find starting page: last memorized page BEFORE current jadeen
-    start_page = None
-    for page in reversed(sorted_pages):
-        if page < current_jadeen_page:
-            start_page = page
-            break
-    
-    # If no page before current jadeen, use the lowest memorized page
-    if start_page is None:
-        start_page = sorted_pages[0] if sorted_pages else None
-    
-    if start_page is None:
-        return "Revision Day"
-    
-    # Now collect 10 pages, going FORWARD from start_page through memorized pages
-    juzz_hali_pages = []
-    
-    # Start from start_page and go FORWARD through ALL memorized pages
-    for page in sorted_pages:
-        if page >= start_page and len(juzz_hali_pages) < 10:
-            juzz_hali_pages.append(page)
-    
-    # If we still need more pages, wrap around from the beginning
-    if len(juzz_hali_pages) < 10:
-        for page in sorted_pages:
-            if page < start_page and len(juzz_hali_pages) < 10:
-                juzz_hali_pages.append(page)
-    
-    if not juzz_hali_pages:
-        return "Revision Day"
-    
-    # Sort for display (lowest to highest)
-    juzz_hali_pages.sort()
-    
-    # Format as range
-    if len(juzz_hali_pages) >= 2:
-        return f"{juzz_hali_pages[0]}-{juzz_hali_pages[-1]}"
-    else:
-        return f"{juzz_hali_pages[0]}"
-
-
-def get_surah_at_page(page):
-    """Find which surah contains a given page"""
-    for surah in SURAH_DATA_BACKWARD:
-        if surah["start_page"] <= page <= surah["end_page"]:
-            return surah
     return None
 
 def generate_backward_schedule(start_surah_num, start_page, daily_amount, working_days):
@@ -1263,9 +1198,6 @@ def calculate_schedule():
     # Calculate current working days with user's settings
     current_working_days = days_in_month - len(sundays) - extra_holidays
     
-    # Track memorized pages for juzz hali calculation
-    memorized_pages_set = set()
-    
     # ============ NEW: ADAPTIVE MIXED CALCULATION ============
     def find_optimal_mix(total_pages, available_days):
         """Find optimal combination of 0.5 and 1.0 pages to reach target"""
@@ -1546,19 +1478,11 @@ def calculate_schedule():
         
         # Convert backward schedule to the format expected by the rest of the code
         for day_schedule in backward_schedule[:working_days]:
-            # Add page to memorized set (only full pages, not half pages)
-            if day_schedule["amount"] == 1.0:
-                memorized_pages_set.add(int(day_schedule["page"]))
-            elif day_schedule["amount"] == 0.5:
-                # For half page, we consider it as memorized for juzz hali purposes
-                memorized_pages_set.add(int(day_schedule["page"]))
-            
             schedule.append({
                 'page': day_schedule["page"],
                 'amount': day_schedule["amount"],
                 'surah_name': day_schedule["surah_name"],
-                'surah_num': day_schedule["surah_num"],
-                'memorized_pages': memorized_pages_set.copy()  # Pass current state
+                'surah_num': day_schedule["surah_num"]
             })
         
     else:
@@ -1577,35 +1501,20 @@ def calculate_schedule():
                     # Repeat pattern if needed
                     amount = optimal_pattern[i % len(optimal_pattern)]
                 
-                # Add page to memorized set
-                if amount == 1.0:
-                    memorized_pages_set.add(int(current_page_val))
-                elif amount == 0.5:
-                    memorized_pages_set.add(int(current_page_val))
-                
                 schedule.append({
                     'page': current_page_val,
-                    'amount': amount,
-                    'memorized_pages': memorized_pages_set.copy()
+                    'amount': amount
                 })
                 current_page_val += amount
                 if current_page_val > end_page:
                     current_page_val = end_page
         else:
-            # Handle 0.5 page daily or 1 page daily
             amount = 0.5 if "0.5" in daily_amount else 1.0
             current_page_val = start_page
             for i in range(working_days):
-                # Add page to memorized set
-                if amount == 1.0:
-                    memorized_pages_set.add(int(current_page_val))
-                elif amount == 0.5:
-                    memorized_pages_set.add(int(current_page_val))
-                
                 schedule.append({
                     'page': current_page_val,
-                    'amount': amount,
-                    'memorized_pages': memorized_pages_set.copy()
+                    'amount': amount
                 })
                 current_page_val += amount
                 if current_page_val > end_page:
@@ -1643,28 +1552,21 @@ def calculate_schedule():
                 jadeen = schedule[jadeen_idx]
                 pages_completed += jadeen['amount']
                 
-                # Get memorized pages for this day
-                memorized_pages = jadeen.get('memorized_pages', set())
-                
-                # Calculate juzz hali using NEW PAGE-BASED LOGIC
-                juzz_hali = calculate_juzz_hali(
-                    current_jadeen_page=int(jadeen['page']),
-                    memorized_pages=memorized_pages,
-                    is_backward=is_backward
-                )
+                # Calculate juzz hali
+                if is_backward:
+                    juzz_hali = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8}"
+                else:
+                    start = max(1, jadeen['page'] - 10)
+                    end = jadeen['page'] - 1
+                    juzz_hali = f"{int(start)}-{int(end)}" if start <= end else "None"
                 
                 # Calculate murajjah (with "Para" prefix for display)
                 murajjah = get_murajjah_for_day(weekday_counter, murajjah_option, for_pdf=False)
                 
-                # Prepare jadeen display with surah name if available
-                jadeen_display = f"{int(jadeen['page'])} ({'full' if jadeen['amount'] == 1 else 'half'})"
-                if 'surah_name' in jadeen:
-                    jadeen_display = f"{jadeen_display} ({jadeen['surah_name']})"
-                
                 full_schedule.append({
                     'Date': day_num,
                     'Day': day_name,
-                    'Jadeen': jadeen_display,
+                    'Jadeen': f"{int(jadeen['page'])} ({'full' if jadeen['amount'] == 1 else 'half'})",
                     'Juzz Hali': juzz_hali,
                     'Murajjah': murajjah,
                     'isHoliday': False
@@ -2413,10 +2315,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
