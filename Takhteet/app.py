@@ -121,7 +121,7 @@ def get_previous_surah_backward(current_surah_num):
                 return SURAH_DATA_BACKWARD[i - 1]
     return None
 
-def calculate_juzz_hali_correct(current_jadeen_page, memorized_pages, is_backward=True):
+def calculate_juzz_hali(current_jadeen_page, memorized_pages, is_backward=True):
     """
     CORRECT VERSION: Juzz Hali = 10 MEMORIZED PAGES
     Rules:
