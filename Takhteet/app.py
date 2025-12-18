@@ -164,6 +164,29 @@ def calculate_juzhali_backward(current_page, amount, all_completed_pages):
     
     return f"{juz_start}-{juz_end}"
 
+def calculate_juzhali_backward_corrected(current_page, amount, all_completed_pages):
+    """Calculate Juzhali for backward direction - CORRECTED VERSION"""
+    completed_after = []
+    
+    for entry in all_completed_pages:
+        page = entry['page']
+        
+        if page > current_page:
+            completed_after.append(page)
+        elif page == current_page and amount == 0.5:
+            # Doing second half today means first half was done yesterday
+            completed_after.append(page)
+    
+    completed_after = sorted(list(set(completed_after)))
+    juzhali_pages = completed_after[:10]
+    
+    if not juzhali_pages:
+        return "None"
+    
+    juz_start = min(juzhali_pages)
+    juz_end = max(juzhali_pages)
+    return f"{juz_start}-{juz_end}"
+
 def generate_backward_schedule(start_surah_num, start_page, daily_amount, working_days):
     """Generate backward schedule based on surah-by-surah progression"""
     schedule = []
@@ -1091,7 +1114,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
 
 
 def generate_schedule(start_juz, days_in_month):
-    """Generate schedule data for PDF - FIXED VERSION"""
+    """Generate schedule data for PDF - WITH CORRECTED JUZHALI"""
     schedule = {}
     current_page = st.session_state.start_page
     current_juz = start_juz
@@ -1111,7 +1134,7 @@ def generate_schedule(start_juz, days_in_month):
     
     all_holidays = sorted(set(sundays + last_days))
     
-    # Calculate jadeen schedule (same as calculate_schedule function)
+    # Calculate jadeen schedule
     days_in_month = calendar.monthrange(st.session_state.year, st.session_state.month)[1]
     start_page = st.session_state.start_page
     end_page = st.session_state.end_page
@@ -1169,9 +1192,12 @@ def generate_schedule(start_juz, days_in_month):
                 if current_page_val > end_page:
                     current_page_val = end_page
     
-    # Now create the schedule for each day
+    # Now create the schedule for each day WITH CORRECTED JUZHALI
     jadeen_idx = 0
     weekday_counter = 0
+    
+    # NEW: Track completed pages for Juzhali calculation
+    completed_pages_history = []
     
     for day in range(1, days_in_month + 1):
         if day in all_holidays:
@@ -1181,30 +1207,20 @@ def generate_schedule(start_juz, days_in_month):
         # Get jadeen for this day
         jadeen = schedule_list[jadeen_idx]
         
-        # Calculate juz range
+        # ==================== CORRECTED JUZHALI FOR PDF ====================
         if is_backward:
-            # For backward: Juzhali is 10 pages AFTER current page (previously memorized)
-            is_half_page = jadeen['amount'] == 0.5
-            
-            if is_half_page:
-                # If half page, include current page in Juzhali (first half already done)
-                juz_start = int(jadeen['page'])
-                juz_end = int(jadeen['page']) + 9
-            else:
-                # If full page, Juzhali starts from next page
-                juz_start = int(jadeen['page']) + 1
-                juz_end = int(jadeen['page']) + 10
-            
-            # Ensure we don't exceed Quran's 604 pages
-            juz_end = min(juz_end, 604)
-            juz_range = f"{juz_start}-{juz_end}"
+            juz_range = calculate_juzhali_backward_corrected(
+                current_page=int(jadeen['page']),
+                amount=jadeen['amount'],
+                all_completed_pages=completed_pages_history
+            )
         else:
-            # Forward direction remains same
+            # Forward direction (unchanged)
             start = max(1, jadeen['page'] - 10)
             end = jadeen['page'] - 1
             juz_range = f"{int(start)}-{int(end)}" if start <= end else "None"
         
-        # Get murajjah for PDF (just numbers)
+        # Get murajjah for PDF
         murajjah = get_murajjah_for_day(weekday_counter, st.session_state.murajjah_option, for_pdf=True)
         
         schedule[day] = {
@@ -1214,6 +1230,12 @@ def generate_schedule(start_juz, days_in_month):
             'isHoliday': False
         }
         
+        # ==================== TRACK COMPLETED PAGE ====================
+        completed_pages_history.append({
+            'page': int(jadeen['page']),
+            'amount': jadeen['amount']
+        })
+        
         jadeen_idx += 1
         weekday_counter += 1
         if weekday_counter >= 6:
@@ -1222,7 +1244,7 @@ def generate_schedule(start_juz, days_in_month):
     return schedule
 
 def calculate_schedule():
-    """Calculate the complete schedule with actual calendar dates - SHOW SINGLE SOLUTION"""
+    """Calculate the complete schedule with CORRECTED Juzhali for backward direction"""
     month = st.session_state.month
     year = st.session_state.year
     direction = st.session_state.direction
@@ -1250,7 +1272,7 @@ def calculate_schedule():
     # Calculate current working days with user's settings
     current_working_days = days_in_month - len(sundays) - extra_holidays
     
-    # ============ NEW: ADAPTIVE MIXED CALCULATION ============
+    # ============ ADAPTIVE MIXED CALCULATION (KEEP THIS LOGIC) ============
     def find_optimal_mix(total_pages, available_days):
         """Find optimal combination of 0.5 and 1.0 pages to reach target"""
         
@@ -1294,7 +1316,7 @@ def calculate_schedule():
 
     # Calculate minimum days needed based on daily amount
     if "Mixed" in daily_amount:
-        # NEW: Use adaptive mixed calculation
+        # Use adaptive mixed calculation
         optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
         
         if optimal_pattern:
@@ -1372,7 +1394,7 @@ def calculate_schedule():
             - Working days: **{min_days_needed}** (from {current_working_days})
             - You can complete all **{total_pages_needed}** pages
             """)
-            solution_found = True
+                solution_found = True
         
         # Solution 3: Increase to 1 page daily (if currently on 0.5 or Mixed)
         if not solution_found and ("0.5" in daily_amount or "Mixed" in daily_amount):
@@ -1572,10 +1594,13 @@ def calculate_schedule():
                 if current_page_val > end_page:
                     current_page_val = end_page
     
-    # Create full monthly schedule - FOLLOWING ACTUAL CALENDAR DATES
+    # ==================== CORRECTED PART: Track completed pages ====================
     full_schedule = []
     jadeen_idx = 0
     weekday_counter = 0
+    
+    # NEW: Track all completed pages for Juzhali calculation
+    completed_pages_history = []
     
     # Get actual calendar for the selected month
     cal = calendar.Calendar()
@@ -1602,28 +1627,22 @@ def calculate_schedule():
         else:
             if jadeen_idx < len(schedule):
                 jadeen = schedule[jadeen_idx]
-                pages_completed += jadeen['amount']
+                current_page = jadeen['page']
+                amount = jadeen['amount']
+                pages_completed += amount
                 
-                # Calculate juzz hali
+                # ==================== CORRECTED JUZHALI CALCULATION ====================
                 if is_backward:
-                    # For backward: Juzhali is pages AFTER current page (completed material)
-                    is_half_page = jadeen['amount'] == 0.5
-                    
-                    if is_half_page:
-                        # Half page: include current page (first half done in previous Jadeen)
-                        juzz_start = int(jadeen['page'])
-                        juzz_end = int(jadeen['page']) + 9
-                    else:
-                        # Full page: start from next page
-                        juzz_start = int(jadeen['page']) + 1
-                        juzz_end = int(jadeen['page']) + 10
-                    
-                    juzz_end = min(juzz_end, 604)  # Don't exceed Quran pages
-                    juzz_hali = f"{juzz_start}-{juzz_end}"
+                    # NEW: Use completed pages history
+                    juzz_hali = calculate_juzhali_backward_corrected(
+                        current_page=int(current_page),
+                        amount=amount,
+                        all_completed_pages=completed_pages_history
+                    )
                 else:
-                    # Forward direction remains same
-                    start = max(1, jadeen['page'] - 10)
-                    end = jadeen['page'] - 1
+                    # Forward direction (unchanged)
+                    start = max(1, current_page - 10)
+                    end = current_page - 1
                     juzz_hali = f"{int(start)}-{int(end)}" if start <= end else "None"
                 
                 # Calculate murajjah (with "Para" prefix for display)
@@ -1632,10 +1651,16 @@ def calculate_schedule():
                 full_schedule.append({
                     'Date': day_num,
                     'Day': day_name,
-                    'Jadeen': f"{int(jadeen['page'])} ({'full' if jadeen['amount'] == 1 else 'half'})",
+                    'Jadeen': f"{int(current_page)} ({'full' if amount == 1 else 'half'})",
                     'Juzz Hali': juzz_hali,
                     'Murajjah': murajjah,
                     'isHoliday': False
+                })
+                
+                # ==================== CRITICAL: Track this completed page ====================
+                completed_pages_history.append({
+                    'page': int(current_page),
+                    'amount': amount
                 })
                 
                 jadeen_idx += 1
@@ -1650,11 +1675,11 @@ def calculate_schedule():
     ✅ **Schedule Generated Successfully!**
     
     📊 **Schedule Summary:**
-    - **Total Pages to Complete:** {total_pages}
+    - **Total Pages to Complete:** {total_pages:.1f}
     - **Working Days:** {working_days}
     - **Holidays:** {len(all_holidays)} (Sundays: {len(sundays)}, Extra: {extra_holidays})
     - **Daily Amount:** {daily_amount}
-    - **Pages Completed:** {pages_completed:.1f} / {total_pages}
+    - **Pages Completed:** {pages_completed:.1f} / {total_pages:.1f}
     - **Completion Date:** Day {working_days} of month
     """)
     
