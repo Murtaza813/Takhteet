@@ -189,6 +189,65 @@ def generate_backward_schedule(start_surah_num, start_page, daily_amount, workin
     
     return schedule
 
+def generate_backward_schedule_with_pattern(start_surah_num, start_page, pattern, working_days):
+    """Generate backward schedule with custom pattern"""
+    schedule = []
+    current_surah = SURAH_BY_NUMBER.get(start_surah_num)
+    if not current_surah:
+        return schedule
+    
+    current_page = start_page
+    current_surah_num = start_surah_num
+    day_count = 0
+    
+    while day_count < working_days:
+        if not current_surah:
+            break
+            
+        # Calculate pages left in current surah
+        pages_in_surah = current_surah["end_page"] - current_surah["start_page"] + 1
+        current_page_in_surah = current_page - current_surah["start_page"]
+        pages_left_in_surah = pages_in_surah - current_page_in_surah
+        
+        if pages_left_in_surah <= 0:
+            # Move to next surah in backward sequence
+            current_surah = get_next_surah_backward(current_surah_num)
+            if not current_surah:
+                break
+            current_surah_num = current_surah["surah"]
+            current_page = current_surah["start_page"]
+            continue
+        
+        # Get amount from pattern
+        today_amount = pattern[day_count % len(pattern)]
+        
+        # Adjust amount if it exceeds pages left in surah
+        if today_amount > pages_left_in_surah:
+            today_amount = pages_left_in_surah
+        
+        # Add to schedule
+        schedule.append({
+            "day": day_count + 1,
+            "surah_num": current_surah_num,
+            "surah_name": current_surah["name"],
+            "page": current_page,
+            "amount": today_amount
+        })
+        
+        # Update current page
+        current_page += today_amount
+        
+        # If we completed the surah, move to next one
+        if current_page > current_surah["end_page"]:
+            current_surah = get_next_surah_backward(current_surah_num)
+            if current_surah:
+                current_surah_num = current_surah["surah"]
+                current_page = current_surah["start_page"]
+        
+        day_count += 1
+    
+    return schedule
+
 def calculate_backward_juzz_hali(current_page, current_surah, all_completed_pages_by_surah):
     """
     Calculate juzz hali for backward direction based on surah completion.
