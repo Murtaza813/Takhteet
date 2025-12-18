@@ -1274,34 +1274,36 @@ def generate_schedule(start_juz, days_in_month):
         # Get jadeen for this day
         jadeen = schedule_list[jadeen_idx]
         
-        # ==================== CORRECTED JUZHALI FOR PDF ====================
-        if is_backward:
-            juz_range = calculate_juzhali_backward_corrected(
-                current_page=int(jadeen['page']),
-                amount=jadeen['amount'],
-                all_completed_pages=completed_pages_history
-            )
-        else:
-            # Forward direction (unchanged)
-            start = max(1, jadeen['page'] - 10)
-            end = jadeen['page'] - 1
-            juz_range = f"{int(start)}-{int(end)}" if start <= end else "None"
-        
-        # Get murajjah for PDF
-        murajjah = get_murajjah_for_day(weekday_counter, st.session_state.murajjah_option, for_pdf=True)
-        
-        schedule[day] = {
-            'current_page': str(int(jadeen['page'])),
-            'juz_range': juz_range,
-            'murajjah': murajjah,
-            'isHoliday': False
-        }
-        
-        # ==================== TRACK COMPLETED PAGE ====================
-        completed_pages_history.append({
-            'page': int(jadeen['page']),
-            'amount': jadeen['amount']
-        })
+                # ==================== TRACK COMPLETED PAGE FIRST ====================
+                # FIRST: Add today's work to history BEFORE calculating Juzhali
+                completed_pages_history.append({
+                    'page': int(jadeen['page']),
+                    'amount': jadeen['amount']
+                })
+
+                # ==================== THEN CALCULATE JUZHALI ====================
+                if is_backward:
+                    juz_range = calculate_juzhali_backward_corrected(
+                        current_page=int(jadeen['page']),
+                        amount=jadeen['amount'],
+                        all_completed_pages=completed_pages_history  # ← Now includes today!
+                    )
+                else:
+                    # Forward direction (unchanged)
+                    start = max(1, jadeen['page'] - 10)
+                    end = jadeen['page'] - 1
+                    juz_range = f"{int(start)}-{int(end)}" if start <= end else "None"
+                
+                # Get murajjah for PDF
+                murajjah = get_murajjah_for_day(weekday_counter, st.session_state.murajjah_option, for_pdf=True)
+                
+                # ==================== ADD TO SCHEDULE ====================
+                schedule[day] = {
+                    'current_page': str(int(jadeen['page'])),
+                    'juz_range': juz_range,  # ← Now calculated WITH today's work
+                    'murajjah': murajjah,
+                    'isHoliday': False
+                }
         
         jadeen_idx += 1
         weekday_counter += 1
@@ -1698,13 +1700,21 @@ def calculate_schedule():
                 amount = jadeen['amount']
                 pages_completed += amount
                 
-                # ==================== CORRECTED JUZHALI CALCULATION ====================
+                # ==================== CRITICAL: Track this completed page FIRST ====================
+                # FIRST: Add today's work to history BEFORE calculating Juzhali
+                completed_pages_history.append({
+                    'page': int(current_page),
+                    'amount': amount
+                })
+
+                # ==================== THEN CALCULATE JUZHALI ====================
+                # NOW calculate Juzhali with updated history (includes today's work)
                 if is_backward:
-                    # NEW: Use completed pages history
+                    # NEW: Use completed pages history (now includes today)
                     juzz_hali = calculate_juzhali_backward_corrected(
                         current_page=int(current_page),
                         amount=amount,
-                        all_completed_pages=completed_pages_history
+                        all_completed_pages=completed_pages_history  # ← Now includes today!
                     )
                 else:
                     # Forward direction (unchanged)
@@ -1715,19 +1725,14 @@ def calculate_schedule():
                 # Calculate murajjah (with "Para" prefix for display)
                 murajjah = get_murajjah_for_day(weekday_counter, murajjah_option, for_pdf=False)
                 
+                # ==================== ADD TO SCHEDULE ====================
                 full_schedule.append({
                     'Date': day_num,
                     'Day': day_name,
                     'Jadeen': f"{int(current_page)} ({'full' if amount == 1 else 'half'})",
-                    'Juzz Hali': juzz_hali,
+                    'Juzz Hali': juzz_hali,  # ← Now calculated WITH today's work included
                     'Murajjah': murajjah,
                     'isHoliday': False
-                })
-                
-                # ==================== CRITICAL: Track this completed page ====================
-                completed_pages_history.append({
-                    'page': int(current_page),
-                    'amount': amount
                 })
                 
                 jadeen_idx += 1
