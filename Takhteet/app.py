@@ -248,6 +248,86 @@ def generate_backward_schedule_with_pattern(start_surah_num, start_page, pattern
     
     return schedule
 
+def calculate_backward_juzz_hali(current_page, current_surah, all_completed_pages_by_surah):
+    """
+    Calculate juzz hali for backward direction based on surah completion.
+    
+    Parameters:
+    - current_page: The page student is currently memorizing (jadeen)
+    - current_surah: The surah object student is currently on
+    - all_completed_pages_by_surah: Dict of {surah_num: [list of completed pages]}
+    
+    Returns:
+    - juzz_hali string like "502-506, 518-520"
+    """
+    
+    # Step 1: Get pages completed in CURRENT surah (from start to current_page)
+    current_surah_pages = []
+    if current_surah:
+        # Pages from start of current surah up to current page
+        for page in range(current_surah["start_page"], int(current_page) + 1):
+            current_surah_pages.append(page)
+    
+    # Step 2: If we have less than ~10 pages, add from previously completed surahs
+    target_pages = 10  # Target around 10 pages for juzz hali
+    all_juzz_hali_pages = current_surah_pages.copy()
+    
+    if len(all_juzz_hali_pages) < target_pages:
+        # Get list of completed surahs (excluding current surah)
+        completed_surahs = []
+        for surah_num, pages in all_completed_pages_by_surah.items():
+            if surah_num != current_surah["surah"]:
+                completed_surahs.append((surah_num, pages))
+        
+        # Sort completed surahs in backward order (most recent first)
+        completed_surahs.sort(key=lambda x: x[0], reverse=False)  # Lower surah num = more recent in backward
+        
+        # Add pages from most recent completed surahs until we reach target
+        for surah_num, pages in completed_surahs:
+            if len(all_juzz_hali_pages) >= target_pages:
+                break
+            
+            # Add this surah's pages (they're already completed)
+            for page in sorted(pages, reverse=True):  # Add in reverse order (backward)
+                if page not in all_juzz_hali_pages:
+                    all_juzz_hali_pages.append(page)
+                    if len(all_juzz_hali_pages) >= target_pages:
+                        break
+    
+    # Step 3: Sort pages in descending order (for backward direction display)
+    all_juzz_hali_pages = sorted(all_juzz_hali_pages, reverse=True)
+    
+    # Step 4: Group consecutive pages into ranges for display
+    if not all_juzz_hali_pages:
+        return "None"
+    
+    # Take only first ~10 pages (most recent)
+    display_pages = all_juzz_hali_pages[:min(12, len(all_juzz_hali_pages))]
+    
+    # Group consecutive pages
+    ranges = []
+    start = display_pages[0]
+    end = display_pages[0]
+    
+    for page in display_pages[1:]:
+        if page == end - 1:  # Pages are consecutive
+            end = page
+        else:
+            if start == end:
+                ranges.append(str(start))
+            else:
+                ranges.append(f"{end}-{start}" if start > end else f"{start}-{end}")
+            start = page
+            end = page
+    
+    # Add the last range
+    if start == end:
+        ranges.append(str(start))
+    else:
+        ranges.append(f"{end}-{start}" if start > end else f"{start}-{end}")
+    
+    return ", ".join(ranges)
+
 # Page configuration
 st.set_page_config(
     page_title="Quran Hifz Takhteet Generator",
@@ -1409,81 +1489,103 @@ def calculate_schedule():
     schedule = []
     
     if is_backward:
-        # ============ BACKWARD SURAH-BASED SCHEDULE ============
-        # Get surah for starting page
-        start_surah = get_surah_at_page(start_page)
-        if not start_surah:
-            st.error(f"❌ Page {start_page} is not in the surah database. Please check the page number.")
-            return None
+    # ============ BACKWARD SURAH-BASED SCHEDULE ============
+    # Get surah for starting page
+    start_surah = get_surah_at_page(start_page)
+    if not start_surah:
+        st.error(f"❌ Page {start_page} is not in the surah database. Please check the page number.")
+        return None
+    
+    # Check if start page is valid within surah
+    if start_page < start_surah["start_page"] or start_page > start_surah["end_page"]:
+        st.error(f"❌ Page {start_page} is not within {start_surah['name']} (pages {start_surah['start_page']}-{start_surah['end_page']})")
+        return None
+    
+    # Generate backward schedule
+    if daily_amount == "Mixed (0.5 & 1 page)":
+        # Use adaptive pattern
+        optimal_pattern, _ = find_optimal_mix(total_pages, working_days)
+        if not optimal_pattern:
+            optimal_pattern = [0.5, 0.5, 1, 0.5, 0.5, 1]  # Fallback to default
         
-        # Check if start page is valid within surah
-        if start_page < start_surah["start_page"] or start_page > start_surah["end_page"]:
-            st.error(f"❌ Page {start_page} is not within {start_surah['name']} (pages {start_surah['start_page']}-{start_surah['end_page']})")
-            return None
+        backward_schedule = generate_backward_schedule_with_pattern(
+            start_surah_num=start_surah["surah"],
+            start_page=start_page,
+            pattern=optimal_pattern,
+            working_days=working_days
+        )
+    else:
+        backward_schedule = generate_backward_schedule(
+            start_surah_num=start_surah["surah"],
+            start_page=start_page,
+            daily_amount=daily_amount,
+            working_days=working_days
+        )
+    
+    if not backward_schedule:
+        st.error("❌ Could not generate backward schedule. Please check your inputs.")
+        return None
+    
+    # Calculate total pages from backward schedule
+    total_pages_scheduled = sum(item["amount"] for item in backward_schedule)
+    
+    # Check if schedule reaches target
+    if total_pages_scheduled < total_pages:
+        # Show what we CAN achieve
+        st.warning(f"""
+        ⚠️ **Note: With backward surah progression, you'll complete {total_pages_scheduled:.1f} pages instead of {total_pages}**
         
-        # Generate backward schedule
-        if daily_amount == "Mixed (0.5 & 1 page)":
-            # Use adaptive pattern
-            optimal_pattern, _ = find_optimal_mix(total_pages, working_days)
-            if not optimal_pattern:
-                optimal_pattern = [0.5, 0.5, 1, 0.5, 0.5, 1]  # Fallback to default
-            
-            backward_schedule = generate_backward_schedule_with_pattern(
-                start_surah_num=start_surah["surah"],
-                start_page=start_page,
-                pattern=optimal_pattern,
-                working_days=working_days
-            )
-        else:
-            backward_schedule = generate_backward_schedule(
-                start_surah_num=start_surah["surah"],
-                start_page=start_page,
-                daily_amount=daily_amount,
-                working_days=working_days
-            )
+        **Reason:** Backward progression follows surah boundaries, not simple page counts.
         
-        if not backward_schedule:
-            st.error("❌ Could not generate backward schedule. Please check your inputs.")
-            return None
+        **Actual target reachable:** Page {start_page - total_pages_scheduled if is_backward else start_page + total_pages_scheduled}
         
-        # Calculate total pages from backward schedule
-        total_pages_scheduled = sum(item["amount"] for item in backward_schedule)
+        **Surahs covered:**
+        """)
         
-        # Check if schedule reaches target
-        if total_pages_scheduled < total_pages:
-            # Show what we CAN achieve
-            st.warning(f"""
-            ⚠️ **Note: With backward surah progression, you'll complete {total_pages_scheduled:.1f} pages instead of {total_pages}**
-            
-            **Reason:** Backward progression follows surah boundaries, not simple page counts.
-            
-            **Actual target reachable:** Page {start_page - total_pages_scheduled if is_backward else start_page + total_pages_scheduled}
-            
-            **Surahs covered:**
-            """)
-            
-            # Show surahs that WILL be covered
-            surahs_covered = {}
-            for item in backward_schedule:
-                surahs_covered[item["surah_num"]] = item["surah_name"]
-            
-            if surahs_covered:
-                cols = st.columns(3)
-                for i, (surah_num, surah_name) in enumerate(sorted(surahs_covered.items())):
-                    with cols[i % 3]:
-                        st.markdown(f"• {surah_num}. {surah_name}")
-            
-            # Update total_pages to what's actually achievable
-            total_pages = total_pages_scheduled
+        # Show surahs that WILL be covered
+        surahs_covered = {}
+        for item in backward_schedule:
+            surahs_covered[item["surah_num"]] = item["surah_name"]
         
-        # Convert backward schedule to the format expected by the rest of the code
-        for day_schedule in backward_schedule[:working_days]:
-            schedule.append({
-                'page': day_schedule["page"],
-                'amount': day_schedule["amount"],
-                'surah_name': day_schedule["surah_name"],
-                'surah_num': day_schedule["surah_num"]
-            })
+        if surahs_covered:
+            cols = st.columns(3)
+            for i, (surah_num, surah_name) in enumerate(sorted(surahs_covered.items())):
+                with cols[i % 3]:
+                    st.markdown(f"• {surah_num}. {surah_name}")
+        
+        # Update total_pages to what's actually achievable
+        total_pages = total_pages_scheduled
+    
+    # ============ TRACK COMPLETED PAGES FOR JUZZ HALI ============
+    # Track completed pages by surah for juzz hali calculation
+    completed_pages_by_surah = {}  # {surah_num: [list of completed pages]}
+    
+    # Convert backward schedule to the format expected by the rest of the code
+    for day_schedule in backward_schedule[:working_days]:
+        page = day_schedule["page"]
+        amount = day_schedule["amount"]
+        surah_num = day_schedule["surah_num"]
+        
+        # Track completed pages in current surah
+        if surah_num not in completed_pages_by_surah:
+            completed_pages_by_surah[surah_num] = []
+        
+        # Add this page to completed pages (even if half page, we consider it done)
+        page_int = int(page)
+        if page_int not in completed_pages_by_surah[surah_num]:
+            completed_pages_by_surah[surah_num].append(page_int)
+        
+        # Get current surah for juzz hali calculation
+        current_surah_for_juzz = SURAH_BY_NUMBER.get(surah_num)
+        
+        schedule.append({
+            'page': page,
+            'amount': amount,
+            'surah_name': day_schedule["surah_name"],
+            'surah_num': surah_num,
+            'completed_pages_by_surah': completed_pages_by_surah.copy(),
+            'current_surah': current_surah_for_juzz
+        })
         
     else:
         # ============ FORWARD DIRECTION (ORIGINAL LOGIC WITH ADAPTIVE MIXED) ============
@@ -1552,10 +1654,18 @@ def calculate_schedule():
                 jadeen = schedule[jadeen_idx]
                 pages_completed += jadeen['amount']
                 
-                # Calculate juzz hali
+                # Calculate juzz hali - DIFFERENT LOGIC FOR BACKWARD
                 if is_backward:
-                    juzz_hali = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8}"
+                    # Use surah-aware juzz hali calculation for backward direction
+                    current_surah_obj = jadeen.get('current_surah')
+                    completed_by_surah = jadeen.get('completed_pages_by_surah', {})
+                    juzz_hali = calculate_backward_juzz_hali(
+                        current_page=jadeen['page'],
+                        current_surah=current_surah_obj,
+                        all_completed_pages_by_surah=completed_by_surah
+                    )
                 else:
+                    # Forward direction uses original logic
                     start = max(1, jadeen['page'] - 10)
                     end = jadeen['page'] - 1
                     juzz_hali = f"{int(start)}-{int(end)}" if start <= end else "None"
@@ -2315,7 +2425,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
 
