@@ -123,12 +123,12 @@ def get_previous_surah_backward(current_surah_num):
 
 def calculate_juzz_hali(current_jadeen_page, memorized_pages, is_backward=True):
     """
-    CORRECT VERSION: Juzz Hali = 10 MEMORIZED PAGES
+    CORRECT VERSION: Juzz Hali = 10 MEMORIZED PAGES going FORWARD
     Rules:
     1. Start from last memorized page BEFORE current jadeen
-    2. If none, start from current jadeen (if memorized yesterday)
+    2. Count FORWARD through memorized pages only
     3. Skip unmemoized pages
-    4. Current jadeen NEVER included (unless memorized yesterday)
+    4. Current jadeen NEVER included (it's today's new work)
     5. Count exactly 10 pages
     """
     
@@ -141,46 +141,42 @@ def calculate_juzz_hali(current_jadeen_page, memorized_pages, is_backward=True):
     if not memorized_without_today:
         return "Revision Day"
     
-    # Sort pages in descending order (highest to lowest)
-    sorted_pages = sorted(memorized_without_today, reverse=True)
+    # Sort pages in ascending order (lowest to highest)
+    sorted_pages = sorted(memorized_without_today)
     
     # Find starting page: last memorized page BEFORE current jadeen
     start_page = None
-    for page in sorted_pages:
+    for page in reversed(sorted_pages):
         if page < current_jadeen_page:
             start_page = page
             break
     
-    # If no page before current jadeen, use the highest memorized page
+    # If no page before current jadeen, use the lowest memorized page
     if start_page is None:
         start_page = sorted_pages[0] if sorted_pages else None
     
     if start_page is None:
         return "Revision Day"
     
-    # Now collect 10 pages, going BACKWARD from start_page
+    # Now collect 10 pages, going FORWARD from start_page through memorized pages
     juzz_hali_pages = []
-    current_page = start_page
     
-    # First, go backward from start_page
-    while len(juzz_hali_pages) < 10 and current_page >= 1:
-        if current_page in memorized_without_today:
-            juzz_hali_pages.append(current_page)
-        current_page -= 1
+    # Start from start_page and go FORWARD through ALL memorized pages
+    for page in sorted_pages:
+        if page >= start_page and len(juzz_hali_pages) < 10:
+            juzz_hali_pages.append(page)
     
-    # If we still need more pages, go FORWARD from start_page
+    # If we still need more pages, wrap around from the beginning
     if len(juzz_hali_pages) < 10:
-        current_page = start_page + 1
-        while len(juzz_hali_pages) < 10 and current_page <= 604:
-            if current_page in memorized_without_today:
-                juzz_hali_pages.append(current_page)
-            current_page += 1
-    
-    # Sort for display (lowest to highest)
-    juzz_hali_pages.sort()
+        for page in sorted_pages:
+            if page < start_page and len(juzz_hali_pages) < 10:
+                juzz_hali_pages.append(page)
     
     if not juzz_hali_pages:
         return "Revision Day"
+    
+    # Sort for display (lowest to highest)
+    juzz_hali_pages.sort()
     
     # Format as range
     if len(juzz_hali_pages) >= 2:
