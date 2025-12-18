@@ -250,81 +250,72 @@ def generate_backward_schedule_with_pattern(start_surah_num, start_page, pattern
 
 def calculate_backward_juzz_hali(current_page, current_surah, all_completed_pages_by_surah):
     """
-    Calculate juzz hali for backward direction based on surah completion.
+    Calculate juzz hali for backward direction - EXACT LOGIC
     
-    Parameters:
-    - current_page: The page student is currently memorizing (jadeen)
-    - current_surah: The surah object student is currently on
-    - all_completed_pages_by_surah: Dict of {surah_num: [list of completed pages]}
-    
-    Returns:
-    - juzz_hali string like "502-506, 518-520"
+    RULES:
+    1. Juzz hali = 10 pages total
+    2. Start from: current_page + 1
+    3. BUT: Skip any page that is in current surah and > current_page (not memorized yet)
+    4. Continue taking pages until 10 total
+    5. If current_page was memorized on previous day, include it first
     """
     
-    # Step 1: Get pages completed in CURRENT surah (from start to current_page)
-    current_surah_pages = []
+    current_page_int = int(current_page)
+    juzz_hali_pages = []
+    
+    # Step 1: Check if current_page was memorized on previous day
+    # Flatten all completed pages
+    all_memorized = []
+    for pages in all_completed_pages_by_surah.values():
+        all_memorized.extend(pages)
+    
+    # If current page is in memorized pages (from previous day), add it
+    if current_page_int in all_memorized:
+        juzz_hali_pages.append(current_page_int)
+    
+    # Step 2: Get pages to skip (pages in current surah > current_page)
+    pages_to_skip = []
     if current_surah:
-        # Pages from start of current surah up to current page
-        for page in range(current_surah["start_page"], int(current_page) + 1):
-            current_surah_pages.append(page)
-    
-    # Step 2: If we have less than ~10 pages, add from previously completed surahs
-    target_pages = 10  # Target around 10 pages for juzz hali
-    all_juzz_hali_pages = current_surah_pages.copy()
-    
-    if len(all_juzz_hali_pages) < target_pages:
-        # Get list of completed surahs (excluding current surah)
-        completed_surahs = []
-        for surah_num, pages in all_completed_pages_by_surah.items():
-            if surah_num != current_surah["surah"]:
-                completed_surahs.append((surah_num, pages))
+        current_surah_start = current_surah["start_page"]
+        current_surah_end = current_surah["end_page"]
         
-        # Sort completed surahs in backward order (most recent first)
-        completed_surahs.sort(key=lambda x: x[0], reverse=False)  # Lower surah num = more recent in backward
-        
-        # Add pages from most recent completed surahs until we reach target
-        for surah_num, pages in completed_surahs:
-            if len(all_juzz_hali_pages) >= target_pages:
-                break
-            
-            # Add this surah's pages (they're already completed)
-            for page in sorted(pages, reverse=True):  # Add in reverse order (backward)
-                if page not in all_juzz_hali_pages:
-                    all_juzz_hali_pages.append(page)
-                    if len(all_juzz_hali_pages) >= target_pages:
-                        break
+        # All pages in current surah that are > current_page
+        for page in range(current_page_int + 1, current_surah_end + 1):
+            pages_to_skip.append(page)
     
-    # Step 3: Sort pages in descending order (for backward direction display)
-    all_juzz_hali_pages = sorted(all_juzz_hali_pages, reverse=True)
+    # Step 3: Start adding pages from current_page + 1
+    next_page = current_page_int + 1
+    while len(juzz_hali_pages) < 10 and next_page <= 604:
+        if next_page not in pages_to_skip:
+            juzz_hali_pages.append(next_page)
+        next_page += 1
     
-    # Step 4: Group consecutive pages into ranges for display
-    if not all_juzz_hali_pages:
+    # Step 4: Sort in reverse for display
+    juzz_hali_pages = sorted(juzz_hali_pages, reverse=True)[:10]
+    
+    # Step 5: Format as ranges
+    if not juzz_hali_pages:
         return "None"
     
-    # Take only first ~10 pages (most recent)
-    display_pages = all_juzz_hali_pages[:min(12, len(all_juzz_hali_pages))]
-    
-    # Group consecutive pages
     ranges = []
-    start = display_pages[0]
-    end = display_pages[0]
+    start = juzz_hali_pages[0]
+    end = juzz_hali_pages[0]
     
-    for page in display_pages[1:]:
-        if page == end - 1:  # Pages are consecutive
+    for page in juzz_hali_pages[1:]:
+        if page == end - 1:
             end = page
         else:
             if start == end:
                 ranges.append(str(start))
             else:
-                ranges.append(f"{end}-{start}" if start > end else f"{start}-{end}")
+                ranges.append(f"{end}-{start}")
             start = page
             end = page
     
-    # Add the last range
     if start == end:
         ranges.append(str(start))
     else:
-        ranges.append(f"{end}-{start}" if start > end else f"{start}-{end}")
+        ranges.append(f"{end}-{start}")
     
     return ", ".join(ranges)
 
