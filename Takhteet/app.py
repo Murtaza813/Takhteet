@@ -166,53 +166,70 @@ def calculate_juzhali_backward(current_page, amount, all_completed_pages):
 
 def calculate_juzhali_backward_corrected(current_page, amount, all_completed_pages):
     """
-    Calculate Juzhali for backward direction - CORRECTED VERSION
+    SIMPLE VERSION based on your exact example
     
-    Args:
-        current_page: Current Jadeen page number (e.g., 570)
-        amount: 0.5 or 1.0 (today's page amount)
-        all_completed_pages: List of dicts [{'page': 578, 'amount': 0.5}, ...]
-    
-    Returns:
-        String like "572-581"
+    Juzhali = 10 pages starting from EARLIEST completed page,
+              skipping pages not completed in Jadeen
     """
     
-    # Step 1: Get pages completed that are numerically AFTER current page
-    completed_after = []
-    
-    # Check if current page was already done (half page scenario)
-    current_page_already_done = False
-    for entry in all_completed_pages:
-        if entry['page'] == current_page:
-            current_page_already_done = True
-            break
+    # 1. Get all COMPLETED pages (total >= 1.0)
+    completed_pages = set()
+    page_counts = {}
     
     for entry in all_completed_pages:
         page = entry['page']
+        amt = entry['amount']
+        if page not in page_counts:
+            page_counts[page] = 0
+        page_counts[page] += amt
+    
+    for page, total in page_counts.items():
+        if total >= 1.0:
+            completed_pages.add(page)
+    
+    # 2. Start from the FIRST completed page >= current_surah_start
+    current_surah = get_surah_at_page(current_page)
+    if not current_surah:
+        return "None"
+    
+    surah_start = current_surah['start_page']
+    
+    # Filter pages >= surah_start
+    eligible_pages = [p for p in sorted(completed_pages) if p >= surah_start]
+    
+    if not eligible_pages:
+        # No completed pages yet, start from surah_end
+        surah_end = current_surah['end_page']
+        # Generate 10 pages starting from surah_end
+        juzhali_pages = list(range(surah_end, surah_end + 10))
+        return f"{min(juzhali_pages)}-{max(juzhali_pages)}"
+    
+    # 3. Take first 10 eligible pages
+    # If we have gaps, we need to fill them
+    juzhali_pages = []
+    current_page_idx = 0
+    
+    while len(juzhali_pages) < 10 and current_page_idx < len(eligible_pages):
+        page = eligible_pages[current_page_idx]
+        juzhali_pages.append(page)
+        current_page_idx += 1
+    
+    # If still need more pages, add sequential pages after last one
+    if len(juzhali_pages) < 10:
+        last_page = juzhali_pages[-1] if juzhali_pages else surah_start
+        next_page = last_page + 1
         
-        if page > current_page:
-            # Pages after current page are definitely completed
-            completed_after.append(page)
-        elif page == current_page and current_page_already_done and amount == 0.5:
-            # SCENARIO 2: Current page appears in history AND today is half page
-            # This means first half was done before, second half is being done today
-            # Include current page in Juzhali
-            completed_after.append(page)
-    
-    # Remove duplicates and sort
-    completed_after = sorted(list(set(completed_after)))
-    
-    # Step 2: Take first 10 pages (most recent in backward sequence)
-    juzhali_pages = completed_after[:10]
+        while len(juzhali_pages) < 10 and next_page <= 604:
+            # Skip if this page is in the middle of being completed (0.5 only)
+            if next_page not in page_counts or page_counts[next_page] >= 1.0:
+                juzhali_pages.append(next_page)
+            next_page += 1
     
     if not juzhali_pages:
         return "None"
     
-    # Step 3: Return range
-    juz_start = min(juzhali_pages)
-    juz_end = max(juzhali_pages)
-    
-    return f"{juz_start}-{juz_end}"
+    juzhali_pages = sorted(juzhali_pages)[:10]
+    return f"{min(juzhali_pages)}-{max(juzhali_pages)}"
 
 def generate_backward_schedule(start_surah_num, start_page, daily_amount, working_days):
     """Generate backward schedule based on surah-by-surah progression"""
