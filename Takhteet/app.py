@@ -165,26 +165,53 @@ def calculate_juzhali_backward(current_page, amount, all_completed_pages):
     return f"{juz_start}-{juz_end}"
 
 def calculate_juzhali_backward_corrected(current_page, amount, all_completed_pages):
-    """Calculate Juzhali for backward direction - CORRECTED VERSION"""
+    """
+    Calculate Juzhali for backward direction - CORRECTED VERSION
+    
+    Args:
+        current_page: Current Jadeen page number (e.g., 570)
+        amount: 0.5 or 1.0 (today's page amount)
+        all_completed_pages: List of dicts [{'page': 578, 'amount': 0.5}, ...]
+    
+    Returns:
+        String like "572-581"
+    """
+    
+    # Step 1: Get pages completed that are numerically AFTER current page
     completed_after = []
+    
+    # Check if current page was already done (half page scenario)
+    current_page_already_done = False
+    for entry in all_completed_pages:
+        if entry['page'] == current_page:
+            current_page_already_done = True
+            break
     
     for entry in all_completed_pages:
         page = entry['page']
         
         if page > current_page:
+            # Pages after current page are definitely completed
             completed_after.append(page)
-        elif page == current_page and amount == 0.5:
-            # Doing second half today means first half was done yesterday
+        elif page == current_page and current_page_already_done and amount == 0.5:
+            # SCENARIO 2: Current page appears in history AND today is half page
+            # This means first half was done before, second half is being done today
+            # Include current page in Juzhali
             completed_after.append(page)
     
+    # Remove duplicates and sort
     completed_after = sorted(list(set(completed_after)))
+    
+    # Step 2: Take first 10 pages (most recent in backward sequence)
     juzhali_pages = completed_after[:10]
     
     if not juzhali_pages:
         return "None"
     
+    # Step 3: Return range
     juz_start = min(juzhali_pages)
     juz_end = max(juzhali_pages)
+    
     return f"{juz_start}-{juz_end}"
 
 def generate_backward_schedule(start_surah_num, start_page, daily_amount, working_days):
@@ -2406,3 +2433,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
