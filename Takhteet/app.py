@@ -127,6 +127,43 @@ def get_previous_surah_backward(current_surah_num):
                 return SURAH_DATA_BACKWARD[i - 1]
     return None
 
+def calculate_juzhali_backward(current_page, amount, all_completed_pages):
+    """
+    Calculate Juzhali for backward direction
+    
+    Args:
+        current_page: Current Jadeen page number
+        amount: 0.5 or 1.0 (half or full page)
+        all_completed_pages: List of all pages completed so far
+    
+    Returns:
+        String like "572-581" representing Juzhali range
+    """
+    # For backward direction:
+    # Juzhali = 10 pages of material that comes AFTER current page
+    # (but was memorized BEFORE in backward sequence)
+    
+    is_half_page = (amount == 0.5)
+    
+    # Get all completed pages that are >= current_page
+    completed_after = [p for p in all_completed_pages if p >= current_page]
+    
+    if is_half_page and current_page in all_completed_pages:
+        # If doing second half, include first half in Juzhali
+        juzhali_pages = completed_after[:10]  # Take first 10 completed pages
+    else:
+        # Full page or first half: exclude current page
+        juzhali_pages = [p for p in completed_after if p > current_page][:10]
+    
+    if not juzhali_pages:
+        return "None"
+    
+    # Return range
+    juz_start = min(juzhali_pages)
+    juz_end = max(juzhali_pages)
+    
+    return f"{juz_start}-{juz_end}"
+
 def generate_backward_schedule(start_surah_num, start_page, daily_amount, working_days):
     """Generate backward schedule based on surah-by-surah progression"""
     schedule = []
@@ -1146,8 +1183,23 @@ def generate_schedule(start_juz, days_in_month):
         
         # Calculate juz range
         if is_backward:
-            juz_range = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8}"
+            # For backward: Juzhali is 10 pages AFTER current page (previously memorized)
+            is_half_page = jadeen['amount'] == 0.5
+            
+            if is_half_page:
+                # If half page, include current page in Juzhali (first half already done)
+                juz_start = int(jadeen['page'])
+                juz_end = int(jadeen['page']) + 9
+            else:
+                # If full page, Juzhali starts from next page
+                juz_start = int(jadeen['page']) + 1
+                juz_end = int(jadeen['page']) + 10
+            
+            # Ensure we don't exceed Quran's 604 pages
+            juz_end = min(juz_end, 604)
+            juz_range = f"{juz_start}-{juz_end}"
         else:
+            # Forward direction remains same
             start = max(1, jadeen['page'] - 10)
             end = jadeen['page'] - 1
             juz_range = f"{int(start)}-{int(end)}" if start <= end else "None"
@@ -1554,8 +1606,22 @@ def calculate_schedule():
                 
                 # Calculate juzz hali
                 if is_backward:
-                    juzz_hali = f"{int(jadeen['page'])-1}-{int(jadeen['page'])+8}"
+                    # For backward: Juzhali is pages AFTER current page (completed material)
+                    is_half_page = jadeen['amount'] == 0.5
+                    
+                    if is_half_page:
+                        # Half page: include current page (first half done in previous Jadeen)
+                        juzz_start = int(jadeen['page'])
+                        juzz_end = int(jadeen['page']) + 9
+                    else:
+                        # Full page: start from next page
+                        juzz_start = int(jadeen['page']) + 1
+                        juzz_end = int(jadeen['page']) + 10
+                    
+                    juzz_end = min(juzz_end, 604)  # Don't exceed Quran pages
+                    juzz_hali = f"{juzz_start}-{juzz_end}"
                 else:
+                    # Forward direction remains same
                     start = max(1, jadeen['page'] - 10)
                     end = jadeen['page'] - 1
                     juzz_hali = f"{int(start)}-{int(end)}" if start <= end else "None"
