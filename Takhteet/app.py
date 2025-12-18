@@ -166,68 +166,91 @@ def calculate_juzhali_backward(current_page, amount, all_completed_pages):
 
 def calculate_juzhali_backward_corrected(current_page, amount, all_completed_pages):
     """
-    SIMPLE VERSION based on your exact example
+    FINAL FIXED VERSION - Based on your exact requirements
     
-    Juzhali = 10 pages starting from EARLIEST completed page,
-              skipping pages not completed in Jadeen
+    Rule: 
+    1. Find ALL pages that have been COMPLETED in Jadeen (total >= 1.0)
+    2. Start Juzhali from the EARLIEST completed page
+    3. Take exactly 10 pages, skipping any that aren't completed
+    4. If needed, fill with sequential pages after the last completed one
     """
     
-    # 1. Get all COMPLETED pages (total >= 1.0)
-    completed_pages = set()
-    page_counts = {}
+    # 1. Track page completion from Jadeen history
+    page_completion = {}
     
     for entry in all_completed_pages:
         page = entry['page']
         amt = entry['amount']
-        if page not in page_counts:
-            page_counts[page] = 0
-        page_counts[page] += amt
+        if page not in page_completion:
+            page_completion[page] = 0
+        page_completion[page] += amt
     
-    for page, total in page_counts.items():
+    # 2. Get ALL fully completed pages (total >= 1.0)
+    completed_pages = set()
+    for page, total in page_completion.items():
         if total >= 1.0:
             completed_pages.add(page)
     
-    # 2. Start from the FIRST completed page >= current_surah_start
-    current_surah = get_surah_at_page(current_page)
-    if not current_surah:
+    # 3. If no pages completed yet, start from current surah's end
+    if not completed_pages:
+        current_surah = get_surah_at_page(current_page)
+        if current_surah:
+            surah_end = current_surah['end_page']
+            # Generate 10 pages starting from surah_end
+            juzhali_pages = []
+            for i in range(10):
+                page_num = surah_end + i
+                if page_num > 604:
+                    break
+                juzhali_pages.append(page_num)
+            
+            if juzhali_pages:
+                return f"{min(juzhali_pages)}-{max(juzhali_pages)}"
         return "None"
     
-    surah_start = current_surah['start_page']
+    # 4. Sort completed pages
+    sorted_completed = sorted(list(completed_pages))
     
-    # Filter pages >= surah_start
-    eligible_pages = [p for p in sorted(completed_pages) if p >= surah_start]
+    # 5. Start Juzhali from the EARLIEST completed page
+    # Find the minimum page number among completed pages
+    start_page = sorted_completed[0]
     
-    if not eligible_pages:
-        # No completed pages yet, start from surah_end
-        surah_end = current_surah['end_page']
-        # Generate 10 pages starting from surah_end
-        juzhali_pages = list(range(surah_end, surah_end + 10))
-        return f"{min(juzhali_pages)}-{max(juzhali_pages)}"
-    
-    # 3. Take first 10 eligible pages
-    # If we have gaps, we need to fill them
+    # 6. Build Juzhali with exactly 10 pages
     juzhali_pages = []
-    current_page_idx = 0
+    current_check = start_page
     
-    while len(juzhali_pages) < 10 and current_page_idx < len(eligible_pages):
-        page = eligible_pages[current_page_idx]
-        juzhali_pages.append(page)
-        current_page_idx += 1
-    
-    # If still need more pages, add sequential pages after last one
-    if len(juzhali_pages) < 10:
-        last_page = juzhali_pages[-1] if juzhali_pages else surah_start
-        next_page = last_page + 1
+    while len(juzhali_pages) < 10 and current_check <= 604:
+        # Check if this page should be included
+        if current_check in completed_pages:
+            # Page is completed - include it
+            juzhali_pages.append(current_check)
+        else:
+            # Page is not completed - check if we can skip it
+            # Only skip if this page is in the middle of being worked on (0.5 only)
+            if current_check in page_completion and page_completion[current_check] < 1.0:
+                # This page is being worked on but not completed - skip it
+                pass
+            else:
+                # This page hasn't been touched at all - include it
+                juzhali_pages.append(current_check)
         
-        while len(juzhali_pages) < 10 and next_page <= 604:
-            # Skip if this page is in the middle of being completed (0.5 only)
-            if next_page not in page_counts or page_counts[next_page] >= 1.0:
-                juzhali_pages.append(next_page)
-            next_page += 1
+        current_check += 1
+    
+    # 7. If we still don't have 10 pages, add sequential pages
+    if len(juzhali_pages) < 10:
+        last_page = juzhali_pages[-1] if juzhali_pages else start_page
+        for i in range(1, 20):  # Add up to 20 more pages
+            if len(juzhali_pages) >= 10:
+                break
+            next_page = last_page + i
+            if next_page > 604:
+                break
+            juzhali_pages.append(next_page)
     
     if not juzhali_pages:
         return "None"
     
+    # Take exactly first 10 pages
     juzhali_pages = sorted(juzhali_pages)[:10]
     return f"{min(juzhali_pages)}-{max(juzhali_pages)}"
 
