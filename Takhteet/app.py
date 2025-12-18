@@ -1421,7 +1421,7 @@ def calculate_schedule():
             - Working days: **{min_days_needed}** (from {current_working_days})
             - You can complete all **{total_pages_needed}** pages
             """)
-                solution_found = True
+            solution_found = True  # <-- CORRECT INDENTATION (4 spaces)
         
         # Solution 3: Increase to 1 page daily (if currently on 0.5 or Mixed)
         if not solution_found and ("0.5" in daily_amount or "Mixed" in daily_amount):
@@ -2433,4 +2433,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
