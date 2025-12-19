@@ -2460,7 +2460,7 @@ def main():
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-# Display schedule if exists
+    # Display schedule if exists
     if st.session_state.schedule:
         st.markdown("---")
         month_name = datetime(2000, st.session_state.month, 1).strftime('%B')
@@ -2525,13 +2525,13 @@ def main():
         
         # Display as styled table (only if NOT in edit mode)
         if not st.session_state.edit_mode:
-        st.dataframe(
-            display_df.style.apply(highlight_holidays, axis=1),
-            use_container_width=True,
-            height=600
-        )
-    else:
-        st.info("📝 Scroll down to edit individual days")
+            st.dataframe(
+                display_df.style.apply(highlight_holidays, axis=1),
+                use_container_width=True,
+                height=600
+            )
+        else:
+            st.info("📝 Scroll down to edit individual days")
         
         # Show schedule summary with surah info for backward
         if "Backward" in st.session_state.direction:
