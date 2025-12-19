@@ -1127,7 +1127,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
             if for_pdf:
                 return ", ".join([str(s) for s in selected])
             else:
-                return ", ".join([f"Para {s}" for s in selected])
+                return ", ".join([str(s) for s in selected])
         return "Not assigned" if not for_pdf else ""
     
     # Auto Generate - UNIQUE SIPARAS PER 6-DAY CYCLE
@@ -1181,7 +1181,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
     if for_pdf:
         return ", ".join([str(p) for p in day_paras])
     else:
-        return ", ".join([f"Para {p}" for p in day_paras])
+        return ", ".join([str(p) for p in day_paras])
 
 
 def generate_schedule(start_juz, days_in_month):
@@ -1989,9 +1989,9 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
                 page_number = page_part
                 amount = amount_part.capitalize()
             
-            # Clean up Murajjah - remove "Para" prefix and truncate if too long
+            # Murajjah - just use the numbers directly
             if murajjah and murajjah != "—":
-                murajjah_clean = murajjah.replace("Para", "").replace("para", "").strip()
+                murajjah_clean = murajjah
                 # Truncate if too long (more than 15 chars)
                 if len(murajjah_clean) > 15:
                     murajjah_clean = murajjah_clean[:12] + "..."
