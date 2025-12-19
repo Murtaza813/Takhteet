@@ -1091,6 +1091,11 @@ if 'manual_murajjah' not in st.session_state:
     }
 if 'show_manual_murajjah' not in st.session_state:
     st.session_state.show_manual_murajjah = False
+# NEW: For teacher editing
+if 'edited_schedule' not in st.session_state:
+    st.session_state.edited_schedule = None
+if 'editing_mode' not in st.session_state:
+    st.session_state.editing_mode = False
 
 # Sipara ranges
 sipara_ranges = {
@@ -1179,6 +1184,53 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
     else:
         return ", ".join([f"Para {p}" for p in day_paras])
 
+
+# ================ NEW: EDITABLE TABLE FUNCTIONS ================
+
+def create_pdf_from_custom_schedule(student_name, month_name, year, custom_schedule):
+    """Create PDF from custom edited schedule"""
+    try:
+        pdf = FPDF(orientation='P')
+        pdf.set_auto_page_break(auto=False)
+        
+        # Add custom font for Arabic if available
+        use_arabic = ARABIC_SUPPORT
+        
+        # Split into two pages: days 1-15 and days 16-31
+        first_half = [d for d in custom_schedule if d['Date'] <= 15]
+        second_half = [d for d in custom_schedule if d['Date'] > 15]
+        
+        # Page 1: Days 1-15
+        pdf.add_page()
+        draw_pdf_page(pdf, student_name, month_name, year, first_half, use_arabic, page_num=1)
+        
+        # Page 2: Days 16-31
+        if second_half:
+            pdf.add_page()
+            draw_pdf_page(pdf, student_name, month_name, year, second_half, use_arabic, page_num=2)
+        
+        # Return PDF as bytes
+        pdf_output = pdf.output()
+        
+        if isinstance(pdf_output, bytearray):
+            return bytes(pdf_output)
+        elif isinstance(pdf_output, str):
+            return pdf_output.encode('latin-1')
+        else:
+            return pdf_output
+            
+    except Exception as e:
+        st.error(f"Error creating PDF from custom schedule: {str(e)}")
+        import traceback
+        st.error(traceback.format_exc())
+        return None
+
+def highlight_holidays(row):
+    """Helper function to highlight holidays in table"""
+    for day_data in st.session_state.schedule:
+        if day_data['Date'] == row['Date'] and day_data['isHoliday']:
+            return ['background-color: #fef2f2'] * len(row)
+    return [''] * len(row)
 
 def generate_schedule(start_juz, days_in_month):
     """Generate schedule data for PDF - WITH CORRECTED JUZHALI"""
@@ -2342,139 +2394,181 @@ def main():
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Display schedule if exists
-    if st.session_state.schedule:
-        st.markdown("---")
-        month_name = datetime(2000, st.session_state.month, 1).strftime('%B')
+# Display schedule if exists
+if st.session_state.schedule:
+    st.markdown("---")
+    month_name = datetime(2000, st.session_state.month, 1).strftime('%B')
+    
+    # Display original schedule
+    if "Backward" in st.session_state.direction:
+        display_columns = ['Date', 'Day', 'Jadeen', 'Surah', 'Juzz Hali', 'Murajjah']
+        display_data = []
+        for day_data in st.session_state.schedule:
+            if not day_data['isHoliday']:
+                page_num = int(day_data['Jadeen'].split()[0]) if day_data['Jadeen'] != 'OFF' else 0
+                surah = get_surah_at_page(page_num) if page_num > 0 else None
+                surah_info = f"{surah['name']}" if surah else ""
+                display_data.append({
+                    'Date': day_data['Date'],
+                    'Day': day_data['Day'],
+                    'Jadeen': day_data['Jadeen'],
+                    'Surah': surah_info,
+                    'Juzz Hali': day_data['Juzz Hali'],
+                    'Murajjah': day_data['Murajjah']
+                })
+            else:
+                display_data.append({
+                    'Date': day_data['Date'],
+                    'Day': day_data['Day'],
+                    'Jadeen': 'OFF',
+                    'Surah': '—',
+                    'Juzz Hali': '—',
+                    'Murajjah': '—'
+                })
+        display_df = pd.DataFrame(display_data)
+    else:
+        display_columns = ['Date', 'Day', 'Jadeen', 'Juzz Hali', 'Murajjah']
+        display_df = pd.DataFrame(st.session_state.schedule)[display_columns]
+    
+    display_df = display_df.sort_values('Date')
+    
+    # Show schedule title
+    st.markdown(f"""
+    <div class="stCard">
+        <h2>Takhteet for {st.session_state.student_name} - {month_name} {st.session_state.year}</h2>
+        <p style='color: #10b981; font-weight: 600;'>({st.session_state.direction})</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Display as table
+    st.dataframe(
+        display_df.style.apply(highlight_holidays, axis=1),
+        use_container_width=True,
+        height=400
+    )
+    
+    # ============ TEACHER EDITING SECTION ============
+    st.markdown("---")
+    st.markdown('<div class="stCard">', unsafe_allow_html=True)
+    st.markdown("#### ✏️ Teacher Customization")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔄 Enable Editing", type="primary", use_container_width=True):
+            st.session_state.editing_mode = True
+            st.session_state.edited_schedule = st.session_state.schedule.copy()
+            st.rerun()
+    
+    with col2:
+        if st.button("✖️ Cancel Editing", type="secondary", use_container_width=True):
+            st.session_state.editing_mode = False
+            st.rerun()
+    
+    if st.session_state.editing_mode:
+        st.info("✏️ **Editing Mode Active** - Edit cells below")
         
-        st.markdown(f"""
-        <div class="stCard">
-            <h2>Takhteet for {st.session_state.student_name} - {month_name} {st.session_state.year}</h2>
-            <p style='color: #10b981; font-weight: 600;'>({st.session_state.direction})</p>
-        </div>
-        """, unsafe_allow_html=True)
+        # Create editable version
+        editable_df = display_df.copy()
+        editable_df['Custom_Jadeen'] = editable_df['Jadeen']
+        editable_df['Custom_Juzz_Hali'] = editable_df['Juzz Hali']
+        editable_df['Custom_Murajjah'] = editable_df['Murajjah']
         
-        # Create DataFrame for display - ADD SURAH COLUMN FOR BACKWARD
-        df = pd.DataFrame(st.session_state.schedule)
-        
-        if "Backward" in st.session_state.direction:
-            # For backward direction: Add surah information
-            display_columns = ['Date', 'Day', 'Jadeen', 'Surah', 'Juzz Hali', 'Murajjah']
-            
-            # Create a new list with surah info
-            display_data = []
-            for day_data in st.session_state.schedule:
-                if not day_data['isHoliday']:
-                    # Get surah info for this page
-                    page_num = int(day_data['Jadeen'].split()[0]) if day_data['Jadeen'] != 'OFF' else 0
-                    surah = get_surah_at_page(page_num) if page_num > 0 else None
-                    surah_info = f"{surah['name']}" if surah else ""
-                    
-                    display_data.append({
-                        'Date': day_data['Date'],
-                        'Day': day_data['Day'],
-                        'Jadeen': day_data['Jadeen'],
-                        'Surah': surah_info,
-                        'Juzz Hali': day_data['Juzz Hali'],
-                        'Murajjah': day_data['Murajjah']
-                    })
-                else:
-                    display_data.append({
-                        'Date': day_data['Date'],
-                        'Day': day_data['Day'],
-                        'Jadeen': 'OFF',
-                        'Surah': '—',
-                        'Juzz Hali': '—',
-                        'Murajjah': '—'
-                    })
-            
-            display_df = pd.DataFrame(display_data)
-        else:
-            # Forward direction: Original format
-            display_columns = ['Date', 'Day', 'Jadeen', 'Juzz Hali', 'Murajjah']
-            display_df = df[display_columns]
-        
-        # Sort by Date
-        display_df = display_df.sort_values('Date')
-        
-        # Convert to HTML for styling
-        def highlight_holidays(row):
-            for day_data in st.session_state.schedule:
-                if day_data['Date'] == row['Date'] and day_data['isHoliday']:
-                    return ['background-color: #fef2f2'] * len(row)
-            return [''] * len(row)
-        
-        # Display as styled table
-        st.dataframe(
-            display_df.style.apply(highlight_holidays, axis=1),
+        # Show editor
+        edited_data = st.data_editor(
+            editable_df,
+            column_config={
+                "Date": st.column_config.NumberColumn(disabled=True),
+                "Day": st.column_config.TextColumn(disabled=True),
+                "Jadeen": st.column_config.TextColumn("Jadeen (Original)", disabled=True),
+                "Surah": st.column_config.TextColumn(disabled=True),
+                "Juzz Hali": st.column_config.TextColumn("Juzz Hali (Original)", disabled=True),
+                "Murajjah": st.column_config.TextColumn("Murajjah (Original)", disabled=True),
+                "Custom_Jadeen": st.column_config.TextColumn("Jadeen (Custom)", max_chars=20),
+                "Custom_Juzz_Hali": st.column_config.TextColumn("Juzz Hali (Custom)", max_chars=20),
+                "Custom_Murajjah": st.column_config.TextColumn("Murajjah (Custom)", max_chars=50)
+            },
+            hide_index=True,
             use_container_width=True,
-            height=600
+            key="schedule_editor"
         )
         
-        # Show schedule summary with surah info for backward
-        if "Backward" in st.session_state.direction:
-            st.markdown("---")
-            with st.expander("📋 Surah Progression Summary", expanded=True):
-                # Extract unique surahs from schedule
-                surahs_progress = {}
-                for day_data in st.session_state.schedule:
-                    if not day_data['isHoliday'] and day_data['Jadeen'] != 'OFF':
-                        page_num = int(day_data['Jadeen'].split()[0])
-                        surah = get_surah_at_page(page_num)
-                        if surah:
-                            surahs_progress[surah['surah']] = surah['name']
-                
-                if surahs_progress:
-                    st.markdown("**Surahs in this schedule:**")
-                    surah_list = []
-                    for surah_num in sorted(surahs_progress.keys()):
-                        surah_list.append(f"{surah_num}. {surahs_progress[surah_num]}")
-                    
-                    # Display in columns
-                    cols = st.columns(3)
-                    for i, surah_item in enumerate(surah_list):
-                        with cols[i % 3]:
-                            st.markdown(f"• {surah_item}")
-        
-        # PDF Download button
-        st.markdown("---")
-        col1, col2, col3 = st.columns([1, 2, 1])
-        
-        with col2:
-            try:
-                # Get month name for PDF
-                month_name = datetime(2000, st.session_state.month, 1).strftime('%B')
-                
-                # Get days in month
-                days_in_month = calendar.monthrange(st.session_state.year, st.session_state.month)[1]
-                
-                # Generate PDF with correct parameters
-                pdf_bytes = create_pdf(
-                    student_name=st.session_state.student_name,
-                    selected_month_name=month_name,
-                    selected_year=st.session_state.year,
-                    start_juz=st.session_state.current_sipara,
-                    days_in_month=days_in_month
+        if st.button("💾 Save Custom Schedule", type="primary", use_container_width=True):
+            updated_schedule = []
+            for idx, row in edited_data.iterrows():
+                original_day = next((d for d in st.session_state.schedule if d['Date'] == row['Date']), None)
+                if original_day:
+                    updated_day = original_day.copy()
+                    if row['Custom_Jadeen'] != row['Jadeen']:
+                        updated_day['Jadeen'] = row['Custom_Jadeen']
+                    if row['Custom_Juzz_Hali'] != row['Juzz Hali']:
+                        updated_day['Juzz Hali'] = row['Custom_Juzz_Hali']
+                    if row['Custom_Murajjah'] != row['Murajjah']:
+                        updated_day['Murajjah'] = row['Custom_Murajjah']
+                    updated_schedule.append(updated_day)
+            
+            st.session_state.edited_schedule = updated_schedule
+            st.session_state.editing_mode = False
+            st.success("✅ Custom schedule saved!")
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # ============ PDF DOWNLOAD SECTION ============
+    st.markdown("---")
+    
+    pdf_col1, pdf_col2 = st.columns(2)
+    
+    with pdf_col1:
+        # Original PDF
+        try:
+            days_in_month = calendar.monthrange(st.session_state.year, st.session_state.month)[1]
+            pdf_bytes = create_pdf(
+                student_name=st.session_state.student_name,
+                selected_month_name=month_name,
+                selected_year=st.session_state.year,
+                start_juz=st.session_state.current_sipara,
+                days_in_month=days_in_month
+            )
+            if pdf_bytes:
+                st.download_button(
+                    label="📥 Download ORIGINAL PDF",
+                    data=pdf_bytes,
+                    file_name=f"takhteet_ORIGINAL_{st.session_state.student_name}_{month_name}_{st.session_state.year}.pdf",
+                    mime="application/pdf",
+                    type="primary",
+                    use_container_width=True
                 )
-                
-                # Verify PDF was created successfully
-                if pdf_bytes:
-                    # Create download button
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+    
+    with pdf_col2:
+        # Custom PDF
+        if st.session_state.edited_schedule:
+            try:
+                custom_pdf_bytes = create_pdf_from_custom_schedule(
+                    student_name=st.session_state.student_name,
+                    month_name=month_name,
+                    year=st.session_state.year,
+                    custom_schedule=st.session_state.edited_schedule
+                )
+                if custom_pdf_bytes:
                     st.download_button(
-                        label="📥 Download PDF (Portrait)",
-                        data=pdf_bytes,
-                        file_name=f"takhteet_{st.session_state.student_name}_{month_name}_{st.session_state.year}.pdf",
+                        label="📥 Download CUSTOM PDF",
+                        data=custom_pdf_bytes,
+                        file_name=f"takhteet_CUSTOM_{st.session_state.student_name}_{month_name}_{st.session_state.year}.pdf",
                         mime="application/pdf",
-                        type="primary",
+                        type="secondary",
                         use_container_width=True
                     )
-                else:
-                    st.error("PDF generation failed. Please try again.")
-                    
             except Exception as e:
-                st.error(f"Error creating PDF: {str(e)}")
-                import traceback
-                st.error(traceback.format_exc())
-
-if __name__ == "__main__":
-    main()
+                st.error(f"Error: {str(e)}")
+        else:
+            st.button(
+                "📥 Download CUSTOM PDF",
+                disabled=True,
+                use_container_width=True,
+                help="Enable editing first"
+            )
+    
+    if st.session_state.edited_schedule:
+        st.success("🎯 **Custom schedule ready!** Download CUSTOM PDF above.")
