@@ -2572,3 +2572,6 @@ if st.session_state.schedule:
     
     if st.session_state.edited_schedule:
         st.success("🎯 **Custom schedule ready!** Download CUSTOM PDF above.")
+
+if __name__ == "__main__":
+    main()
