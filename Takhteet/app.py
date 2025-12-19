@@ -2476,6 +2476,66 @@ def main():
         render_editable_schedule()
         # ===== END EDITABLE SECTION =====
         
+        # Create DataFrame for display - ADD SURAH COLUMN FOR BACKWARD
+        df = pd.DataFrame(st.session_state.schedule)
+        
+        if "Backward" in st.session_state.direction:
+            # For backward direction: Add surah information
+            display_columns = ['Date', 'Day', 'Jadeen', 'Surah', 'Juzz Hali', 'Murajjah']
+            
+            # Create a new list with surah info
+            display_data = []
+            for day_data in st.session_state.schedule:
+                if not day_data['isHoliday']:
+                    # Get surah info for this page
+                    page_num = int(day_data['Jadeen'].split()[0]) if day_data['Jadeen'] != 'OFF' else 0
+                    surah = get_surah_at_page(page_num) if page_num > 0 else None
+                    surah_info = f"{surah['name']}" if surah else ""
+                    
+                    display_data.append({
+                        'Date': day_data['Date'],
+                        'Day': day_data['Day'],
+                        'Jadeen': day_data['Jadeen'],
+                        'Surah': surah_info,
+                        'Juzz Hali': day_data['Juzz Hali'],
+                        'Murajjah': day_data['Murajjah']
+                    })
+                else:
+                    display_data.append({
+                        'Date': day_data['Date'],
+                        'Day': day_data['Day'],
+                        'Jadeen': 'OFF',
+                        'Surah': '—',
+                        'Juzz Hali': '—',
+                        'Murajjah': '—'
+                    })
+            
+            display_df = pd.DataFrame(display_data)
+        else:
+            # Forward direction: Original format
+            display_columns = ['Date', 'Day', 'Jadeen', 'Juzz Hali', 'Murajjah']
+            display_df = df[display_columns]
+        
+        # Sort by Date
+        display_df = display_df.sort_values('Date')
+        
+        # Convert to HTML for styling
+        def highlight_holidays(row):
+            for day_data in st.session_state.schedule:
+                if day_data['Date'] == row['Date'] and day_data['isHoliday']:
+                    return ['background-color: #fef2f2'] * len(row)
+            return [''] * len(row)
+        
+        # Display as styled table (only if NOT in edit mode)
+        if not st.session_state.edit_mode:
+            st.dataframe(
+                display_df.style.apply(highlight_holidays, axis=1),
+                use_container_width=True,
+                height=600
+            )
+        else:
+            st.info("📝 Scroll down to edit individual days")
+        
         if "Backward" in st.session_state.direction:
             # For backward direction: Add surah information
             display_columns = ['Date', 'Day', 'Jadeen', 'Surah', 'Juzz Hali', 'Murajjah']
