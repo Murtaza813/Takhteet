@@ -1193,23 +1193,21 @@ def create_pdf_from_custom_schedule(student_name, month_name, year, custom_sched
         pdf = FPDF(orientation='P')
         pdf.set_auto_page_break(auto=False)
         
-        # Add custom font for Arabic if available
         use_arabic = ARABIC_SUPPORT
         
-        # Split into two pages: days 1-15 and days 16-31
+        # Split into two pages
         first_half = [d for d in custom_schedule if d['Date'] <= 15]
         second_half = [d for d in custom_schedule if d['Date'] > 15]
         
-        # Page 1: Days 1-15
+        # Page 1
         pdf.add_page()
         draw_pdf_page(pdf, student_name, month_name, year, first_half, use_arabic, page_num=1)
         
-        # Page 2: Days 16-31
+        # Page 2
         if second_half:
             pdf.add_page()
             draw_pdf_page(pdf, student_name, month_name, year, second_half, use_arabic, page_num=2)
         
-        # Return PDF as bytes
         pdf_output = pdf.output()
         
         if isinstance(pdf_output, bytearray):
@@ -2494,20 +2492,49 @@ if st.session_state.schedule:
         
         if st.button("💾 Save Custom Schedule", type="primary", use_container_width=True):
             updated_schedule = []
+            
             for idx, row in edited_data.iterrows():
+                # Find original day data
                 original_day = next((d for d in st.session_state.schedule if d['Date'] == row['Date']), None)
+                
                 if original_day:
                     updated_day = original_day.copy()
-                    if row['Custom_Jadeen'] != row['Jadeen']:
-                        updated_day['Jadeen'] = row['Custom_Jadeen']
-                    if row['Custom_Juzz_Hali'] != row['Juzz Hali']:
-                        updated_day['Juzz Hali'] = row['Custom_Juzz_Hali']
-                    if row['Custom_Murajjah'] != row['Murajjah']:
-                        updated_day['Murajjah'] = row['Custom_Murajjah']
+                    
+                    # Check if it's a holiday
+                    is_holiday = False
+                    if row['Custom_Jadeen'] == 'OFF' or row['Custom_Jadeen'] == 'Holiday':
+                        is_holiday = True
+                    
+                    # Update ALL fields
+                    updated_day['Jadeen'] = row['Custom_Jadeen']
+                    updated_day['Juzz Hali'] = row['Custom_Juzz_Hali']
+                    updated_day['Murajjah'] = row['Custom_Murajjah']
+                    updated_day['isHoliday'] = is_holiday
+                    
+                    # For holidays, clear other fields
+                    if is_holiday:
+                        updated_day['Jadeen'] = 'OFF'
+                        updated_day['Juzz Hali'] = '—'
+                        updated_day['Murajjah'] = '—'
+                    
+                    # For Jadeen field, ensure proper format
+                    if not is_holiday and row['Custom_Jadeen'] != 'OFF':
+                        # Check if format is correct: should be like "418 (half)" or "418 (full)"
+                        if '(' not in row['Custom_Jadeen'] and row['Custom_Jadeen'].strip().isdigit():
+                            # If user entered just a number, add "(full)" default
+                            updated_day['Jadeen'] = f"{row['Custom_Jadeen'].strip()} (full)"
+                    
                     updated_schedule.append(updated_day)
             
+            # Save to session state
             st.session_state.edited_schedule = updated_schedule
             st.session_state.editing_mode = False
+            
+            # Show debug info
+            st.write("🔍 **Debug Info:** Saved", len(updated_schedule), "days to custom schedule")
+            if updated_schedule:
+                st.write("Sample day:", updated_schedule[0])
+            
             st.success("✅ Custom schedule saved!")
             st.rerun()
     
@@ -2542,15 +2569,25 @@ if st.session_state.schedule:
             st.error(f"Error: {str(e)}")
     
     with pdf_col2:
-        # Custom PDF
+        # CUSTOM PDF button (only if edits were made)
         if st.session_state.edited_schedule:
+            # Show debug info
+            st.write(f"📋 **Ready:** Custom schedule has {len(st.session_state.edited_schedule)} days")
+            
             try:
+                month_name = datetime(2000, st.session_state.month, 1).strftime('%B')
+                
+                # Show what we're sending to PDF
+                if st.session_state.edited_schedule:
+                    st.write("📄 **PDF Input Sample:**", st.session_state.edited_schedule[0])
+                
                 custom_pdf_bytes = create_pdf_from_custom_schedule(
                     student_name=st.session_state.student_name,
                     month_name=month_name,
                     year=st.session_state.year,
                     custom_schedule=st.session_state.edited_schedule
                 )
+                
                 if custom_pdf_bytes:
                     st.download_button(
                         label="📥 Download CUSTOM PDF",
@@ -2560,14 +2597,18 @@ if st.session_state.schedule:
                         type="secondary",
                         use_container_width=True
                     )
+                else:
+                    st.error("❌ Custom PDF generation failed - no bytes returned")
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                st.error(f"❌ Error creating custom PDF: {str(e)}")
+                import traceback
+                st.error(traceback.format_exc())
         else:
             st.button(
                 "📥 Download CUSTOM PDF",
                 disabled=True,
                 use_container_width=True,
-                help="Enable editing first"
+                help="Make edits and click 'Save Custom Schedule' first"
             )
     
     if st.session_state.edited_schedule:
