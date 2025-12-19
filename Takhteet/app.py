@@ -132,7 +132,7 @@ def calculate_juzhali_backward(current_page, amount, all_completed_pages):
     Calculate Juzhali for backward direction
     
     Args:
-        current_page: Current Jadeen page number
+        current_page: Current Jadeed page number
         amount: 0.5 or 1.0 (half or full page)
         all_completed_pages: List of all pages completed so far
     
@@ -169,13 +169,13 @@ def calculate_juzhali_backward_corrected(current_page, amount, all_completed_pag
     FINAL FIXED VERSION - Based on your exact requirements
     
     Rule: 
-    1. Find ALL pages that have been COMPLETED in Jadeen (total >= 1.0)
+    1. Find ALL pages that have been COMPLETED in Jadeed (total >= 1.0)
     2. Start Juzhali from the EARLIEST completed page
     3. Take exactly 10 pages, skipping any that aren't completed
     4. If needed, fill with sequential pages after the last completed one
     """
     
-    # 1. Track page completion from Jadeen history
+    # 1. Track page completion from Jadeed history
     page_completion = {}
     
     for entry in all_completed_pages:
@@ -1127,7 +1127,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
             if for_pdf:
                 return ", ".join([str(s) for s in selected])
             else:
-                return ", ".join([str(s) for s in selected])
+                return ", ".join([f"Para {s}" for s in selected])
         return "Not assigned" if not for_pdf else ""
     
     # Auto Generate - UNIQUE SIPARAS PER 6-DAY CYCLE
@@ -1181,7 +1181,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
     if for_pdf:
         return ", ".join([str(p) for p in day_paras])
     else:
-        return ", ".join([str(p) for p in day_paras])
+        return ", ".join([f"Para {p}" for p in day_paras])
 
 
 def generate_schedule(start_juz, days_in_month):
@@ -1205,7 +1205,7 @@ def generate_schedule(start_juz, days_in_month):
     
     all_holidays = sorted(set(sundays + last_days))
     
-    # Calculate jadeen schedule
+    # Calculate Jadeed schedule
     days_in_month = calendar.monthrange(st.session_state.year, st.session_state.month)[1]
     start_page = st.session_state.start_page
     end_page = st.session_state.end_page
@@ -1264,7 +1264,7 @@ def generate_schedule(start_juz, days_in_month):
                     current_page_val = end_page
     
     # Now create the schedule for each day WITH CORRECTED JUZHALI
-    jadeen_idx = 0
+    Jadeed_idx = 0
     weekday_counter = 0
     
     # NEW: Track completed pages for Juzhali calculation
@@ -1275,27 +1275,27 @@ def generate_schedule(start_juz, days_in_month):
             schedule[day] = {'isHoliday': True}
             continue
         
-        # Get jadeen for this day
-        jadeen = schedule_list[jadeen_idx]
+        # Get Jadeed for this day
+        Jadeed = schedule_list[Jadeed_idx]
         
         # ==================== TRACK COMPLETED PAGE FIRST ====================
         # FIRST: Add today's work to history BEFORE calculating Juzhali
         completed_pages_history.append({
-            'page': int(jadeen['page']),
-            'amount': jadeen['amount']
+            'page': int(Jadeed['page']),
+            'amount': Jadeed['amount']
         })
 
         # ==================== THEN CALCULATE JUZHALI ====================
         if is_backward:
             juz_range = calculate_juzhali_backward_corrected(
-                current_page=int(jadeen['page']),
-                amount=jadeen['amount'],
+                current_page=int(Jadeed['page']),
+                amount=Jadeed['amount'],
                 all_completed_pages=completed_pages_history  # ← Now includes today!
             )
         else:
             # Forward direction (unchanged)
-            start = max(1, jadeen['page'] - 10)
-            end = jadeen['page'] - 1
+            start = max(1, Jadeed['page'] - 10)
+            end = Jadeed['page'] - 1
             juz_range = f"{int(start)}-{int(end)}" if start <= end else "None"
         
         # Get murajjah for PDF
@@ -1303,13 +1303,13 @@ def generate_schedule(start_juz, days_in_month):
         
         # ==================== ADD TO SCHEDULE ====================
         schedule[day] = {
-            'current_page': str(int(jadeen['page'])),
+            'current_page': str(int(Jadeed['page'])),
             'juz_range': juz_range,  # ← Now calculated WITH today's work
             'murajjah': murajjah,
             'isHoliday': False
         }
         
-        jadeen_idx += 1
+        Jadeed_idx += 1
         weekday_counter += 1
         if weekday_counter >= 6:
             weekday_counter = 0
@@ -1549,7 +1549,7 @@ def calculate_schedule():
     all_holidays = sorted(set(sundays + last_days))
     working_days = days_in_month - len(all_holidays)
     
-    # Calculate jadeen schedule
+    # Calculate Jadeed schedule
     is_backward = "Backward" in direction
     total_pages = abs(end_page - start_page) + 1
     
@@ -1669,7 +1669,7 @@ def calculate_schedule():
 
     # ==================== CORRECTED PART: Track completed pages ====================
     full_schedule = []
-    jadeen_idx = 0
+    Jadeed_idx = 0
     weekday_counter = 0
 
     # NEW: Track all completed pages for Juzhali calculation
@@ -1692,16 +1692,16 @@ def calculate_schedule():
             full_schedule.append({
                 'Date': day_num,
                 'Day': day_name,
-                'Jadeen': 'OFF',
+                'Jadeed': 'OFF',
                 'Juzz Hali': '—',
                 'Murajjah': '—',
                 'isHoliday': True
             })
         else:
-            if jadeen_idx < len(schedule):
-                jadeen = schedule[jadeen_idx]
-                current_page = jadeen['page']
-                amount = jadeen['amount']
+            if Jadeed_idx < len(schedule):
+                Jadeed = schedule[Jadeed_idx]
+                current_page = Jadeed['page']
+                amount = Jadeed['amount']
                 pages_completed += amount
                 
                 # ==================== CRITICAL: Track this completed page FIRST ====================
@@ -1733,13 +1733,13 @@ def calculate_schedule():
                 full_schedule.append({
                     'Date': day_num,
                     'Day': day_name,
-                    'Jadeen': f"{int(current_page)} ({'full' if amount == 1 else 'half'})",
+                    'Jadeed': f"{int(current_page)} ({'full' if amount == 1 else 'half'})",
                     'Juzz Hali': juzz_hali,  # ← Now calculated WITH today's work included
                     'Murajjah': murajjah,
                     'isHoliday': False
                 })
                 
-                jadeen_idx += 1
+                Jadeed_idx += 1
                 weekday_counter += 1
                 if weekday_counter >= 6:
                     weekday_counter = 0
@@ -1976,22 +1976,22 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
             ]
         else:
             # Extract data from schedule
-            jadeen_text = day_schedule['Jadeen']
+            Jadeed_text = day_schedule['Jadeed']
             juzz_hali = day_schedule['Juzz Hali']
             murajjah = day_schedule['Murajjah']
             
-            # Parse Jadeen text
+            # Parse Jadeed text
             page_number = ""
             amount = ""
-            if "(" in jadeen_text:
-                page_part = jadeen_text.split("(")[0].strip()
-                amount_part = jadeen_text.split("(")[1].replace(")", "").strip()
+            if "(" in Jadeed_text:
+                page_part = Jadeed_text.split("(")[0].strip()
+                amount_part = Jadeed_text.split("(")[1].replace(")", "").strip()
                 page_number = page_part
                 amount = amount_part.capitalize()
             
-            # Murajjah - just use the numbers directly
+            # Clean up Murajjah - remove "Para" prefix and truncate if too long
             if murajjah and murajjah != "—":
-                murajjah_clean = murajjah
+                murajjah_clean = murajjah.replace("Para", "").replace("para", "").strip()
                 # Truncate if too long (more than 15 chars)
                 if len(murajjah_clean) > 15:
                     murajjah_clean = murajjah_clean[:12] + "..."
@@ -2177,7 +2177,7 @@ def render_editable_schedule():
                 if new_holiday_status != is_holiday:
                     working_schedule[idx]['isHoliday'] = new_holiday_status
                     if new_holiday_status:
-                        working_schedule[idx]['Jadeen'] = 'OFF'
+                        working_schedule[idx]['Jadeed'] = 'OFF'
                         working_schedule[idx]['Juzz Hali'] = '—'
                         working_schedule[idx]['Murajjah'] = '—'
             
@@ -2186,16 +2186,16 @@ def render_editable_schedule():
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    # Jadeen field
-                    current_jadeen = day_data['Jadeen']
-                    new_jadeen = st.text_input(
-                        "Jadeen (New Page)",
-                        value=current_jadeen,
-                        key=f"jadeen_{idx}",
+                    # Jadeed field
+                    current_Jadeed = day_data['Jadeed']
+                    new_Jadeed = st.text_input(
+                        "Jadeed (New Page)",
+                        value=current_Jadeed,
+                        key=f"Jadeed_{idx}",
                         help="Format: '123 (full)' or '123 (half)'"
                     )
-                    if new_jadeen != current_jadeen:
-                        working_schedule[idx]['Jadeen'] = new_jadeen
+                    if new_Jadeed != current_Jadeed:
+                        working_schedule[idx]['Jadeed'] = new_Jadeed
                 
                 with col2:
                     # Juzz Hali field
@@ -2252,7 +2252,7 @@ def main():
             1. **Fill in student details**
             2. **Select month/year**
             3. **Choose Hifz direction**
-            4. **Set Jadeen pages**
+            4. **Set Jadeed pages**
             5. **Generate schedule**
             6. **Download PDF**
             """)
@@ -2263,7 +2263,7 @@ def main():
             st.markdown("""
             - 🎯 **Backward & Forward Hifz**
             - 📅 **Monthly schedule generator**
-            - 📄 **Jadeen tracking**
+            - 📄 **Jadeed tracking**
             - 🔄 **Murajjah planning**
             - 📊 **PDF export (Portrait)**
             """)
@@ -2305,9 +2305,9 @@ def main():
         
         st.markdown("---")
         
-        # === DAILY JADEEN AMOUNT - MUST BE BEFORE backward/forward section ===
+        # === DAILY Jadeed AMOUNT - MUST BE BEFORE backward/forward section ===
         st.session_state.daily_amount = st.selectbox(
-            "**Daily Jadeen Amount**",
+            "**Daily Jadeed Amount**",
             options=["0.5 page daily", "1 page daily", "Mixed (0.5 & 1 page)"],
             index=2
         )
@@ -2406,7 +2406,7 @@ def main():
                 forward_col1, forward_col2 = st.columns(2)
                 with forward_col1:
                     st.session_state.start_page = st.number_input(
-                        "**Current Jadeen Page**",
+                        "**Current Jadeed Page**",
                         min_value=1,
                         max_value=604,
                         value=418,
@@ -2414,7 +2414,7 @@ def main():
                     )
                 with forward_col2:
                     st.session_state.end_page = st.number_input(
-                        "**Target Jadeen Page**",
+                        "**Target Jadeed Page**",
                         min_value=1,
                         max_value=604,
                         value=430,
@@ -2481,21 +2481,21 @@ def main():
         
         if "Backward" in st.session_state.direction:
             # For backward direction: Add surah information
-            display_columns = ['Date', 'Day', 'Jadeen', 'Surah', 'Juzz Hali', 'Murajjah']
+            display_columns = ['Date', 'Day', 'Jadeed', 'Surah', 'Juzz Hali', 'Murajjah']
             
             # Create a new list with surah info
             display_data = []
             for day_data in st.session_state.schedule:
                 if not day_data['isHoliday']:
                     # Get surah info for this page
-                    page_num = int(day_data['Jadeen'].split()[0]) if day_data['Jadeen'] != 'OFF' else 0
+                    page_num = int(day_data['Jadeed'].split()[0]) if day_data['Jadeed'] != 'OFF' else 0
                     surah = get_surah_at_page(page_num) if page_num > 0 else None
                     surah_info = f"{surah['name']}" if surah else ""
                     
                     display_data.append({
                         'Date': day_data['Date'],
                         'Day': day_data['Day'],
-                        'Jadeen': day_data['Jadeen'],
+                        'Jadeed': day_data['Jadeed'],
                         'Surah': surah_info,
                         'Juzz Hali': day_data['Juzz Hali'],
                         'Murajjah': day_data['Murajjah']
@@ -2504,7 +2504,7 @@ def main():
                     display_data.append({
                         'Date': day_data['Date'],
                         'Day': day_data['Day'],
-                        'Jadeen': 'OFF',
+                        'Jadeed': 'OFF',
                         'Surah': '—',
                         'Juzz Hali': '—',
                         'Murajjah': '—'
@@ -2513,7 +2513,7 @@ def main():
             display_df = pd.DataFrame(display_data)
         else:
             # Forward direction: Original format
-            display_columns = ['Date', 'Day', 'Jadeen', 'Juzz Hali', 'Murajjah']
+            display_columns = ['Date', 'Day', 'Jadeed', 'Juzz Hali', 'Murajjah']
             display_df = df[display_columns]
         
         # Sort by Date
@@ -2538,21 +2538,21 @@ def main():
         
         if "Backward" in st.session_state.direction:
             # For backward direction: Add surah information
-            display_columns = ['Date', 'Day', 'Jadeen', 'Surah', 'Juzz Hali', 'Murajjah']
+            display_columns = ['Date', 'Day', 'Jadeed', 'Surah', 'Juzz Hali', 'Murajjah']
             
             # Create a new list with surah info
             display_data = []
             for day_data in st.session_state.schedule:
                 if not day_data['isHoliday']:
                     # Get surah info for this page
-                    page_num = int(day_data['Jadeen'].split()[0]) if day_data['Jadeen'] != 'OFF' else 0
+                    page_num = int(day_data['Jadeed'].split()[0]) if day_data['Jadeed'] != 'OFF' else 0
                     surah = get_surah_at_page(page_num) if page_num > 0 else None
                     surah_info = f"{surah['name']}" if surah else ""
                     
                     display_data.append({
                         'Date': day_data['Date'],
                         'Day': day_data['Day'],
-                        'Jadeen': day_data['Jadeen'],
+                        'Jadeed': day_data['Jadeed'],
                         'Surah': surah_info,
                         'Juzz Hali': day_data['Juzz Hali'],
                         'Murajjah': day_data['Murajjah']
@@ -2561,7 +2561,7 @@ def main():
                     display_data.append({
                         'Date': day_data['Date'],
                         'Day': day_data['Day'],
-                        'Jadeen': 'OFF',
+                        'Jadeed': 'OFF',
                         'Surah': '—',
                         'Juzz Hali': '—',
                         'Murajjah': '—'
@@ -2570,7 +2570,7 @@ def main():
             display_df = pd.DataFrame(display_data)
         else:
             # Forward direction: Original format
-            display_columns = ['Date', 'Day', 'Jadeen', 'Juzz Hali', 'Murajjah']
+            display_columns = ['Date', 'Day', 'Jadeed', 'Juzz Hali', 'Murajjah']
             display_df = df[display_columns]
         
         # Sort by Date
@@ -2600,8 +2600,8 @@ def main():
                 # Extract unique surahs from schedule
                 surahs_progress = {}
                 for day_data in st.session_state.schedule:
-                    if not day_data['isHoliday'] and day_data['Jadeen'] != 'OFF':
-                        page_num = int(day_data['Jadeen'].split()[0])
+                    if not day_data['isHoliday'] and day_data['Jadeed'] != 'OFF':
+                        page_num = int(day_data['Jadeed'].split()[0])
                         surah = get_surah_at_page(page_num)
                         if surah:
                             surahs_progress[surah['surah']] = surah['name']
