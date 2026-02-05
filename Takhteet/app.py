@@ -1702,7 +1702,7 @@ def calculate_schedule():
         
     else:
         # ============ FORWARD DIRECTION (ORIGINAL LOGIC WITH ADAPTIVE MIXED) ============
-        schedule_list = []  # ← ADD THIS LINE to initialize the list
+        schedule = []  # Initialize schedule list for forward direction
         
         if daily_amount == "Mixed (0.5 & 1 page)":
             # Use adaptive pattern
@@ -1718,13 +1718,22 @@ def calculate_schedule():
                     # Repeat pattern if needed
                     amount = optimal_pattern[i % len(optimal_pattern)]
                 
-                schedule_list.append({
+                # Ensure we don't exceed target
+                if not is_backward and current_page_val > end_page:
+                    break
+                if is_backward and current_page_val < end_page:
+                    break
+                
+                schedule.append({
                     'page': current_page_val,
                     'amount': amount
                 })
-                current_page_val += amount
-                if current_page_val > end_page:
-                    current_page_val = end_page
+                
+                if is_backward:
+                    current_page_val -= amount
+                else:
+                    current_page_val += amount
+                
         else:
             # Determine amount based on selection
             if "0.5" in daily_amount:
@@ -1736,13 +1745,21 @@ def calculate_schedule():
             
             current_page_val = start_page
             for i in range(working_days):
-                schedule_list.append({
+                # Ensure we don't exceed target
+                if not is_backward and current_page_val > end_page:
+                    break
+                if is_backward and current_page_val < end_page:
+                    break
+                
+                schedule.append({
                     'page': current_page_val,
                     'amount': amount
                 })
-                current_page_val += amount
-                if current_page_val > end_page:
-                    current_page_val = end_page
+                
+                if is_backward:
+                    current_page_val -= amount
+                else:
+                    current_page_val += amount
 
     # ==================== CORRECTED PART: Track completed pages ====================
     full_schedule = []
@@ -2530,10 +2547,67 @@ def main():
         with col2:
             if st.button("✨ Generate Takhteet", type="primary", use_container_width=True):
                 with st.spinner("Checking if target can be reached..."):
+                    # Add debug output
+                    st.write("📊 Debug Information:")
+                    st.write(f"- Direction: {st.session_state.direction}")
+                    st.write(f"- Start page: {st.session_state.start_page}")
+                    st.write(f"- End page: {st.session_state.end_page}")
+                    st.write(f"- Daily amount: {st.session_state.daily_amount}")
+                    st.write(f"- Month: {st.session_state.month}, Year: {st.session_state.year}")
+                    
+                    # Get days in month
+                    days_in_month = calendar.monthrange(st.session_state.year, st.session_state.month)[1]
+                    st.write(f"- Days in month: {days_in_month}")
+                    
+                    # Get Sundays
+                    sundays = []
+                    for day in range(1, days_in_month + 1):
+                        if datetime(st.session_state.year, st.session_state.month, day).weekday() == 6:
+                            sundays.append(day)
+                    st.write(f"- Sundays (auto holidays): {sundays}")
+                    st.write(f"- Extra holidays: {st.session_state.extra_holidays}")
+                    
+                    # Calculate working days
+                    all_holidays = sundays.copy()
+                    last_days = []
+                    for i in range(days_in_month, days_in_month - st.session_state.extra_holidays, -1):
+                        if i not in sundays:
+                            last_days.append(i)
+                    
+                    all_holidays = sorted(set(sundays + last_days))
+                    st.session_state.debug_holidays = all_holidays  # Store for debugging
+                    working_days = days_in_month - len(all_holidays)
+
+                    # Make sure working_days is positive
+                    if working_days <= 0:
+                        st.error(f"❌ No working days! All {days_in_month} days are holidays.")
+                        st.write(f"Holidays: {all_holidays}")
+                        return None
+                        
+                    st.write(f"- Total holidays: {len(all_holidays)}")
+                    st.write(f"- Working days: {working_days}")
+                    st.write(f"- All holidays: {all_holidays}")
+                    
+                    # Try to generate schedule
                     result = calculate_schedule()
-                    if result:  # Only show success and rerun if schedule was actually generated
-                        st.success("Schedule generated successfully!")
-                        st.rerun()
+                    
+                    if result:
+                        st.success("✅ Schedule generated successfully!")
+                        st.write(f"Schedule has {len(result)} days")
+                        # Show first few non-holiday days
+                        non_holiday_count = sum(1 for d in result if not d.get('isHoliday', False))
+                        st.write(f"Non-holiday days in schedule: {non_holiday_count}")
+                        
+                        if non_holiday_count > 0:
+                            st.write("First few schedule entries:")
+                            for i, day_data in enumerate(result[:5]):
+                                if not day_data.get('isHoliday', False):
+                                    st.write(f"Day {day_data['Date']}: {day_data['Jadeed']}")
+                    else:
+                        st.error("❌ Schedule generation failed!")
+                        st.info("Check the error messages above for possible issues.")
+                    
+                    st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
     
