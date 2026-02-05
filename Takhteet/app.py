@@ -1733,6 +1733,7 @@ def calculate_schedule():
                 amount = 1.0
             
             current_page_val = start_page
+            schedule_list = []  # ← ADD THIS LINE to initialize the list
             for i in range(working_days):
                 schedule_list.append({
                     'page': current_page_val,
