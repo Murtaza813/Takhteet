@@ -1702,6 +1702,8 @@ def calculate_schedule():
         
     else:
         # ============ FORWARD DIRECTION (ORIGINAL LOGIC WITH ADAPTIVE MIXED) ============
+        schedule_list = []  # ← ADD THIS LINE to initialize the list
+        
         if daily_amount == "Mixed (0.5 & 1 page)":
             # Use adaptive pattern
             optimal_pattern, _ = find_optimal_mix(total_pages, working_days)
@@ -1716,7 +1718,7 @@ def calculate_schedule():
                     # Repeat pattern if needed
                     amount = optimal_pattern[i % len(optimal_pattern)]
                 
-                schedule.append({
+                schedule_list.append({
                     'page': current_page_val,
                     'amount': amount
                 })
@@ -1733,20 +1735,14 @@ def calculate_schedule():
                 amount = 1.0
             
             current_page_val = start_page
-            schedule_list = []  # ← ADD THIS LINE to initialize the list
             for i in range(working_days):
                 schedule_list.append({
                     'page': current_page_val,
                     'amount': amount
                 })
-                if is_backward:
-                    current_page_val -= amount
-                    if current_page_val < end_page:
-                        current_page_val = end_page
-                else:
-                    current_page_val += amount
-                    if current_page_val > end_page:
-                        current_page_val = end_page
+                current_page_val += amount
+                if current_page_val > end_page:
+                    current_page_val = end_page
 
     # ==================== CORRECTED PART: Track completed pages ====================
     full_schedule = []
