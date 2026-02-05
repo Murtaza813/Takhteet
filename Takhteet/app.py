@@ -1,3 +1,4 @@
+import math
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -281,10 +282,13 @@ def generate_backward_schedule(start_surah_num, start_page, daily_amount, workin
                 break
             current_surah_num = current_surah["surah"]
             current_page = current_surah["start_page"]
-            continue
+            continue  # CORRECT INDENTATION - This continue should be at this level
 
+        # Determine daily amount - FIXED INDENTATION
         if "0.5" in daily_amount:
             today_amount = 0.5
+        elif "2 pages" in daily_amount:
+            today_amount = 2.0
         else:  # "1 page daily" or any other
             today_amount = 1.0
         
@@ -1387,6 +1391,47 @@ def calculate_schedule():
         
         return None, None
 
+    def find_optimal_mix_with_2pages(total_pages, available_days):
+        """Find optimal combination of 0.5, 1.0 and 2.0 pages to reach target"""
+        
+        # If we can't even complete with all 2.0 pages
+        if available_days < math.ceil(total_pages / 2):
+            return None, None  # Impossible
+        
+        # Try different combinations
+        for two_days in range(0, available_days + 1):
+            remaining_days = available_days - two_days
+            
+            for one_days in range(0, remaining_days + 1):
+                half_days = remaining_days - one_days
+                
+                total_possible = (two_days * 2.0) + (one_days * 1.0) + (half_days * 0.5)
+                
+                if total_possible >= total_pages:
+                    # Found a working combination
+                    # Create pattern prioritizing 2-page days first, then 1-page, then 0.5-page
+                    pattern = []
+                    
+                    # Add 2-page days
+                    for _ in range(two_days):
+                        pattern.append(2.0)
+                    
+                    # Add 1-page days
+                    for _ in range(one_days):
+                        pattern.append(1.0)
+                    
+                    # Add 0.5-page days
+                    for _ in range(half_days):
+                        pattern.append(0.5)
+                    
+                    # Shuffle to distribute evenly
+                    import random
+                    random.shuffle(pattern)
+                    
+                    return pattern, total_possible
+        
+        return None, None
+
     # Calculate minimum days needed based on daily amount
     if "Mixed" in daily_amount:
         # Use adaptive mixed calculation
@@ -1413,6 +1458,11 @@ def calculate_schedule():
         min_days_needed = total_pages_needed * 2
         avg_pages_per_day = 0.5
         can_use_mixed = True
+    elif "2 pages" in daily_amount:
+        # If 2 pages daily: need 0.5 days per page (round up)
+        min_days_needed = math.ceil(total_pages_needed / 2)
+        avg_pages_per_day = 2.0
+        can_use_mixed = False
     else:
         # 1 page daily
         min_days_needed = total_pages_needed
@@ -1436,7 +1486,7 @@ def calculate_schedule():
         
         # ============ ADAPTIVE SOLUTIONS ============
         solution_found = False
-        
+
         # Solution 1: Try Mixed pattern if not already using it
         if "Mixed" not in daily_amount and can_use_mixed:
             optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
@@ -1453,7 +1503,7 @@ def calculate_schedule():
                 - You can complete **{max_possible:.1f}** pages
                 """)
                 solution_found = True
-        
+
         # Solution 2: Reduce holidays
         if not solution_found and max_working_days >= min_days_needed:
             holidays_needed = max(0, days_in_month - len(sundays) - min_days_needed)
@@ -1467,9 +1517,27 @@ def calculate_schedule():
             - Working days: **{min_days_needed}** (from {current_working_days})
             - You can complete all **{total_pages_needed}** pages
             """)
-            solution_found = True  # <-- CORRECT INDENTATION (4 spaces)
-        
-        # Solution 3: Increase to 1 page daily (if currently on 0.5 or Mixed)
+            solution_found = True
+
+        # Solution 3: Increase to 2 pages daily (if currently on 0.5, 1, or Mixed)
+        if not solution_found and ("0.5" in daily_amount or "1 page" in daily_amount or "Mixed" in daily_amount):
+            new_min_days_2pages = math.ceil(total_pages_needed / 2)
+            if max_working_days >= new_min_days_2pages:
+                holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_2pages)
+                st.success(f"""
+                **✅ SOLUTION: Increase to 2 Pages Daily**
+                
+                **Action needed:**
+                - Change from **{daily_amount}** to **2 pages daily**
+                - Set holidays to **{holidays_needed}**
+                
+                **Result:**
+                - Working days needed: **{new_min_days_2pages}** (down from {min_days_needed})
+                - You can complete all **{total_pages_needed}** pages
+                """)
+                solution_found = True
+
+        # Solution 4: Increase to 1 page daily (if currently on 0.5 or Mixed)
         if not solution_found and ("0.5" in daily_amount or "Mixed" in daily_amount):
             new_min_days_1page = total_pages_needed
             if max_working_days >= new_min_days_1page:
@@ -1486,8 +1554,8 @@ def calculate_schedule():
                 - You can complete all **{total_pages_needed}** pages
                 """)
                 solution_found = True
-        
-        # Solution 4: Try different mixed pattern with reduced holidays
+
+        # Solution 5: Try different mixed pattern with reduced holidays
         if not solution_found and "Mixed" in daily_amount:
             # Try with maximum working days
             optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, max_working_days)
@@ -1655,17 +1723,29 @@ def calculate_schedule():
                 current_page_val += amount
                 if current_page_val > end_page:
                     current_page_val = end_page
-        else:
-            amount = 0.5 if "0.5" in daily_amount else 1.0
-            current_page_val = start_page
-            for i in range(working_days):
-                schedule.append({
-                    'page': current_page_val,
-                    'amount': amount
-                })
-                current_page_val += amount
-                if current_page_val > end_page:
-                    current_page_val = end_page
+                else:
+                    # Determine amount based on selection
+                    if "0.5" in daily_amount:
+                        amount = 0.5
+                    elif "2 pages" in daily_amount:
+                        amount = 2.0
+                    else:  # "1 page daily"
+                        amount = 1.0
+                    
+                    current_page_val = start_page
+                    for i in range(working_days):
+                        schedule_list.append({
+                            'page': current_page_val,
+                            'amount': amount
+                        })
+                        if is_backward:
+                            current_page_val -= amount
+                            if current_page_val < end_page:
+                                current_page_val = end_page
+                        else:
+                            current_page_val += amount
+                            if current_page_val > end_page:
+                                current_page_val = end_page
 
     # ==================== CORRECTED PART: Track completed pages ====================
     full_schedule = []
@@ -1733,7 +1813,7 @@ def calculate_schedule():
                 full_schedule.append({
                     'Date': day_num,
                     'Day': day_name,
-                    'Jadeed': f"{int(current_page)} ({'full' if amount == 1 else 'half'})",
+                    'Jadeed': f"{int(current_page)} ({'2 pages' if amount == 2 else 'full' if amount == 1 else 'half'})",
                     'Juzz Hali': juzz_hali,  # ← Now calculated WITH today's work included
                     'Murajjah': murajjah,
                     'isHoliday': False
@@ -1987,7 +2067,7 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
                 page_part = Jadeed_text.split("(")[0].strip()
                 amount_part = Jadeed_text.split("(")[1].replace(")", "").strip()
                 page_number = page_part
-                amount = amount_part.capitalize()
+                amount = amount_part.replace("pages", "").replace("page", "").strip().capitalize()
             
             # Clean up Murajjah - remove "Para" prefix and truncate if too long
             if murajjah and murajjah != "—":
@@ -2308,7 +2388,7 @@ def main():
         # === DAILY Jadeed AMOUNT - MUST BE BEFORE backward/forward section ===
         st.session_state.daily_amount = st.selectbox(
             "**Daily Jadeed Amount**",
-            options=["0.5 page daily", "1 page daily", "Mixed (0.5 & 1 page)"],
+            options=["0.5 page daily", "1 page daily", "2 pages daily", "Mixed (0.5 & 1 page)"],
             index=2
         )
         
@@ -2377,7 +2457,7 @@ def main():
                             min_value=float(selected_surah["start_page"]),
                             max_value=float(selected_surah["end_page"]),
                             value=float(selected_surah["start_page"]),
-                            step=0.5 if "0.5" in st.session_state.daily_amount else 1.0,
+                            step=0.5 if "0.5" in st.session_state.daily_amount else (2.0 if "2 pages" in st.session_state.daily_amount else 1.0),
                             format="%.1f",
                             help=f"Pages {selected_surah['start_page']}-{selected_surah['end_page']} in {selected_surah['name']}"
                         )
