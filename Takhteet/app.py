@@ -1723,29 +1723,29 @@ def calculate_schedule():
                 current_page_val += amount
                 if current_page_val > end_page:
                     current_page_val = end_page
+        else:
+            # Determine amount based on selection
+            if "0.5" in daily_amount:
+                amount = 0.5
+            elif "2 pages" in daily_amount:
+                amount = 2.0
+            else:  # "1 page daily"
+                amount = 1.0
+            
+            current_page_val = start_page
+            for i in range(working_days):
+                schedule_list.append({
+                    'page': current_page_val,
+                    'amount': amount
+                })
+                if is_backward:
+                    current_page_val -= amount
+                    if current_page_val < end_page:
+                        current_page_val = end_page
                 else:
-                    # Determine amount based on selection
-                    if "0.5" in daily_amount:
-                        amount = 0.5
-                    elif "2 pages" in daily_amount:
-                        amount = 2.0
-                    else:  # "1 page daily"
-                        amount = 1.0
-                    
-                    current_page_val = start_page
-                    for i in range(working_days):
-                        schedule_list.append({
-                            'page': current_page_val,
-                            'amount': amount
-                        })
-                        if is_backward:
-                            current_page_val -= amount
-                            if current_page_val < end_page:
-                                current_page_val = end_page
-                        else:
-                            current_page_val += amount
-                            if current_page_val > end_page:
-                                current_page_val = end_page
+                    current_page_val += amount
+                    if current_page_val > end_page:
+                        current_page_val = end_page
 
     # ==================== CORRECTED PART: Track completed pages ====================
     full_schedule = []
