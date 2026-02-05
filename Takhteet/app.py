@@ -1,4 +1,3 @@
-import math
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -282,13 +281,10 @@ def generate_backward_schedule(start_surah_num, start_page, daily_amount, workin
                 break
             current_surah_num = current_surah["surah"]
             current_page = current_surah["start_page"]
-            continue  # CORRECT INDENTATION - This continue should be at this level
+            continue
 
-        # Determine daily amount - FIXED INDENTATION
         if "0.5" in daily_amount:
             today_amount = 0.5
-        elif "2 pages" in daily_amount:
-            today_amount = 2.0
         else:  # "1 page daily" or any other
             today_amount = 1.0
         
@@ -1122,7 +1118,7 @@ def toggle_sipara(day, sipara):
 def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
     """Get murajjah for a specific day with UNIQUE siparas per 6-day cycle"""
     if murajjah_option == "No Murajjah":
-        return ""  # Return empty string instead of "Teacher will assign"
+        return "Teacher will assign" if not for_pdf else ""
     
     if murajjah_option == "Manual Selection":
         day_key = f"day{(day_number % 6) + 1}"
@@ -1132,7 +1128,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
                 return ", ".join([str(s) for s in selected])
             else:
                 return ", ".join([f"Para {s}" for s in selected])
-        return ""  # Return empty string instead of "Not assigned"
+        return "Not assigned" if not for_pdf else ""
     
     # Auto Generate - UNIQUE SIPARAS PER 6-DAY CYCLE
     current_sipara = st.session_state.current_sipara
@@ -1146,7 +1142,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
         completed = list(range(1, current_sipara))
     
     if not completed or len(completed) == 0:
-        return ""  # Return empty string instead of "Revision Day"
+        return "Revision Day" if not for_pdf else "Revision"
     
     # =========== NEW: EACH SIPARA ONLY ONCE PER 6 DAYS ===========
     # Sort completed siparas
@@ -1160,7 +1156,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
             day_paras = [completed_sorted[day_index]]
         else:
             # No sipara for this day (all assigned to earlier days)
-            return ""  # Return empty string
+            return "Revision Day" if not for_pdf else "Revision"
     
     else:
         # MORE THAN 6 SIPARAS - Use round-robin distribution
@@ -1180,7 +1176,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
     day_paras = sorted(list(set(day_paras)))
     
     if not day_paras:
-        return ""  # Return empty string
+        return "Revision Day" if not for_pdf else "Revision"
     
     if for_pdf:
         return ", ".join([str(p) for p in day_paras])
@@ -1391,47 +1387,6 @@ def calculate_schedule():
         
         return None, None
 
-    def find_optimal_mix_with_2pages(total_pages, available_days):
-        """Find optimal combination of 0.5, 1.0 and 2.0 pages to reach target"""
-        
-        # If we can't even complete with all 2.0 pages
-        if available_days < math.ceil(total_pages / 2):
-            return None, None  # Impossible
-        
-        # Try different combinations
-        for two_days in range(0, available_days + 1):
-            remaining_days = available_days - two_days
-            
-            for one_days in range(0, remaining_days + 1):
-                half_days = remaining_days - one_days
-                
-                total_possible = (two_days * 2.0) + (one_days * 1.0) + (half_days * 0.5)
-                
-                if total_possible >= total_pages:
-                    # Found a working combination
-                    # Create pattern prioritizing 2-page days first, then 1-page, then 0.5-page
-                    pattern = []
-                    
-                    # Add 2-page days
-                    for _ in range(two_days):
-                        pattern.append(2.0)
-                    
-                    # Add 1-page days
-                    for _ in range(one_days):
-                        pattern.append(1.0)
-                    
-                    # Add 0.5-page days
-                    for _ in range(half_days):
-                        pattern.append(0.5)
-                    
-                    # Shuffle to distribute evenly
-                    import random
-                    random.shuffle(pattern)
-                    
-                    return pattern, total_possible
-        
-        return None, None
-
     # Calculate minimum days needed based on daily amount
     if "Mixed" in daily_amount:
         # Use adaptive mixed calculation
@@ -1458,11 +1413,6 @@ def calculate_schedule():
         min_days_needed = total_pages_needed * 2
         avg_pages_per_day = 0.5
         can_use_mixed = True
-    elif "2 pages" in daily_amount:
-        # If 2 pages daily: need 0.5 days per page (round up)
-        min_days_needed = math.ceil(total_pages_needed / 2)
-        avg_pages_per_day = 2.0
-        can_use_mixed = False
     else:
         # 1 page daily
         min_days_needed = total_pages_needed
@@ -1486,7 +1436,7 @@ def calculate_schedule():
         
         # ============ ADAPTIVE SOLUTIONS ============
         solution_found = False
-
+        
         # Solution 1: Try Mixed pattern if not already using it
         if "Mixed" not in daily_amount and can_use_mixed:
             optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, current_working_days)
@@ -1503,7 +1453,7 @@ def calculate_schedule():
                 - You can complete **{max_possible:.1f}** pages
                 """)
                 solution_found = True
-
+        
         # Solution 2: Reduce holidays
         if not solution_found and max_working_days >= min_days_needed:
             holidays_needed = max(0, days_in_month - len(sundays) - min_days_needed)
@@ -1517,27 +1467,9 @@ def calculate_schedule():
             - Working days: **{min_days_needed}** (from {current_working_days})
             - You can complete all **{total_pages_needed}** pages
             """)
-            solution_found = True
-
-        # Solution 3: Increase to 2 pages daily (if currently on 0.5, 1, or Mixed)
-        if not solution_found and ("0.5" in daily_amount or "1 page" in daily_amount or "Mixed" in daily_amount):
-            new_min_days_2pages = math.ceil(total_pages_needed / 2)
-            if max_working_days >= new_min_days_2pages:
-                holidays_needed = max(0, days_in_month - len(sundays) - new_min_days_2pages)
-                st.success(f"""
-                **✅ SOLUTION: Increase to 2 Pages Daily**
-                
-                **Action needed:**
-                - Change from **{daily_amount}** to **2 pages daily**
-                - Set holidays to **{holidays_needed}**
-                
-                **Result:**
-                - Working days needed: **{new_min_days_2pages}** (down from {min_days_needed})
-                - You can complete all **{total_pages_needed}** pages
-                """)
-                solution_found = True
-
-        # Solution 4: Increase to 1 page daily (if currently on 0.5 or Mixed)
+            solution_found = True  # <-- CORRECT INDENTATION (4 spaces)
+        
+        # Solution 3: Increase to 1 page daily (if currently on 0.5 or Mixed)
         if not solution_found and ("0.5" in daily_amount or "Mixed" in daily_amount):
             new_min_days_1page = total_pages_needed
             if max_working_days >= new_min_days_1page:
@@ -1554,8 +1486,8 @@ def calculate_schedule():
                 - You can complete all **{total_pages_needed}** pages
                 """)
                 solution_found = True
-
-        # Solution 5: Try different mixed pattern with reduced holidays
+        
+        # Solution 4: Try different mixed pattern with reduced holidays
         if not solution_found and "Mixed" in daily_amount:
             # Try with maximum working days
             optimal_pattern, max_possible = find_optimal_mix(total_pages_needed, max_working_days)
@@ -1702,8 +1634,6 @@ def calculate_schedule():
         
     else:
         # ============ FORWARD DIRECTION (ORIGINAL LOGIC WITH ADAPTIVE MIXED) ============
-        schedule = []  # Initialize schedule list for forward direction
-        
         if daily_amount == "Mixed (0.5 & 1 page)":
             # Use adaptive pattern
             optimal_pattern, _ = find_optimal_mix(total_pages, working_days)
@@ -1718,48 +1648,24 @@ def calculate_schedule():
                     # Repeat pattern if needed
                     amount = optimal_pattern[i % len(optimal_pattern)]
                 
-                # Ensure we don't exceed target
-                if not is_backward and current_page_val > end_page:
-                    break
-                if is_backward and current_page_val < end_page:
-                    break
-                
                 schedule.append({
                     'page': current_page_val,
                     'amount': amount
                 })
-                
-                if is_backward:
-                    current_page_val -= amount
-                else:
-                    current_page_val += amount
-                
+                current_page_val += amount
+                if current_page_val > end_page:
+                    current_page_val = end_page
         else:
-            # Determine amount based on selection
-            if "0.5" in daily_amount:
-                amount = 0.5
-            elif "2 pages" in daily_amount:
-                amount = 2.0
-            else:  # "1 page daily"
-                amount = 1.0
-            
+            amount = 0.5 if "0.5" in daily_amount else 1.0
             current_page_val = start_page
             for i in range(working_days):
-                # Ensure we don't exceed target
-                if not is_backward and current_page_val > end_page:
-                    break
-                if is_backward and current_page_val < end_page:
-                    break
-                
                 schedule.append({
                     'page': current_page_val,
                     'amount': amount
                 })
-                
-                if is_backward:
-                    current_page_val -= amount
-                else:
-                    current_page_val += amount
+                current_page_val += amount
+                if current_page_val > end_page:
+                    current_page_val = end_page
 
     # ==================== CORRECTED PART: Track completed pages ====================
     full_schedule = []
@@ -1827,7 +1733,7 @@ def calculate_schedule():
                 full_schedule.append({
                     'Date': day_num,
                     'Day': day_name,
-                    'Jadeed': f"{int(current_page)} ({'2 pages' if amount == 2 else 'full' if amount == 1 else 'half'})",
+                    'Jadeed': f"{int(current_page)} ({'full' if amount == 1 else 'half'})",
                     'Juzz Hali': juzz_hali,  # ← Now calculated WITH today's work included
                     'Murajjah': murajjah,
                     'isHoliday': False
@@ -2081,7 +1987,7 @@ def draw_pdf_page(pdf, student_name, month_name, year, days_data, use_arabic, pa
                 page_part = Jadeed_text.split("(")[0].strip()
                 amount_part = Jadeed_text.split("(")[1].replace(")", "").strip()
                 page_number = page_part
-                amount = amount_part.replace("pages", "").replace("page", "").strip().capitalize()
+                amount = amount_part.capitalize()
             
             # Clean up Murajjah - remove "Para" prefix and truncate if too long
             if murajjah and murajjah != "—":
@@ -2402,7 +2308,7 @@ def main():
         # === DAILY Jadeed AMOUNT - MUST BE BEFORE backward/forward section ===
         st.session_state.daily_amount = st.selectbox(
             "**Daily Jadeed Amount**",
-            options=["0.5 page daily", "1 page daily", "2 pages daily", "Mixed (0.5 & 1 page)"],
+            options=["0.5 page daily", "1 page daily", "Mixed (0.5 & 1 page)"],
             index=2
         )
         
@@ -2471,7 +2377,7 @@ def main():
                             min_value=float(selected_surah["start_page"]),
                             max_value=float(selected_surah["end_page"]),
                             value=float(selected_surah["start_page"]),
-                            step=0.5 if "0.5" in st.session_state.daily_amount else (2.0 if "2 pages" in st.session_state.daily_amount else 1.0),
+                            step=0.5 if "0.5" in st.session_state.daily_amount else 1.0,
                             format="%.1f",
                             help=f"Pages {selected_surah['start_page']}-{selected_surah['end_page']} in {selected_surah['name']}"
                         )
@@ -2547,67 +2453,10 @@ def main():
         with col2:
             if st.button("✨ Generate Takhteet", type="primary", use_container_width=True):
                 with st.spinner("Checking if target can be reached..."):
-                    # Add debug output
-                    st.write("📊 Debug Information:")
-                    st.write(f"- Direction: {st.session_state.direction}")
-                    st.write(f"- Start page: {st.session_state.start_page}")
-                    st.write(f"- End page: {st.session_state.end_page}")
-                    st.write(f"- Daily amount: {st.session_state.daily_amount}")
-                    st.write(f"- Month: {st.session_state.month}, Year: {st.session_state.year}")
-                    
-                    # Get days in month
-                    days_in_month = calendar.monthrange(st.session_state.year, st.session_state.month)[1]
-                    st.write(f"- Days in month: {days_in_month}")
-                    
-                    # Get Sundays
-                    sundays = []
-                    for day in range(1, days_in_month + 1):
-                        if datetime(st.session_state.year, st.session_state.month, day).weekday() == 6:
-                            sundays.append(day)
-                    st.write(f"- Sundays (auto holidays): {sundays}")
-                    st.write(f"- Extra holidays: {st.session_state.extra_holidays}")
-                    
-                    # Calculate working days
-                    all_holidays = sundays.copy()
-                    last_days = []
-                    for i in range(days_in_month, days_in_month - st.session_state.extra_holidays, -1):
-                        if i not in sundays:
-                            last_days.append(i)
-                    
-                    all_holidays = sorted(set(sundays + last_days))
-                    st.session_state.debug_holidays = all_holidays  # Store for debugging
-                    working_days = days_in_month - len(all_holidays)
-
-                    # Make sure working_days is positive
-                    if working_days <= 0:
-                        st.error(f"❌ No working days! All {days_in_month} days are holidays.")
-                        st.write(f"Holidays: {all_holidays}")
-                        return None
-                        
-                    st.write(f"- Total holidays: {len(all_holidays)}")
-                    st.write(f"- Working days: {working_days}")
-                    st.write(f"- All holidays: {all_holidays}")
-                    
-                    # Try to generate schedule
                     result = calculate_schedule()
-                    
-                    if result:
-                        st.success("✅ Schedule generated successfully!")
-                        st.write(f"Schedule has {len(result)} days")
-                        # Show first few non-holiday days
-                        non_holiday_count = sum(1 for d in result if not d.get('isHoliday', False))
-                        st.write(f"Non-holiday days in schedule: {non_holiday_count}")
-                        
-                        if non_holiday_count > 0:
-                            st.write("First few schedule entries:")
-                            for i, day_data in enumerate(result[:5]):
-                                if not day_data.get('isHoliday', False):
-                                    st.write(f"Day {day_data['Date']}: {day_data['Jadeed']}")
-                    else:
-                        st.error("❌ Schedule generation failed!")
-                        st.info("Check the error messages above for possible issues.")
-                    
-                    st.rerun()
+                    if result:  # Only show success and rerun if schedule was actually generated
+                        st.success("Schedule generated successfully!")
+                        st.rerun()
         
         st.markdown('</div>', unsafe_allow_html=True)
     
