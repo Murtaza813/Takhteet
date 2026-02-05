@@ -1118,7 +1118,7 @@ def toggle_sipara(day, sipara):
 def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
     """Get murajjah for a specific day with UNIQUE siparas per 6-day cycle"""
     if murajjah_option == "No Murajjah":
-        return "Teacher will assign" if not for_pdf else ""
+        return ""  # Return empty string instead of "Teacher will assign"
     
     if murajjah_option == "Manual Selection":
         day_key = f"day{(day_number % 6) + 1}"
@@ -1128,7 +1128,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
                 return ", ".join([str(s) for s in selected])
             else:
                 return ", ".join([f"Para {s}" for s in selected])
-        return "Not assigned" if not for_pdf else ""
+        return ""  # Return empty string instead of "Not assigned"
     
     # Auto Generate - UNIQUE SIPARAS PER 6-DAY CYCLE
     current_sipara = st.session_state.current_sipara
@@ -1142,7 +1142,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
         completed = list(range(1, current_sipara))
     
     if not completed or len(completed) == 0:
-        return "Revision Day" if not for_pdf else "Revision"
+        return ""  # Return empty string instead of "Revision Day"
     
     # =========== NEW: EACH SIPARA ONLY ONCE PER 6 DAYS ===========
     # Sort completed siparas
@@ -1156,7 +1156,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
             day_paras = [completed_sorted[day_index]]
         else:
             # No sipara for this day (all assigned to earlier days)
-            return "Revision Day" if not for_pdf else "Revision"
+            return ""  # Return empty string
     
     else:
         # MORE THAN 6 SIPARAS - Use round-robin distribution
@@ -1176,7 +1176,7 @@ def get_murajjah_for_day(day_number, murajjah_option, for_pdf=False):
     day_paras = sorted(list(set(day_paras)))
     
     if not day_paras:
-        return "Revision Day" if not for_pdf else "Revision"
+        return ""  # Return empty string
     
     if for_pdf:
         return ", ".join([str(p) for p in day_paras])
